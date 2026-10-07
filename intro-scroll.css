@@ -1,0 +1,23 @@
+/* Stage 4: scoped details, no global typography or changes to later chapters. */
+.enhanced .stage.intro-active .ghost-word{opacity:calc(1 - var(--intro-quiet,1))}
+.enhanced .stage.intro-active .halo{opacity:.10}
+.enhanced .stage.intro-active.dark .halo{opacity:.065}
+.enhanced .stage.intro-active .scene-connected .pillars{gap:18px;max-width:440px}
+.enhanced .stage.intro-active .scene-connected .pillars span{display:inline-block}
+.enhanced .stage.intro-active .scene-training .modality-list span{display:inline-block}
+.enhanced .stage.intro-active .scene-training .copy{max-width:610px}
+@media(max-width:760px){
+ .enhanced .stage.intro-active .scene-connected,.enhanced .stage.intro-active .scene-training{padding-top:102px}
+ .enhanced .stage.intro-active .scene-connected h2,.enhanced .stage.intro-active .scene-training h2{font-size:clamp(44px,10.8vw,65px);line-height:1.02}
+ .enhanced .stage.intro-active .scene-connected .description,.enhanced .stage.intro-active .scene-training .description{margin-top:19px;font-size:12px;line-height:1.7}
+ .enhanced .stage.intro-active .scene-connected .pillars{margin-top:20px;gap:9px;font-size:10px}
+ .enhanced .stage.intro-active .scene-connected .pillars span+span:before{margin-right:9px}
+ .enhanced .stage.intro-active .scene-training .modality-list{margin-top:20px;font-size:10px;gap:9px 17px}
+ .enhanced .stage.intro-active .scene-training .micro-note{margin-top:14px;font-size:8px}
+}
+@media(max-width:760px) and (max-height:740px){
+ .enhanced .stage.intro-active .scene-connected,.enhanced .stage.intro-active .scene-training{padding-top:92px}
+ .enhanced .stage.intro-active .scene-connected h2,.enhanced .stage.intro-active .scene-training h2{font-size:42px}
+ .enhanced .stage.intro-active .scene-connected .eyebrow,.enhanced .stage.intro-active .scene-training .eyebrow{margin-bottom:17px}
+ .enhanced .stage.intro-active .scene-connected .description,.enhanced .stage.intro-active .scene-training .description{margin-top:14px}
+}

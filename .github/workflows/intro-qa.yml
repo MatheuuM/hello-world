@@ -1,0 +1,58 @@
+name: MOVVA Intro Stage 4
+on:
+  push:
+    branches: [studio-intro-v4]
+permissions:
+  contents: write
+jobs:
+  intro-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare bounded candidate and browser
+        run: |
+          node qa/prepare-intro.cjs
+          node --check experience.js
+          node --check intro-scroll.js
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 90s npx playwright install chromium
+      - name: Browser review and baseline regression
+        run: |
+          python3 -m http.server 8077 > /tmp/movva-intro.log 2>&1 &
+          python3 -m http.server 8078 --directory /tmp/movva-intro-baseline > /tmp/movva-baseline.log 2>&1 &
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+          timeout 300s node qa/intro-check.cjs
+      - name: Stage verified source objects without updating branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import os,json,urllib.request,pathlib
+          assert os.environ['REPO']=='MatheuuM/hello-world'
+          assert json.loads(pathlib.Path('qa-intro-output/report.json').read_text())['status']=='PASS'
+          result={}
+          for name in ['experience.js','index.html']:
+              payload=json.dumps({'encoding':'utf-8','content':pathlib.Path(name).read_text()}).encode()
+              req=urllib.request.Request('https://api.github.com/repos/'+os.environ['REPO']+'/git/blobs',data=payload,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'},method='POST')
+              with urllib.request.urlopen(req,timeout=20) as response: result[name]=json.load(response)['sha']
+          pathlib.Path('qa-intro-output/source-blobs.json').write_text(json.dumps(result,indent=2))
+          print(json.dumps(result))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-intro-stage4
+          path: |
+            qa-intro-output/
+            intro-scroll.js
+            intro-scroll.css
+            experience.js
+            index.html
+          retention-days: 5
