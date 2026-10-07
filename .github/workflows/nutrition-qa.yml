@@ -57,7 +57,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, pathlib, os
-          groups=['layout','sequence','regression','controls']; results=[]
+          groups=['layout','sequence','regression','controls']; results=[]; guards=[]
           for group in groups:
             p=pathlib.Path('evidence')/('movva-nutrition-'+group)/'report.json'
             d=json.loads(p.read_text())
@@ -66,7 +66,16 @@ jobs:
             assert not d['errors'],d
             assert all(c['pass'] for c in d['checks']),d
             results.append({'group':group,'checks':len(d['checks']),'seconds':d['seconds'],'images':len(d['images'])})
-          summary={'stage':5,'status':'PASS','commit':os.environ['GITHUB_SHA'],'groups':results,'checks':sum(r['checks'] for r in results),'screenshots':sum(r['images'] for r in results)}
+            if group=='layout':
+              for c in d['checks']:
+                if not c['name'].startswith('Nutrition fit and text separation '): continue
+                width,height=map(int,c['name'].split()[-1].split('x'))
+                if width>760: continue
+                device=c['detail']['device']; actual=device['b']-device['y']; minimum=max(180,height*.30)
+                assert actual>=minimum,(width,height,actual,minimum)
+                guards.append({'viewport':[width,height],'minimumDeviceHeight':minimum,'actualDeviceHeight':actual,'pass':True})
+          assert len(guards)==4,guards
+          summary={'stage':5,'status':'PASS','commit':os.environ['GITHUB_SHA'],'groups':results,'checks':sum(r['checks'] for r in results),'visualSizeGuards':guards,'screenshots':sum(r['images'] for r in results)}
           pathlib.Path('evidence/summary.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary,indent=2))
           PY
       - uses: actions/upload-artifact@v4
