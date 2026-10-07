@@ -17,11 +17,12 @@ try{
  page.on('response',r=>{if(r.url().startsWith('http://127.0.0.1:8077')&&r.status()>=400)log.errors.push(r.status()+' '+r.url())});
  await page.goto('http://127.0.0.1:8077/',{waitUntil:'networkidle',timeout:30000});
  await page.waitForFunction(()=>window.__MOVVA_QA__?.ready,{timeout:30000});
+ await page.waitForFunction(()=>document.querySelector('.scene[aria-hidden="false"]')!==null,{timeout:18000});
  const init=await page.evaluate(()=>({engine:__MOVVA_QA__.engine,enhanced:__MOVVA_QA__.enabled,dom:document.documentElement.classList.contains('dom-device')}));
  assert.equal(init.enhanced,true);
  if(mobile){assert.equal(init.dom,true);assert.equal(init.engine,'CSS3D DOM');assert.equal(await page.locator('#world').evaluate(e=>getComputedStyle(e).display),'none');}
  check('3D engine initialized',init);
- const go=async p=>{await page.evaluate(p=>__MOVVA_QA__.setProgress(p),p);await page.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.00012,p,{timeout:22000});};
+ const go=async p=>{await page.evaluate(p=>__MOVVA_QA__.setProgress(p),p);await page.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.00012,p,{timeout:22000});await page.waitForTimeout(120);};
  const state=()=>page.evaluate(()=>{
  const obj=document.querySelector('#css3d-object'),rig=document.querySelector('#css3d-device'),box=obj.getBoundingClientRect();
  return {transform:getComputedStyle(obj).transform,ratio:box.height/Math.max(1,box.width),screen:rig.dataset.screen,active:document.querySelector('#chapter-name').textContent,over:document.documentElement.scrollWidth>innerWidth+1,progress:__MOVVA_QA__.progress};
