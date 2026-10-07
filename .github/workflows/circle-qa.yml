@@ -5,15 +5,71 @@ on:
 permissions:
   contents: read
 jobs:
-  source:
-    name: Stage 7 / immutable source checkpoint
+  circle:
+    name: Stage 7 / ${{ matrix.group }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [layout, sequence, regression, controls]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare immutable Stage 6 baseline
+        run: |
+          mkdir -p /tmp/movva-circle-baseline
+          git archive 7c4cb583502b16d150c3e9fa37bcb3b1bc36b292 | tar -x -C /tmp/movva-circle-baseline
+          node --check circle-scroll.js
+          node --check qa/circle-check.cjs
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 90s npx playwright install chromium
+      - name: Validate one bounded group
+        env:
+          QA_GROUP: ${{ matrix.group }}
+        run: |
+          python3 -m http.server 8077 > /tmp/circle-candidate.log 2>&1 &
+          python3 -m http.server 8078 --directory /tmp/movva-circle-baseline > /tmp/circle-baseline.log 2>&1 &
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+          timeout 240s node qa/circle-check.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-circle-${{ matrix.group }}
+          path: qa-circle-${{ matrix.group }}/
+          retention-days: 5
+  approval:
+    name: Stage 7 / complete gate
+    if: always()
+    needs: circle
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v4
-      - run: git archive --format=zip HEAD -o stage7-baseline.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: movva-stage7-baseline-source
-          path: stage7-baseline.zip
+          pattern: movva-circle-*
+          path: evidence
+      - name: Require all checks from the same source
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,os
+          counts={'layout':21,'sequence':17,'regression':13,'controls':14}; results=[]
+          for group,n in counts.items():
+            d=json.loads((pathlib.Path('evidence')/('movva-circle-'+group)/'report.json').read_text())
+            assert d['status']=='PASS' and d['commit']==os.environ['GITHUB_SHA'],d
+            assert not d['errors'] and len(d['checks'])==n,d
+            assert all(c['pass'] for c in d['checks']),d
+            results.append({'group':group,'checks':n,'seconds':d['seconds'],'images':len(d['images'])})
+          s={'stage':7,'status':'PASS','commit':os.environ['GITHUB_SHA'],'checks':sum(counts.values()),'groups':results,'screenshots':sum(r['images'] for r in results),'limits':['Chromium automation, not physical iPhone/Safari','Existing reduced-resolution app captures']}
+          pathlib.Path('evidence/summary.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage7-review
+          path: evidence/
           retention-days: 5
