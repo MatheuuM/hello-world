@@ -9,10 +9,11 @@ async function run(){
  browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
  const ctx=await browser.newContext({viewport:{width:1440,height:960},deviceScaleFactor:1});const page=await ctx.newPage();
  page.on('pageerror',e=>report.pageErrors.push(e.message));page.on('response',r=>{if(r.url().startsWith(base)&&r.status()>=400)report.localErrors.push(r.url());});
- await page.goto(base,{waitUntil:'networkidle'});await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>window.__MOVVA_QA__?.ready&&window.MOVVA_INTRO?.layout,null,{timeout:20000});
+ async function ready(url){await page.goto(url,{waitUntil:'networkidle'});await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>window.__MOVVA_QA__?.ready,null,{timeout:20000,polling:100});}
+ await ready(base);await page.waitForFunction(()=>window.MOVVA_INTRO?.layout,null,{timeout:20000});
  report.fonts=await page.evaluate(()=>[...document.fonts].map(f=>({family:f.family,status:f.status})));
  assert.equal(await page.evaluate(()=>__MOVVA_QA__.version),'intro-stage4-1');check('Five real textures and original 3D device initialize',await page.evaluate(()=>({objects:__MOVVA_QA__.meshCount,textures:__MOVVA_QA__.textureSizes})));
- async function move(p,pg=page){await pg.evaluate(p=>__MOVVA_QA__.setProgress(p),p);await pg.waitForFunction(p=>{const e=document.querySelector('#experience'),s=document.querySelector('#stage'),actual=Math.max(0,Math.min(1,(scrollY-e.offsetTop)/(e.offsetHeight-s.clientHeight)));return Math.abs(actual-p)<.00015&&Math.abs(__MOVVA_QA__.progress-actual)<.0000001;},p,{timeout:12000});}
+ async function move(p){await page.bringToFront();await page.evaluate(p=>__MOVVA_QA__.setProgress(p),p);await page.waitForFunction(p=>{const e=document.querySelector('#experience'),s=document.querySelector('#stage'),actual=Math.max(0,Math.min(1,(scrollY-e.offsetTop)/(e.offsetHeight-s.clientHeight)));return Math.abs(actual-p)<.00015&&Math.abs(__MOVVA_QA__.progress-actual)<.0000001;},p,{timeout:18000,polling:100});}
  async function shot(name){await page.screenshot({path:path.join(out,name+'.png')});report.images.push(name+'.png');}
  async function metrics(){return page.evaluate(()=>{
   const stage=document.querySelector('#stage'),vw=stage.clientWidth,vh=stage.clientHeight,m=__MOVVA_QA__.modelMatrix,hh=14*Math.tan(32*Math.PI/360),hw=hh*vw/vh,xs=[],ys=[];
@@ -33,11 +34,16 @@ async function run(){
  await page.setViewportSize({width:1440,height:960});await page.waitForTimeout(250);
  for(const p of [.08,.12,.145,.225,.255,.279,.30,.365,.410]){await move(p);await shot('sequence-'+p);check('Forward scene '+p,await metrics());}
  for(const p of [.12,.185,.279,.335,.405]){await move(p);const before=await metrics();await move(.45);await move(p);const after=await metrics();assert.ok(Math.max(...before.matrix.map((n,i)=>Math.abs(n-after.matrix[i])))<.001,JSON.stringify({p,before,after}));assert.equal(before.chapter,after.chapter);check('Reversible pose and chapter '+p);}
- const baseline=await ctx.newPage();await baseline.goto('http://127.0.0.1:8078',{waitUntil:'networkidle'});await baseline.evaluate(()=>document.fonts.ready);await baseline.waitForFunction(()=>window.__MOVVA_QA__?.ready);
- for(const p of [0,.04,.495,.68,.835,.975]){await move(p);await move(p,baseline);const a=await page.evaluate(()=>({m:__MOVVA_QA__.modelMatrix,bg:document.querySelector('#stage').style.backgroundColor,score:document.querySelector('#score-number').textContent})),b=await baseline.evaluate(()=>({m:__MOVVA_QA__.modelMatrix,bg:document.querySelector('#stage').style.backgroundColor,score:document.querySelector('#score-number').textContent}));assert.ok(Math.max(...a.m.map((v,i)=>Math.abs(v-b.m[i])))<.001,JSON.stringify({p,a,b}));assert.equal(a.bg,b.bg);assert.equal(a.score,b.score);check('Unchanged outside Stage 4 at '+p);}
- await baseline.close();
- await move(0);await page.locator('.hero-cta').click();await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.18)<.0002);assert.equal(await page.locator('#chapter-name').innerText(),'TUDO CONECTADO');check('Hero CTA reaches connected hold');
- await page.locator('.chapter-dots [data-jump="0.33"]').click();await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.33)<.0002);assert.equal(await page.locator('#chapter-name').innerText(),'TRAINING');check('Chapter navigation reaches Training');
+ // Keep one visible WebGL page: the application intentionally pauses hidden tabs.
+ // Collect candidate states, then navigate to the immutable baseline in the same tab.
+ const outside=[0,.04,.495,.68,.835,.975],candidate=new Map();
+ const state=()=>page.evaluate(()=>({m:__MOVVA_QA__.modelMatrix,bg:document.querySelector('#stage').style.backgroundColor,score:document.querySelector('#score-number').textContent}));
+ for(const p of outside){await move(p);candidate.set(p,await state());}
+ await ready('http://127.0.0.1:8078');
+ for(const p of outside){await move(p);const a=candidate.get(p),b=await state();assert.ok(Math.max(...a.m.map((v,i)=>Math.abs(v-b.m[i])))<.001,JSON.stringify({p,a,b}));assert.equal(a.bg,b.bg);assert.equal(a.score,b.score);check('Unchanged outside Stage 4 at '+p);}
+ await ready(base);
+ await move(0);await page.locator('.hero-cta').click();await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.18)<.0002,null,{timeout:18000,polling:100});assert.equal(await page.locator('#chapter-name').innerText(),'TUDO CONECTADO');check('Hero CTA reaches connected hold');
+ await page.locator('.chapter-dots [data-jump="0.33"]').click();await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.33)<.0002,null,{timeout:18000,polling:100});assert.equal(await page.locator('#chapter-name').innerText(),'TRAINING');check('Chapter navigation reaches Training');
  await page.locator('#motion').click();assert.equal(await page.evaluate(()=>__MOVVA_QA__.enabled),false);assert.equal(await page.evaluate(()=>document.querySelector('#stage').classList.contains('intro-active')),false);assert.equal(await page.locator('.scene[aria-hidden="true"]').count(),0);check('Motion-off restores all seven chapters and clears intro overrides');
  const rp=await browser.newContext({reducedMotion:'reduce',viewport:{width:393,height:852}});const reduced=await rp.newPage();await reduced.goto(base,{waitUntil:'networkidle'});assert.equal(await reduced.evaluate(()=>document.documentElement.classList.contains('enhanced')),false);assert.equal(await reduced.locator('.scene').count(),7);check('Reduced-motion linear reading preserved');await rp.close();
  const np=await browser.newContext({javaScriptEnabled:false,viewport:{width:320,height:667}});const nojs=await np.newPage();await nojs.goto(base,{waitUntil:'networkidle'});assert.equal(await nojs.locator('.scene').count(),7);assert.equal(await nojs.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);check('No-JavaScript reading preserved');await np.close();
