@@ -1,0 +1,68 @@
+name: MOVVA Stage 8 Integrated Quality Gate
+on:
+  push:
+    branches: [studio-integration-v8]
+permissions:
+  contents: read
+jobs:
+  audit:
+    name: Integrated / ${{ matrix.group }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [desktop, mobile, accessibility]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate syntax and install browser
+        run: |
+          for file in experience.js hero-layout.js intro-scroll.js nutrition-scroll.js evolution-scroll.js circle-scroll.js qa/integrated-check.cjs; do node --check "$file"; done
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 90s npx playwright install chromium
+      - name: Run bounded integration checks
+        env:
+          QA_GROUP: ${{ matrix.group }}
+        run: |
+          python3 -m http.server 8077 > /tmp/movva-integrated.log 2>&1 &
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+          timeout 250s node qa/integrated-check.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integrated-${{ matrix.group }}
+          path: qa-integration-${{ matrix.group }}/
+          retention-days: 7
+  gate:
+    name: Integrated / final gate
+    if: always()
+    needs: audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: integrated-*
+          path: evidence
+      - name: Require all groups from one commit
+        run: |
+          python3 - <<'PY'
+          import json,os,pathlib
+          minimum={'desktop':14,'mobile':14,'accessibility':12}; groups=[]
+          for group,n in minimum.items():
+            d=json.loads((pathlib.Path('evidence')/('integrated-'+group)/'report.json').read_text())
+            assert d['status']=='PASS' and d['commit']==os.environ['GITHUB_SHA'],group
+            assert not d['errors'] and len(d['checks'])>=n,group
+            groups.append({'group':group,'checks':len(d['checks']),'images':len(d['images']),'seconds':d['seconds']})
+          result={'stage':8,'status':'PASS','sha':os.environ['GITHUB_SHA'],'groups':groups,'checks':sum(g['checks'] for g in groups),'screenshots':sum(g['images'] for g in groups),'limits':['Chromium not physical Safari','Reduced-resolution sanitized screenshots']}
+          pathlib.Path('evidence/summary.json').write_text(json.dumps(result,indent=2))
+          print(json.dumps(result,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage8-review
+          path: evidence/
+          retention-days: 7
