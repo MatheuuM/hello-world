@@ -1,0 +1,26 @@
+/* Nutrition only. No global typography, hero, Training or later-chapter rules. */
+#nutrition .eyebrow{color:#686451}
+#nutrition h2{font-size:clamp(56px,6.05vw,93px);line-height:1.025;letter-spacing:-.058em}
+#nutrition .description{max-width:440px;font-size:15px;line-height:1.8;margin-top:28px}
+.nutrition-chapters{display:flex;align-items:center;flex-wrap:wrap;gap:10px 23px;margin-top:25px;font-size:10px;color:#6b705e;letter-spacing:.025em}
+.nutrition-chapters span{display:inline-flex;align-items:center;gap:9px}
+.nutrition-chapters i{font-family:var(--serif);font-size:16px;font-weight:400;font-style:italic;color:#838777}
+#nutrition .nutrition-readout{max-width:360px;margin-top:30px;border-top:1px solid #b5ad982e;padding-top:21px}
+#nutrition .nutrition-readout .hydration-title{font-size:9px;letter-spacing:.13em;color:#666f61;margin:0 0 13px}
+#nutrition .nutrition-readout .hydration-value{display:flex;align-items:baseline;gap:8px}
+#nutrition .nutrition-readout strong{font-size:48px;font-weight:400;letter-spacing:-.065em;line-height:1.1}
+#nutrition .hydration-value>span{font-size:15px;color:#6e7464}
+#nutrition .water-track{height:5px;border-radius:6px;background:#c6c8b65c;overflow:hidden;margin-top:13px}
+#nutrition .water-track i{border-radius:6px;background:#7b8d72;position:relative}
+#nutrition .hydration-caption{display:flex;justify-content:space-between;gap:12px;margin-top:9px;color:#737969;font-size:9px}
+#nutrition .micro-note{font-size:9px;line-height:1.75;color:#707568;margin-top:22px;max-width:355px}
+.nutrition-surface{display:none}
+.enhanced .nutrition-surface{display:block;position:absolute;width:min(42vw,650px);height:80%;border-radius:48% 48% 42% 42%;transform:translate(-50%,-50%) rotate(calc(-8deg + 12deg*var(--nutrition-orbit,0)));background:radial-gradient(ellipse at 30% 40%,#dce3cd9c,#d6ceb55c 64%,transparent 75%);opacity:0;pointer-events:none;z-index:1}
+.enhanced .nutrition-surface:after{content:'';position:absolute;inset:12% -4%;border:1px solid #8b95742c;border-radius:50%;transform:rotate(calc(-28deg + 20deg*var(--nutrition-orbit,0)))}
+.enhanced .nutrition-active .nutrition-surface{opacity:calc(var(--nutrition-presence,0)*.75)}
+.enhanced .nutrition-active .halo,.enhanced .nutrition-active .ghost-word{opacity:0}
+.enhanced #nutrition .copy{width:47%;max-width:610px;padding-top:24px}
+@media(max-width:1100px) and (min-width:761px){#nutrition h2{font-size:60px}#nutrition .description{font-size:13px}#nutrition .nutrition-readout{margin-top:24px}.nutrition-chapters{gap:8px 13px;font-size:9px}#nutrition .micro-note{font-size:8px}}
+@media(max-height:800px) and (min-width:761px){#nutrition h2{font-size:65px}#nutrition .eyebrow{margin-bottom:21px}#nutrition .description{font-size:13px;margin-top:20px}#nutrition .nutrition-readout{margin-top:21px;padding-top:15px}#nutrition .nutrition-readout strong{font-size:38px}.nutrition-chapters{margin-top:19px}#nutrition .micro-note{margin-top:15px}}
+@media(max-width:760px){.enhanced #nutrition{padding-top:100px}.enhanced #nutrition .copy{width:100%;max-width:540px;padding:0}#nutrition h2{font-size:clamp(43px,10.3vw,62px);line-height:1.02}#nutrition .eyebrow{margin-bottom:19px}#nutrition .description{font-size:12px;line-height:1.7;margin-top:17px}.nutrition-chapters{margin-top:16px;gap:15px;font-size:8px}.nutrition-chapters i{font-size:13px}.nutrition-chapters span{gap:5px}#nutrition .nutrition-readout{margin-top:17px;padding-top:11px;max-width:310px}#nutrition .nutrition-readout .hydration-title{font-size:8px;letter-spacing:.09em;margin:0 0 7px}#nutrition .nutrition-readout strong{font-size:32px}#nutrition .hydration-value>span{font-size:11px}#nutrition .water-track{height:3px;margin-top:8px}#nutrition .hydration-caption{font-size:8px;margin-top:7px}#nutrition .micro-note{font-size:8px;margin-top:12px;max-width:310px}.enhanced .nutrition-surface{width:85%;height:48%}}
+@media(max-width:760px) and (max-height:760px){.enhanced #nutrition{padding-top:92px}#nutrition h2{font-size:41px}#nutrition .description{font-size:11px;line-height:1.55;margin-top:13px}#nutrition .eyebrow{font-size:7px;margin-bottom:14px}.nutrition-chapters{margin-top:10px;gap:12px}#nutrition .nutrition-readout{margin-top:12px;padding-top:9px}#nutrition .nutrition-readout strong{font-size:27px}#nutrition .nutrition-readout .hydration-title{font-size:7px}#nutrition .micro-note{font-size:7px;margin-top:9px}#nutrition .hydration-caption{font-size:7px}}

@@ -1,0 +1,77 @@
+name: MOVVA Nutrition Stage 5
+on:
+  push:
+    branches: [studio-nutrition-v5]
+permissions:
+  contents: read
+jobs:
+  nutrition:
+    name: Stage 5 / ${{ matrix.group }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [layout, sequence, regression, controls]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare immutable baseline and browser
+        run: |
+          mkdir -p /tmp/movva-nutrition-baseline
+          git archive f6795872907f3b458a346bf720fdafb4ccbf32e4 | tar -x -C /tmp/movva-nutrition-baseline
+          node --check nutrition-scroll.js
+          node --check qa/nutrition-check.cjs
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 90s npx playwright install chromium
+      - name: Validate one bounded group
+        env:
+          QA_GROUP: ${{ matrix.group }}
+        run: |
+          python3 -m http.server 8077 > /tmp/movva-nutrition.log 2>&1 &
+          python3 -m http.server 8078 --directory /tmp/movva-nutrition-baseline > /tmp/movva-nutrition-before.log 2>&1 &
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+          timeout 240s node qa/nutrition-check.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-nutrition-${{ matrix.group }}
+          path: qa-nutrition-${{ matrix.group }}/
+          retention-days: 5
+  approval:
+    name: Stage 5 / complete gate
+    if: always()
+    needs: nutrition
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: movva-nutrition-*
+          path: evidence
+      - name: Require every group and source commit
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, os
+          groups=['layout','sequence','regression','controls']; results=[]
+          for group in groups:
+            p=pathlib.Path('evidence')/('movva-nutrition-'+group)/'report.json'
+            d=json.loads(p.read_text())
+            assert d['status']=='PASS',d
+            assert d['commit']==os.environ['GITHUB_SHA'],d
+            assert not d['errors'],d
+            assert all(c['pass'] for c in d['checks']),d
+            results.append({'group':group,'checks':len(d['checks']),'seconds':d['seconds'],'images':len(d['images'])})
+          summary={'stage':5,'status':'PASS','commit':os.environ['GITHUB_SHA'],'groups':results,'checks':sum(r['checks'] for r in results),'screenshots':sum(r['images'] for r in results)}
+          pathlib.Path('evidence/summary.json').write_text(json.dumps(summary,indent=2));print(json.dumps(summary,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage5-review
+          path: evidence/
+          retention-days: 5
