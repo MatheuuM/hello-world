@@ -1,0 +1,73 @@
+name: MOVVA Safari and Desktop 3D QA
+on:
+  push:
+    branches: [fix-ios-safari-and-web-3d]
+permissions:
+  contents: read
+jobs:
+  browsers:
+    name: ${{ matrix.engine }} / ${{ matrix.device }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        device: [mobile, desktop]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test browser
+        run: |
+          timeout 110s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 210s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Test site in browser
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+          QA_DEVICE: ${{ matrix.device }}
+        run: |
+          node --check experience.js
+          node --check mobile-phone.js
+          node --check qa/mobile-crossbrowser-check.cjs
+          python3 -m http.server 8077 >/tmp/movva-hotfix-server.log 2>&1 &
+          timeout 250s node qa/mobile-crossbrowser-check.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: device-${{ matrix.engine }}-${{ matrix.device }}
+          path: qa-hotfix/${{ matrix.engine }}-${{ matrix.device }}/
+          retention-days: 6
+  acceptance:
+    name: Browser approval gate
+    if: always()
+    needs: browsers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: device-*
+          path: evidence
+      - name: Require four passing suites from same commit
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,os
+          results=[]
+          for engine in ['chromium','webkit']:
+            for device in ['mobile','desktop']:
+              f=pathlib.Path('evidence')/f'device-{engine}-{device}'/'report.json'
+              r=json.loads(f.read_text())
+              assert r['status']=='PASS' and r['commit']==os.environ['GITHUB_SHA'],str(f)+' '+str(r.get('error'))
+              assert len(r['images'])>=7
+              results.append({'engine':engine,'device':device,'checks':len(r['checks'])})
+          d={'status':'PASS','commit':os.environ['GITHUB_SHA'],'results':results,'total_checks':sum(x['checks'] for x in results)}
+          pathlib.Path('evidence/summary.json').write_text(json.dumps(d,indent=2))
+          print(json.dumps(d,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-safari-final
+          path: evidence/
+          retention-days: 6
