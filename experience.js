@@ -178,7 +178,7 @@ async function build(){
   {geom:face(2.14,1.32,.12),base:box(2.17,1.35,.048,.13,.006),tex:'evolution',rect:[.040,.39,.93,.292],chapter:4,x:-1.25,y:-.27,z:1.07,rz:-.08}
  ];
  ready=true;applyMode();
- window.__MOVVA_QA__={version:'hero-stage3-1',engine:'WebGL triangulated geometry',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return meshes.length},get drawCalls(){return drawCalls},get textureCount(){return Object.keys(textures).length},get textureSizes(){return{...textureSizes}},get frameCount(){return frameCount},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get renderSize(){return[canvas.width,canvas.height]},setProgress(p){jump(clamp(p),false);}};
+ window.__MOVVA_QA__={version:'intro-stage4-1',engine:'WebGL triangulated geometry',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return meshes.length},get drawCalls(){return drawCalls},get textureCount(){return Object.keys(textures).length},get textureSizes(){return{...textureSizes}},get frameCount(){return frameCount},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get renderSize(){return[canvas.width,canvas.height]},setProgress(p){jump(clamp(p),false);}};
 }
 const poses=[
  [0,.47,.05,.99,-.09,-.34,-.095],[.10,.45,.06,1.01,-.06,-.15,-.06],
@@ -203,7 +203,9 @@ function draw(o,model,texA,texB,mix=0){gl.bindBuffer(gl.ARRAY_BUFFER,o.geom.buff
 }
 function render(p){
  if(!gl||gl.isContextLost())return;
- const w=weights(p),bg=background(p),active=w.indexOf(Math.max(...w));
+ const intro=window.MOVVA_INTRO;
+ const w=intro?intro.weights(p,weights(p)):weights(p),bg=intro?intro.background(p,background(p)):background(p);
+ const selected=w.indexOf(Math.max(...w)),active=intro?intro.active(p,selected):selected;
  stage.style.backgroundColor=`rgb(${bg})`;stage.classList.toggle('dark',active===2);$('.header').classList.toggle('dark',active===2);
  scenes.forEach((s,i)=>{const visible=w[i]>.002;s.style.opacity=w[i].toFixed(4);s.style.visibility=visible?'visible':'hidden';s.inert=i!==active;s.setAttribute('aria-hidden',String(i!==active));const cy=(1-w[i])*22;s.style.transform=`translateY(${cy}px)`;});
  dots.forEach((a,i)=>{if(i===active)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current')});
@@ -217,13 +219,16 @@ function render(p){
  const halfH=14*Math.tan(32*Math.PI/360),halfW=halfH*width/height;
  // Stage 3 is restricted to the opening; the existing poses take over at .13.
  if(window.MOVVA_HERO)[nx,ny,scale,rx,ry,rz]=window.MOVVA_HERO.fit(p,[nx,ny,scale,rx,ry,rz],compose,halfW,halfH);
+ if(intro)[nx,ny,scale,rx,ry,rz]=intro.fit(p,[nx,ny,scale,rx,ry,rz],compose,halfW,halfH);
+ intro?.visual(p);
  const model=compose(nx*halfW,ny*halfH,0,rx+pointer[1]*.025,ry+pointer[0]*.065,rz,scale);
  let ix=0,blend=0,transitions=[[.253,.275],[.421,.443],[.578,.60],[.753,.775]];
  for(let k=0;k<transitions.length;k++){const[a,b]=transitions[k];if(p>=b)ix=k+1;else if(p>a){ix=k;blend=range(p,a,b);break;}}
+ const change=intro?.screen(p);if(change){ix=change.ix;blend=change.blend;}
  const labels=['home','training','nutrition','evolution','circle'],txA=textures[labels[ix]],txB=textures[labels[Math.min(ix+1,4)]];
  gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uniforms.uViewProjection,false,new Float32Array(viewProjection));gl.uniform1i(uniforms.uTextureA,0);gl.uniform1i(uniforms.uTextureB,1);gl.uniform1f(uniforms.uDark,active===2?1:0);drawCalls=0;frameCount++;lastModel=model;bindTexture(txA,0);bindTexture(txB,1);
  meshes.forEach(o=>draw(o,mm(model,o.local),txA,txB,blend));
- if(!mobile)for(const o of panels){const a=w[o.chapter];if(a<.015)continue;const spread=smooth(a);const panelM=mm(model,compose(o.x*spread,o.y,.20+o.z*spread,.02,-.10*spread,o.rz*spread,lerp(.02,1,spread)));
+ if(!mobile)for(const o of panels){const a=intro?intro.panel(p,o.chapter,w[o.chapter]):w[o.chapter];if(a<.015)continue;const spread=smooth(a);const panelM=mm(model,compose(o.x*spread,o.y,.20+o.z*spread,.02,-.10*spread,o.rz*spread,lerp(.02,1,spread)));
  draw({geom:o.base,color:[.85,.85,.79],metal:.22,shine:80},panelM,txA,txA,0);
  draw({geom:o.geom,color:[1,1,1],mode:1,rect:o.rect},mm(panelM,mat.translation(0,0,.027)),textures[o.tex],textures[o.tex],0);
  }
@@ -231,14 +236,14 @@ function render(p){
  $('.halo').style.transform=`translate(-50%,-50%) rotate(${p*110}deg) scale(${1+p*.08})`;
  $('.ghost-word').style.transform=`translateX(${-p*4}vw)`;
 }
-function resize(){window.MOVVA_HERO?.measure();width=stage.clientWidth;height=stage.clientHeight;mobile=width<=760;if(gl&&width&&height){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);viewProjection=mm(mat.perspective(32*Math.PI/180,width/height,.1,60),mat.translation(0,0,-14));}requestTick();}
+function resize(){window.MOVVA_HERO?.measure();window.MOVVA_INTRO?.measure();width=stage.clientWidth;height=stage.clientHeight;mobile=width<=760;if(gl&&width&&height){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);viewProjection=mm(mat.perspective(32*Math.PI/180,width/height,.1,60),mat.translation(0,0,-14));}requestTick();}
 function measure(){const travel=experience.offsetHeight-stage.clientHeight;return travel>0?clamp((scrollY-experience.offsetTop)/travel):0;}
 function requestTick(){if(enabled&&!raf&&!disposed&&!document.hidden)raf=requestAnimationFrame(tick);}
 function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,t-(lastTime||t-16));lastTime=t;target=measure();const k=1-Math.exp(-dt/85);position=lerp(position,target,k);pointer=pointer.map((v,i)=>lerp(v,pointerTarget[i],k));if(Math.abs(position-target)<.000006)position=target;render(position);
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
-function clearScenes(){stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
+function clearScenes(){window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
 function applyMode(){const short=innerWidth<=760&&innerHeight<640,landscape=innerHeight<560&&innerWidth>innerHeight;enabled=ready&&userMotion&&!media.matches&&!short&&!landscape;root.classList.toggle('enhanced',enabled);motion.setAttribute('aria-pressed',String(enabled));motion.setAttribute('aria-label',enabled?'Desativar animações':'Ativar animações');motion.title=enabled?'Trocar para leitura sem animações':'Experiência sem movimento';motion.querySelector('span').textContent=enabled?'Movimento':'Modo leve';if(enabled){resize();position=target=measure();requestTick();}else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}}
 function jump(p,animated=true){if(!enabled)return;const top=experience.offsetTop+p*(experience.offsetHeight-stage.clientHeight);scrollTo({top,behavior:animated?'smooth':'instant'});target=p;requestTick();}
 $$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));

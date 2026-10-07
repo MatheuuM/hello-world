@@ -1,0 +1,15 @@
+{
+  "stage": 4,
+  "baseline": "a77e9fa2751fc7e2741bc221a5f79784eacb54e8",
+  "reviewedWorkflowRun": 37679715106,
+  "reviewedArtifact": 11508693087,
+  "status": "PASS",
+  "checks": 43,
+  "screenshots": 25,
+  "runtime": {
+    "experience.js": "5a9e8246b850ac2d67a70846430ff1d03b842dbe",
+    "index.html": "16eefc2238cd5cb1c760dc9e1aba32a319b7aa44",
+    "intro-scroll.js": "85bc75aa3a0991a92115255d00ed2be2133ccc98",
+    "intro-scroll.css": "633093778f8da6ea137cfaa45f0a654299ac035b"
+  }
+}
