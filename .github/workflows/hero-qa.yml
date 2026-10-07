@@ -24,9 +24,18 @@ jobs:
           python3 -m http.server 8077 > /tmp/movva-hero-server.log 2>&1 &
           trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
           timeout 180s node qa/hero-check.cjs
+          timeout 60s node qa/hero-fallback-check.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: movva-hero-stage3
-          path: qa-hero-output/
+          path: |
+            qa-hero-output/
+            hero.css
+            hero-layout.js
+            experience.js
+            index.html
+            qa/hero-check.cjs
+            qa/hero-fallback-check.cjs
+            .github/workflows/hero-qa.yml
           retention-days: 5
