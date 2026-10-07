@@ -12,7 +12,7 @@ const range=(p,a,b)=>smooth((p-a)/(b-a));
 const windows=[[0,.13],[.125,.275],[.27,.435],[.43,.595],[.59,.775],[.77,.935],[.93,1.05]];
 const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CIRCLE','MOVVA'];
 const scenes=$$('.scene'),dots=$$('.chapter-dots a');
-let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false;
+let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
 let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null,userMotion=true;
 try{userMotion=sessionStorage.getItem('movva-motion')!=='off';}catch(_){}
 const mat={
@@ -202,7 +202,7 @@ function draw(o,model,texA,texB,mix=0){gl.bindBuffer(gl.ARRAY_BUFFER,o.geom.buff
  gl.drawArrays(gl.TRIANGLES,0,o.geom.count);drawCalls++;
 }
 function render(p){
- if(!gl||gl.isContextLost())return;
+ if(!domDevice&&(!gl||gl.isContextLost()))return;
  const intro=window.MOVVA_INTRO;
  const w=intro?intro.weights(p,weights(p)):weights(p),bg=intro?intro.background(p,background(p)):background(p);
  const selected=w.indexOf(Math.max(...w)),active=intro?intro.active(p,selected):selected;
@@ -226,6 +226,7 @@ function render(p){
  for(let k=0;k<transitions.length;k++){const[a,b]=transitions[k];if(p>=b)ix=k+1;else if(p>a){ix=k;blend=range(p,a,b);break;}}
  const change=intro?.screen(p);if(change){ix=change.ix;blend=change.blend;}
  const labels=['home','training','nutrition','evolution','circle'],txA=textures[labels[ix]],txB=textures[labels[Math.min(ix+1,4)]];
+ if(domDevice){window.MOVVA_DOM_DEVICE?.render(p,active,ix,blend);lastModel=model;drawCalls=0;frameCount++;return;}
  gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uniforms.uViewProjection,false,new Float32Array(viewProjection));gl.uniform1i(uniforms.uTextureA,0);gl.uniform1i(uniforms.uTextureB,1);gl.uniform1f(uniforms.uDark,active===2?1:0);drawCalls=0;frameCount++;lastModel=model;bindTexture(txA,0);bindTexture(txB,1);
  meshes.forEach(o=>draw(o,mm(model,o.local),txA,txB,blend));
  if(!mobile)for(const o of panels){const a=intro?intro.panel(p,o.chapter,w[o.chapter]):w[o.chapter];if(a<.015)continue;const spread=smooth(a);const panelM=mm(model,compose(o.x*spread,o.y,.20+o.z*spread,.02,-.10*spread,o.rz*spread,lerp(.02,1,spread)));
@@ -244,7 +245,7 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
 function clearScenes(){window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
-function applyMode(){const short=innerWidth<=760&&innerHeight<640,landscape=innerHeight<560&&innerWidth>innerHeight;enabled=ready&&userMotion&&!media.matches&&!short&&!landscape;root.classList.toggle('enhanced',enabled);motion.setAttribute('aria-pressed',String(enabled));motion.setAttribute('aria-label',enabled?'Desativar animações':'Ativar animações');motion.title=enabled?'Trocar para leitura sem animações':'Experiência sem movimento';motion.querySelector('span').textContent=enabled?'Movimento':'Modo leve';if(enabled){resize();position=target=measure();requestTick();}else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}}
+function applyMode(){const short=innerWidth<=760&&innerHeight<580,landscape=innerHeight<500&&innerWidth>innerHeight;enabled=ready&&userMotion&&!media.matches&&!short&&!landscape;root.classList.toggle('enhanced',enabled);root.classList.toggle('dom-device',enabled&&domDevice);motion.setAttribute('aria-pressed',String(enabled));motion.setAttribute('aria-label',enabled?'Desativar animações':'Ativar animações');motion.title=enabled?'Trocar para leitura sem animações':'Experiência sem movimento';motion.querySelector('span').textContent=enabled?'Movimento':'Modo leve';if(enabled){resize();position=target=measure();requestTick();}else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}}
 function jump(p,animated=true){if(!enabled)return;const top=experience.offsetTop+p*(experience.offsetHeight-stage.clientHeight);scrollTo({top,behavior:animated?'smooth':'instant'});target=p;requestTick();}
 $$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));
 motion.addEventListener('click',()=>{const previous=enabled,active=weights(position).indexOf(Math.max(...weights(position)));userMotion=!enabled;try{sessionStorage.setItem('movva-motion',userMotion?'on':'off')}catch(_){}applyMode();if(previous){scenes[active].scrollIntoView({behavior:'instant',block:'start'});}else if(enabled)jump(0,false);});
@@ -256,5 +257,11 @@ addEventListener('pointerout',e=>{if(!e.relatedTarget){pointerTarget=[0,0];reque
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;}else{lastTime=0;requestTick();}});
 media.addEventListener?.('change',applyMode);
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();ready=false;applyMode();window.__MOVVA_QA__={ready:false,fallback:'context-lost'};});
-build().catch(err=>{console.warn('MOVVA: using accessible static experience.',err.message);ready=false;applyMode();window.__MOVVA_QA__={ready:false,fallback:err.message};});
+function activateDOM(reason){
+ domDevice=true;ready=true;applyMode();
+ window.__MOVVA_QA__={version:'safari-device-hotfix',engine:'CSS3D DOM',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return 0},get drawCalls(){return drawCalls},get textureCount(){return 5},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get frameCount(){return frameCount},get reason(){return reason},setProgress(p){jump(clamp(p),false)}};
+}
+const preferDOM=matchMedia('(max-width:760px)').matches || /iPad|iPhone|iPod/.test(navigator.userAgent);
+if(preferDOM){activateDOM('mobile-safari-safe');}
+else build().catch(err=>{console.warn('MOVVA: falling back to CSS 3D.',err.message);activateDOM('WebGL fallback: '+err.message);});
 })();

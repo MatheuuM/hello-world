@@ -1,0 +1,31 @@
+/* Safari-safe 3D product: actual DOM faces avoid mobile WebGL flattening. */
+.css3d-device{display:none;position:absolute;z-index:4;top:68%;left:50%;width:170px;height:362px;pointer-events:none;perspective:1200px;transform:translate(-50%,-50%);contain:layout style}
+.enhanced.dom-device #world{display:none}
+.enhanced.dom-device .css3d-device{display:block}
+.css3d-object{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(-13deg) rotateX(3deg) rotateZ(-3deg);will-change:transform;filter:drop-shadow(0 18px 20px rgba(47,42,29,.20))}
+.css3d-front,.css3d-back{position:absolute;inset:0;border-radius:12.5% / 5.6%;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-style:preserve-3d;overflow:hidden}
+.css3d-front{background:#181b19;border:5px solid #4d5350;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 0 0 1px #242825;transform:translateZ(7px)}
+.css3d-back{background:linear-gradient(132deg,#e5e1d6,#b8b6a9 55%,#999a8f);border:3px solid #63665f;transform:rotateY(180deg) translateZ(7px);box-shadow:inset 0 0 0 2px #fff4,inset 12px 0 30px #fff2}
+.css3d-display{position:absolute;inset:0;border-radius:10% / 4.6%;overflow:hidden;background:#e3ddd0;isolation:isolate}
+.css3d-screen{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transition:opacity .22s linear;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.css3d-screen-home{opacity:1}
+.css3d-island{position:absolute;z-index:2;top:1.6%;left:50%;transform:translateX(-50%) translateZ(1px);width:27%;height:3.3%;border-radius:99px;background:#080a09;box-shadow:0 0 0 1px #3e4439}
+.css3d-glint{position:absolute;z-index:2;inset:0;border-radius:12.5% / 5.6%;background:linear-gradient(109deg,#fff0 36%,#fff1 40%,#fff0 50%);opacity:.55}
+.css3d-rail{position:absolute;top:2%;bottom:2%;width:14px;background:linear-gradient(90deg,#3f443f,#d3d2c7 55%,#596057);border-radius:4px;transform-style:preserve-3d}
+.css3d-rail-left{left:0;transform:translateX(-7px) rotateY(-90deg)}
+.css3d-rail-right{right:0;transform:translateX(7px) rotateY(90deg)}
+.css3d-rail i{display:block;position:absolute;width:3px;height:11%;top:26%;left:5px;background:#30372e;border-radius:2px;box-shadow:0 1px 2px #fff6}
+.css3d-rail-left i:nth-child(2){top:41%}
+.css3d-rail-right i{top:35%;height:12%}
+.css3d-top,.css3d-bottom{position:absolute;left:10px;right:10px;height:14px;border-radius:4px;background:linear-gradient(#70756c,#c5c9bd,#555b53);transform-style:preserve-3d}
+.css3d-top{top:0;transform:translateY(-7px) rotateX(90deg)}
+.css3d-bottom{bottom:0;transform:translateY(7px) rotateX(-90deg)}
+.css3d-camera{position:absolute;top:4.1%;left:7%;width:43%;aspect-ratio:1/1.08;border-radius:24%;background:#a0a498;border:2px solid #8e9289;box-shadow:inset 0 3px 12px #ffffff62,0 2px 7px #53584d55}
+.css3d-camera i{position:absolute;width:34%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 42% 39%,#102022 0 22%,#182c2d 27%,#040809 42%,#576059 51%,#111a1c 61%,#333b36 65%,#969e93 80%);border:2px solid #6b7068;box-shadow:0 1px 4px #1119}
+.css3d-camera i:nth-child(1){top:10%;left:10%}.css3d-camera i:nth-child(2){top:40%;right:8%}.css3d-camera i:nth-child(3){bottom:6%;left:10%}
+.css3d-camera b{position:absolute;width:12%;height:12%;border-radius:50%;top:13%;right:16%;background:#f3e7b8;box-shadow:0 0 7px #fff8}
+.css3d-rear-logo{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);width:41%;opacity:.55;filter:grayscale(1)}
+.css3d-shadow{position:absolute;left:7%;right:7%;height:10%;bottom:-9%;background:radial-gradient(ellipse,#4c493955,transparent 72%);filter:blur(10px);opacity:.65}
+@media(min-width:761px){.enhanced.dom-device .css3d-device{--size:490px;top:50%;left:72%;width:calc(var(--size)*.47);height:var(--size)}}
+@media(max-width:760px){.css3d-device{max-width:54vw}.css3d-front{border-width:4px}}
+@media(prefers-reduced-motion:reduce){.css3d-screen,.css3d-object{transition:none!important}}
