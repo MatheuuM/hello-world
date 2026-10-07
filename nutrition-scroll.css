@@ -1,4 +1,5 @@
 /* Nutrition only. No global typography, hero, Training or later-chapter rules. */
+#nutrition .static-shot{height:auto}
 #nutrition .eyebrow{color:#686451}
 #nutrition h2{font-size:clamp(56px,6.05vw,93px);line-height:1.025;letter-spacing:-.058em}
 #nutrition .description{max-width:440px;font-size:15px;line-height:1.8;margin-top:28px}
