@@ -1,0 +1,60 @@
+/* Stage 6: scene-scoped Evolution styling; no global typography or other chapters. */
+#evolution .static-shot{height:auto;flex-shrink:0;align-self:center}
+#evolution h2{font-size:clamp(57px,5.75vw,89px);line-height:1.025;letter-spacing:-.06em}
+#evolution h2 .evo-line{display:block}
+#evolution .eyebrow{margin-bottom:27px;color:#5a674e}
+#evolution .description{max-width:455px;font-size:15px;line-height:1.85;margin-top:26px}
+#evolution .evo-metrics{width:100%;max-width:490px;margin-top:34px;padding-top:20px;border-top:1px solid #74836830}
+#evolution .evo-status{font-size:8px;letter-spacing:.13em;line-height:1.6;color:#657359;margin:0 0 18px}
+#evolution .evo-dashboard{display:grid;grid-template-columns:139px 1fr;gap:26px;align-items:start}
+#evolution .score-readout{margin:0;display:block;border-right:1px solid #74836826;height:146px}
+#evolution .score-ring{width:100px;height:100px}
+#evolution .score-ring>div{padding-top:27px}
+#evolution .score-ring strong{font-size:35px}
+#evolution .score-caption{gap:4px;margin-top:10px}
+#evolution .score-caption strong{font-size:11px;font-weight:500}
+#evolution .score-caption small{font-size:9px;color:#68755e}
+#evolution .activity-story{display:block;margin:0;max-width:none}
+#evolution .activity-story>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:10px;color:#626e58}
+#evolution .activity-story strong{font-size:23px;font-weight:400;white-space:nowrap;letter-spacing:-.05em}
+#evolution .activity-story b{font-weight:400;font-variant-numeric:tabular-nums}
+#evolution .activity-story svg{display:block;width:100%;height:101px;margin-top:12px;overflow:visible}
+#evolution .activity-bar{fill:#768967}
+#evolution .activity-grid{stroke:#74836822;stroke-width:1}
+#evolution .activity-story text{font-size:8px;fill:#626e58}
+#evolution .micro-note{margin-top:21px;font-size:9px;line-height:1.8;color:#65705e;max-width:420px}
+#evolution .evo-source{position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap}
+.evolution-surface{display:none}
+.enhanced .evolution-surface{display:block;position:absolute;width:min(46vw,710px);height:77%;border-radius:49% 49% 44% 44%;transform:translate(-50%,-50%) rotate(calc(7deg - 12deg * var(--evolution-orbit,0)));background:radial-gradient(ellipse at 55% 30%,#e8edde,#cbd6bd6b 67%,transparent 78%);opacity:0;pointer-events:none;z-index:1}
+.enhanced .evolution-surface:before,.enhanced .evolution-surface:after{content:'';position:absolute;inset:9% -4%;border:1px solid #7c8f6a24;border-radius:50%;transform:rotate(-22deg)}
+.enhanced .evolution-surface:after{inset:15% -10%;transform:rotate(25deg)}
+.enhanced .evolution-active .evolution-surface{opacity:calc(var(--evolution-presence,0) * .8)}
+.enhanced .evolution-active .halo,.enhanced .evolution-active .ghost-word{opacity:0}
+.enhanced #evolution .copy{width:46%;max-width:570px;padding-top:18px}
+@media(max-width:1100px) and (min-width:761px){#evolution h2{font-size:62px}#evolution .description{font-size:13px}#evolution .evo-dashboard{grid-template-columns:109px 1fr;gap:17px}#evolution .score-ring{width:88px;height:88px}#evolution .score-ring>div{padding-top:23px}#evolution .score-ring strong{font-size:29px}#evolution .activity-story>div{font-size:9px;gap:8px}#evolution .activity-story strong{font-size:21px}}
+@media(max-height:800px) and (min-width:761px){#evolution h2{font-size:66px}#evolution .eyebrow{margin-bottom:20px}#evolution .description{font-size:13px;margin-top:21px}#evolution .evo-metrics{margin-top:23px;padding-top:16px}#evolution .evo-status{margin-bottom:12px}#evolution .micro-note{margin-top:15px}}
+@media(max-width:760px){
+ .enhanced #evolution{padding-top:100px}.enhanced #evolution .copy{width:100%;max-width:540px;padding:0}
+ #evolution h2{font-size:clamp(42px,10.1vw,64px);line-height:1.025}#evolution h2 .evo-line{display:inline}#evolution h2 em{display:block}
+ #evolution .eyebrow{font-size:8px;margin-bottom:17px}#evolution .description{font-size:12px;line-height:1.65;margin-top:17px}
+ #evolution .evo-metrics{max-width:350px;margin-top:18px;padding-top:12px}
+ #evolution .evo-status{font-size:7px;letter-spacing:.09em;margin-bottom:12px}
+ #evolution .evo-dashboard{grid-template-columns:94px 1fr;gap:18px}
+ #evolution .score-readout{height:105px}#evolution .score-ring{width:69px;height:69px;flex-basis:69px}
+ #evolution .score-ring>div{padding-top:18px}#evolution .score-ring strong{font-size:24px}#evolution .score-ring small{font-size:8px}
+ #evolution .score-caption{margin-top:6px;gap:2px}#evolution .score-caption strong{font-size:9px}#evolution .score-caption small{font-size:8px}
+ #evolution .activity-story>div{font-size:9px;gap:7px}#evolution .activity-story strong{font-size:20px}
+ #evolution .activity-story svg{height:73px;margin-top:7px}
+ #evolution .micro-note{font-size:7.5px;margin-top:12px;line-height:1.65;max-width:350px}
+ .enhanced .evolution-surface{width:84%;height:45%}
+}
+@media(max-width:760px) and (max-height:760px){
+ .enhanced #evolution{padding-top:92px}#evolution h2{font-size:36px}#evolution .eyebrow{font-size:7px;margin-bottom:14px}
+ #evolution .description{font-size:11px;line-height:1.5;margin-top:13px}
+ #evolution .evo-metrics{margin-top:13px;padding-top:10px}#evolution .evo-status{margin-bottom:8px;font-size:6.5px}
+ #evolution .evo-dashboard{grid-template-columns:82px 1fr;gap:14px}#evolution .score-readout{height:86px}
+ #evolution .score-ring{width:57px;height:57px}#evolution .score-ring>div{padding-top:14px}#evolution .score-ring strong{font-size:21px}
+ #evolution .score-caption strong{font-size:8px}#evolution .score-caption small{font-size:7px}
+ #evolution .activity-story>div{font-size:8px}#evolution .activity-story strong{font-size:17px}
+ #evolution .activity-story svg{height:58px;margin-top:5px}#evolution .micro-note{font-size:7px;margin-top:9px}
+}

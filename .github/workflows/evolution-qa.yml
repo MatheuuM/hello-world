@@ -5,17 +5,71 @@ on:
 permissions:
   contents: read
 jobs:
-  baseline-source:
+  evolution:
+    name: Stage 6 / ${{ matrix.group }}
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 7
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [layout, sequence, regression, controls]
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Archive immutable approved baseline
-        run: git archive --format=zip --output=/tmp/stage6-baseline.zip 044119d5012f40534ceeaa72ae5b70d54cc19d5b
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          name: movva-stage6-baseline-source
-          path: /tmp/stage6-baseline.zip
+          node-version: '22'
+      - name: Prepare immutable Stage 5 baseline
+        run: |
+          mkdir -p /tmp/movva-evolution-baseline
+          git archive 044119d5012f40534ceeaa72ae5b70d54cc19d5b | tar -x -C /tmp/movva-evolution-baseline
+          node --check evolution-scroll.js
+          node --check qa/evolution-check.cjs
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 90s npx playwright install chromium
+      - name: Validate one bounded group
+        env:
+          QA_GROUP: ${{ matrix.group }}
+        run: |
+          python3 -m http.server 8077 > /tmp/evolution-candidate.log 2>&1 &
+          python3 -m http.server 8078 --directory /tmp/movva-evolution-baseline > /tmp/evolution-baseline.log 2>&1 &
+          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
+          timeout 240s node qa/evolution-check.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-evolution-${{ matrix.group }}
+          path: qa-evolution-${{ matrix.group }}/
+          retention-days: 5
+  approval:
+    name: Stage 6 / complete gate
+    if: always()
+    needs: evolution
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: movva-evolution-*
+          path: evidence
+      - name: Require all checks from the same source
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,os
+          counts={'layout':11,'sequence':16,'regression':13,'controls':9}; results=[]
+          for group,n in counts.items():
+            d=json.loads((pathlib.Path('evidence')/('movva-evolution-'+group)/'report.json').read_text())
+            assert d['status']=='PASS' and d['commit']==os.environ['GITHUB_SHA'],d
+            assert not d['errors'] and len(d['checks'])==n,d
+            assert all(c['pass'] for c in d['checks']),d
+            results.append({'group':group,'checks':n,'seconds':d['seconds'],'images':len(d['images'])})
+          s={'stage':6,'status':'PASS','commit':os.environ['GITHUB_SHA'],'checks':sum(counts.values()),'groups':results,'screenshots':sum(r['images'] for r in results),'limits':['Chromium automation, not physical iPhone/Safari','Existing reduced-resolution app captures']}
+          pathlib.Path('evidence/summary.json').write_text(json.dumps(s,indent=2));print(json.dumps(s,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage6-review
+          path: evidence/
           retention-days: 5
