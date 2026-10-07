@@ -6,8 +6,13 @@ permissions:
   contents: read
 jobs:
   intro-review:
+    name: Stage 4 / ${{ matrix.group }}
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 6
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [layout, sequence, regression, controls]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -15,8 +20,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify reviewed runtime and prepare baseline
+      - name: Verify immutable runtime and prepare baseline
         run: |
+          node qa/prepare-intro.cjs
           node - <<'JS'
           const fs=require('node:fs'),crypto=require('node:crypto'),assert=require('node:assert/strict');
           const manifest=JSON.parse(fs.readFileSync('qa/stage4-runtime-manifest.json','utf8'));
@@ -25,24 +31,50 @@ jobs:
             const actual=crypto.createHash('sha1').update('blob '+bytes.length+'\0').update(bytes).digest('hex');
             assert.equal(actual,expected,file+' differs from the reviewed runtime');
           }
-          console.log('Reviewed runtime hashes match.');
+          console.log('Reviewed runtime hashes match after preparation.');
           JS
-          node qa/prepare-intro.cjs
           node --check experience.js
           node --check intro-scroll.js
+          node --check qa/intro-check.cjs
           timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
           timeout 90s npx playwright install chromium
-      - name: Browser review and baseline regression
+      - name: Validate bounded group without changing runtime
+        env:
+          QA_GROUP: ${{ matrix.group }}
         run: |
           python3 -m http.server 8077 > /tmp/movva-intro.log 2>&1 &
+          candidate_pid=$!
           python3 -m http.server 8078 --directory /tmp/movva-intro-baseline > /tmp/movva-baseline.log 2>&1 &
-          trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
-          timeout 360s node qa/intro-check.cjs
+          baseline_pid=$!
+          trap 'kill "$candidate_pid" "$baseline_pid" 2>/dev/null || true' EXIT
+          timeout --verbose --kill-after=10s 240s node qa/intro-check.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: movva-intro-stage4
-          path: |
-            qa-intro-output/
-            qa/stage4-runtime-manifest.json
+          name: movva-intro-stage4-${{ matrix.group }}
+          path: qa-intro-output/${{ matrix.group }}/
           retention-days: 5
+          if-no-files-found: error
+  final-gate:
+    name: Stage 4 / all original checks
+    needs: intro-review
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: movva-intro-stage4-*
+          path: qa-closeout-input
+      - name: Reject missing or failed groups
+        env:
+          MATRIX_RESULT: ${{ needs.intro-review.result }}
+        run: node qa/aggregate-intro.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage4-closeout
+          path: qa-closeout-output/
+          retention-days: 5
+          if-no-files-found: error
