@@ -1,0 +1,21 @@
+name: MOVVA Evolution Stage 6
+on:
+  push:
+    branches: [studio-evolution-v6]
+permissions:
+  contents: read
+jobs:
+  baseline-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Archive immutable approved baseline
+        run: git archive --format=zip --output=/tmp/stage6-baseline.zip 044119d5012f40534ceeaa72ae5b70d54cc19d5b
+      - uses: actions/upload-artifact@v4
+        with:
+          name: movva-stage6-baseline-source
+          path: /tmp/stage6-baseline.zip
+          retention-days: 5
