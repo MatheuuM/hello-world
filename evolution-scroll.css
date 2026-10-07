@@ -58,3 +58,12 @@
  #evolution .activity-story>div{font-size:8px}#evolution .activity-story strong{font-size:17px}
  #evolution .activity-story svg{height:58px;margin-top:5px}#evolution .micro-note{font-size:7px;margin-top:9px}
 }
+/* Review 1: reserve real product space instead of merely fitting a tiny device. */
+@media(max-width:760px){#evolution h2 .evo-line:first-child{display:block}#evolution h2 em{display:inline}}
+@media(max-width:760px) and (max-height:760px){
+ #evolution h2{font-size:32px}#evolution .eyebrow{margin-bottom:12px}
+ #evolution .description{margin-top:8px}#evolution .evo-metrics{margin-top:11px;padding-top:8px}
+ #evolution .score-readout{height:74px}#evolution .score-ring{width:49px;height:49px}
+ #evolution .score-ring>div{padding-top:11px}#evolution .score-ring strong{font-size:20px}
+ #evolution .activity-story svg{height:50px}#evolution .micro-note{margin-top:7px}
+}
