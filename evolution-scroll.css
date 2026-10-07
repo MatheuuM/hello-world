@@ -67,3 +67,10 @@
  #evolution .score-ring>div{padding-top:11px}#evolution .score-ring strong{font-size:20px}
  #evolution .activity-story svg{height:50px}#evolution .micro-note{margin-top:7px}
 }
+/* Review 2: the compact desktop keeps its heading clear of the fixed header. */
+@media(max-height:800px) and (min-width:761px){
+ #evolution h2{font-size:60px}
+ #evolution .evo-metrics{margin-top:19px;padding-top:14px}
+ #evolution .score-readout{height:130px}
+ #evolution .activity-story svg{height:90px}
+}
