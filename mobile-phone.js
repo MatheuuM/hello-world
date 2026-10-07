@@ -38,9 +38,14 @@ function render(p,active,ix,blend){
  const [ry,rx,rz]=poseAt(p);
  const safeRy=mobile?clamp(ry,-398,-8):ry;
  device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg)';
- frames.forEach((el,i)=>{el.style.opacity=i===ix?String(1-blend):i===ix+1?String(blend):'0'});
+ const selected=Math.min(frames.length-1,ix+(blend>=.5?1:0));
+ frames.forEach((el,i)=>{el.style.display=i===selected?'block':'none';el.style.opacity='1';});
+ const degrees=((-safeRy%360)+360)%360;
+ const rear=degrees>92&&degrees<268;
+ rig.querySelector('.css3d-front').style.visibility=rear?'hidden':'visible';
+ rig.querySelector('.css3d-back').style.visibility=rear?'visible':'hidden';
  rig.style.opacity=mobile&&h<135?String(clamp((h-100)/35)):'1';
- rig.setAttribute('data-screen',names[ix]||'home');rig.dataset.chapter=String(active);
+ rig.setAttribute('data-screen',names[selected]||'home');rig.dataset.chapter=String(active);
 }
 window.MOVVA_DOM_DEVICE={render,get active(){return document.documentElement.classList.contains('dom-device')}};
 })();

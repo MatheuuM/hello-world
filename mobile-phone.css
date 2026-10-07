@@ -29,3 +29,6 @@
 @media(min-width:761px){.enhanced.dom-device .css3d-device{--size:490px;top:50%;left:72%;width:calc(var(--size)*.47);height:var(--size)}}
 @media(max-width:760px){.css3d-device{max-width:54vw}.css3d-front{border-width:4px}}
 @media(prefers-reduced-motion:reduce){.css3d-screen,.css3d-object{transition:none!important}}
+/* Additional Safari compositor fallback for the primary CTA. */
+.hero-actions .hero-cta{position:relative;isolation:isolate;background-color:#414c37;background-image:linear-gradient(#414c37,#414c37)}
+.hero-actions .hero-cta:before{content:"";position:absolute;inset:-1px;background-color:#414c37;border-radius:inherit;z-index:-1}
