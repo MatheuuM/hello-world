@@ -1,0 +1,20 @@
+name: MOVVA Integrated Source Export
+on:
+  push:
+    branches: [studio-integration-v8]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive website source without Git internals
+        run: tar czf /tmp/movva-integrated-source.tar.gz --exclude=.git -C "$GITHUB_WORKSPACE" .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: movva-integrated-source
+          path: /tmp/movva-integrated-source.tar.gz
+          retention-days: 2
