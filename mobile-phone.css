@@ -2,7 +2,7 @@
 .css3d-device{display:none;position:absolute;z-index:4;top:68%;left:50%;width:170px;height:362px;pointer-events:none;perspective:1200px;transform:translate(-50%,-50%);contain:layout style}
 .enhanced.dom-device #world{display:none}
 .enhanced.dom-device .css3d-device{display:block}
-.css3d-object{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(-13deg) rotateX(3deg) rotateZ(-3deg);will-change:transform;filter:drop-shadow(0 18px 20px rgba(47,42,29,.20))}
+.css3d-object{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(-13deg) rotateX(3deg) rotateZ(-3deg);will-change:transform}
 .css3d-front,.css3d-back{position:absolute;inset:0;border-radius:12.5% / 5.6%;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-style:preserve-3d;overflow:hidden}
 .css3d-front{background:#181b19;border:5px solid #4d5350;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),0 0 0 1px #242825;transform:translateZ(7px)}
 .css3d-back{background:linear-gradient(132deg,#e5e1d6,#b8b6a9 55%,#999a8f);border:3px solid #63665f;transform:rotateY(180deg) translateZ(7px);box-shadow:inset 0 0 0 2px #fff4,inset 12px 0 30px #fff2}
