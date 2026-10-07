@@ -17,7 +17,8 @@ let layout=null,opening=null,touched=false;
 function measure(){
  const vw=stage.clientWidth,vh=stage.clientHeight;if(!vw||!vh)return;
  const tall=vw<=760,gutter=parseFloat(getComputedStyle(stage).getPropertyValue('--gutter'))||24;
- const bar=document.querySelector('.chapter-bar'),bottom=vh-(bar.offsetHeight||36)-30;
+ // Always reserve the same navigation height; class changes while scrolling must not resize the camera slot.
+ const bottom=vh-(tall?36:34)-30;
  const header=document.querySelector('.header').offsetHeight;
  const top=tall?Math.max(...copies.map(c=>c.parentElement.offsetTop+c.offsetTop+c.offsetHeight))+23:Math.max(header+30,112);
  const common={y:top,height:Math.max(80,bottom-top),viewportWidth:vw,viewportHeight:vh};
