@@ -22,7 +22,15 @@ try{
  assert.equal(init.enhanced,true);
  if(mobile){assert.equal(init.dom,true);assert.equal(init.engine,'CSS3D DOM');assert.equal(await page.locator('#world').evaluate(e=>getComputedStyle(e).display),'none');}
  check('3D engine initialized',init);
- const go=async p=>{await page.evaluate(p=>__MOVVA_QA__.setProgress(p),p);await page.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.00012,p,{timeout:22000});await page.waitForTimeout(120);};
+ const go=async p=>{
+ await page.evaluate(p=>__MOVVA_QA__.setProgress(p),p);
+ try{await page.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.00012,p,{timeout:12000})}
+ catch(error){
+  const diag=await page.evaluate(()=>{const ex=document.querySelector('#experience'),st=document.querySelector('#stage');return {target:window.__MOVVA_QA__?.progress,scrollY,innerHeight,stageHeight:st.clientHeight,experienceHeight:ex.offsetHeight,bodyHeight:document.body.scrollHeight,docHeight:document.documentElement.scrollHeight,scrollBehavior:getComputedStyle(document.documentElement).scrollBehavior,cssMode:document.documentElement.className,ready:window.__MOVVA_QA__?.ready}});
+  console.log('WEBKIT_JUMP_DIAGNOSTIC',JSON.stringify({requested:p,diag}));throw error;
+ }
+ await page.waitForTimeout(120);
+};
  const state=()=>page.evaluate(()=>{
  const obj=document.querySelector('#css3d-object'),rig=document.querySelector('#css3d-device'),box=obj.getBoundingClientRect();
  return {transform:getComputedStyle(obj).transform,ratio:box.height/Math.max(1,box.width),screen:rig.dataset.screen,active:document.querySelector('#chapter-name').textContent,over:document.documentElement.scrollWidth>innerWidth+1,progress:__MOVVA_QA__.progress};
