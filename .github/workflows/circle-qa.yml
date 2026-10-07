@@ -1,0 +1,19 @@
+name: MOVVA Circle Stage 7
+on:
+  push:
+    branches: [studio-circle-v7]
+permissions:
+  contents: read
+jobs:
+  source:
+    name: Stage 7 / immutable source checkpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - run: git archive --format=zip HEAD -o stage7-baseline.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: movva-stage7-baseline-source
+          path: stage7-baseline.zip
+          retention-days: 5
