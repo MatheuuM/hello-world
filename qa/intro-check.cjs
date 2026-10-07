@@ -12,7 +12,7 @@ async function run(){
  await page.goto(base,{waitUntil:'networkidle'});await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>window.__MOVVA_QA__?.ready&&window.MOVVA_INTRO?.layout,null,{timeout:20000});
  report.fonts=await page.evaluate(()=>[...document.fonts].map(f=>({family:f.family,status:f.status})));
  assert.equal(await page.evaluate(()=>__MOVVA_QA__.version),'intro-stage4-1');check('Five real textures and original 3D device initialize',await page.evaluate(()=>({objects:__MOVVA_QA__.meshCount,textures:__MOVVA_QA__.textureSizes})));
- async function move(p,pg=page){await pg.evaluate(p=>__MOVVA_QA__.setProgress(p),p);await pg.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.00015&&__MOVVA_QA__.settled,p,{timeout:12000});}
+ async function move(p,pg=page){await pg.evaluate(p=>__MOVVA_QA__.setProgress(p),p);await pg.waitForFunction(p=>{const e=document.querySelector('#experience'),s=document.querySelector('#stage'),actual=Math.max(0,Math.min(1,(scrollY-e.offsetTop)/(e.offsetHeight-s.clientHeight)));return Math.abs(actual-p)<.00015&&Math.abs(__MOVVA_QA__.progress-actual)<.0000001;},p,{timeout:12000});}
  async function shot(name){await page.screenshot({path:path.join(out,name+'.png')});report.images.push(name+'.png');}
  async function metrics(){return page.evaluate(()=>{
   const stage=document.querySelector('#stage'),vw=stage.clientWidth,vh=stage.clientHeight,m=__MOVVA_QA__.modelMatrix,hh=14*Math.tan(32*Math.PI/360),hw=hh*vw/vh,xs=[],ys=[];

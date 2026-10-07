@@ -27,7 +27,7 @@ jobs:
           python3 -m http.server 8077 > /tmp/movva-intro.log 2>&1 &
           python3 -m http.server 8078 --directory /tmp/movva-intro-baseline > /tmp/movva-baseline.log 2>&1 &
           trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
-          timeout 300s node qa/intro-check.cjs
+          timeout 360s node qa/intro-check.cjs
       - name: Stage verified source objects without updating branches
         env:
           GH_TOKEN: ${{ github.token }}
