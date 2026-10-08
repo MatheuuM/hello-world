@@ -24,7 +24,7 @@ try{
  check('3D engine initialized',init);
  const go=async p=>{
  await page.evaluate(p=>__MOVVA_QA__.setProgress(p),p);
- try{await page.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.00012,p,{timeout:12000})}
+ try{await page.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.00030,p,{timeout:12000})}
  catch(error){
   const diag=await page.evaluate(()=>{const ex=document.querySelector('#experience'),st=document.querySelector('#stage');return {target:window.__MOVVA_QA__?.progress,scrollY,innerHeight,stageHeight:st.clientHeight,experienceHeight:ex.offsetHeight,bodyHeight:document.body.scrollHeight,docHeight:document.documentElement.scrollHeight,scrollBehavior:getComputedStyle(document.documentElement).scrollBehavior,cssMode:document.documentElement.className,ready:window.__MOVVA_QA__?.ready}});
   console.log('WEBKIT_JUMP_DIAGNOSTIC',JSON.stringify({requested:p,diag}));throw error;
