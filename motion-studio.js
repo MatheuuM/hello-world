@@ -21,7 +21,7 @@ function render(p,active,device){
  root.style.display='';
  const vw=stage.clientWidth,vh=stage.clientHeight,mobile=vw<=760;
  let cx=vw*.5,cy=vh*.5,phoneH=430;
- if(mobile&&rig&&document.documentElement.classList.contains('dom-device')){
+ if(rig&&document.documentElement.classList.contains('dom-device')){
   cx=parseFloat(rig.style.left)||vw*.5;
   cy=parseFloat(rig.style.top)||vh*.70;
   phoneH=parseFloat(rig.style.height)||360;
