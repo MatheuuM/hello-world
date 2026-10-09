@@ -53,7 +53,7 @@ function render(p,active,device){
   const wobble=Math.sin((local+.07*c.index)*Math.PI*2);
   const movement=.15*(1-factor);
   const elWidth=c.el.offsetWidth|| (mobile?132:190);
-  const keepLeft=elWidth/2+leftGuard,keepRight=vw-elWidth/2-leftGuard;
+  const keepLeft=elWidth*.78+leftGuard,keepRight=vw-elWidth*.78-leftGuard;
   let px=clamp(cx+offX*factor+wobble*(mobile?3:7),keepLeft,keepRight);
   let py=cy+offY*factor+(1-factor)*(c.level<0?40:-35);
   const nav=document.querySelector('.chapter-bar'),navY=nav?nav.getBoundingClientRect().top-stage.getBoundingClientRect().top:vh-48;
