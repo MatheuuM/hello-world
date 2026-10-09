@@ -243,7 +243,15 @@ function render(p){
 function resize(){window.MOVVA_HERO?.measure();window.MOVVA_INTRO?.measure();width=stage.clientWidth;height=stage.clientHeight;mobile=width<=760;if(gl&&width&&height){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);viewProjection=mm(mat.perspective(32*Math.PI/180,width/height,.1,60),mat.translation(0,0,-14));}requestTick();}
 function measure(){const travel=experience.offsetHeight-stage.clientHeight;return travel>0?clamp((scrollY-experience.offsetTop)/travel):0;}
 function requestTick(){if(enabled&&!raf&&!disposed&&!document.hidden)raf=requestAnimationFrame(tick);}
-function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,t-(lastTime||t-16));lastTime=t;target=measure();const k=1-Math.exp(-dt/85);position=lerp(position,target,k);pointer=pointer.map((v,i)=>lerp(v,pointerTarget[i],k));if(Math.abs(position-target)<.000006)position=target;render(position);
+function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,t-(lastTime||t-16));lastTime=t;target=measure();const k=1-Math.exp(-dt/85);position=lerp(position,target,k);pointer=pointer.map((v,i)=>lerp(v,pointerTarget[i],k));if(Math.abs(position-target)<.000006)position=target;
+ try{render(position)}
+ catch(err){
+  console.warn('MOVVA 3D frame failed; activating compatible renderer.',err);
+  if(!domDevice){
+   activateDOM('Runtime WebGL frame failed');
+   try{render(position)}catch(fallbackErr){console.warn('MOVVA compatible renderer also failed.',fallbackErr);ready=false;applyMode()}
+  }else{ready=false;applyMode()}
+ }
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
@@ -259,12 +267,17 @@ addEventListener('pointermove',e=>{if(!enabled||mobile||e.pointerType==='touch')
 addEventListener('pointerout',e=>{if(!e.relatedTarget){pointerTarget=[0,0];requestTick();}},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;}else{lastTime=0;requestTick();}});
 media.addEventListener?.('change',applyMode);
-canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();ready=false;applyMode();window.__MOVVA_QA__={ready:false,fallback:'context-lost'};});
+canvas.addEventListener('webglcontextlost',e=>{
+ e.preventDefault();
+ if(!domDevice){console.warn('MOVVA: WebGL context lost; continuing with CSS 3D.');activateDOM('WebGL context lost')}
+});
 function activateDOM(reason){
  domDevice=true;ready=true;applyMode();
  window.__MOVVA_QA__={version:'safari-device-hotfix',engine:'CSS3D DOM',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return 0},get drawCalls(){return drawCalls},get textureCount(){return 5},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get frameCount(){return frameCount},get reason(){return reason},setProgress(p){jump(clamp(p),false)}};
 }
-const preferDOM=matchMedia('(max-width:760px)').matches || /iPad|iPhone|iPod/.test(navigator.userAgent);
+// ?renderer=css3d uses the same 3D hardware presentation as mobile on desktop.
+const explicitCSS3D=new URLSearchParams(location.search).get('renderer')==='css3d';
+const preferDOM=explicitCSS3D || matchMedia('(max-width:760px)').matches || /iPad|iPhone|iPod/.test(navigator.userAgent);
 if(preferDOM){activateDOM('mobile-safari-safe');}
 else build().catch(err=>{console.warn('MOVVA: falling back to CSS 3D.',err.message);activateDOM('WebGL fallback: '+err.message);});
 })();
