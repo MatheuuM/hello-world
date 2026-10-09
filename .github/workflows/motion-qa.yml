@@ -1,0 +1,72 @@
+name: MOVVA Motion Graphics Cross-Browser QA
+on:
+  push:
+    branches: [feature/immersive-3d-cards]
+permissions:
+  contents: read
+jobs:
+  browser:
+    name: Browser / ${{ matrix.engine }} / ${{ matrix.device }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+        device: [mobile, desktop]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax and browser
+        run: |
+          node --check experience.js
+          node --check mobile-phone.js
+          node --check motion-studio.js
+          node --check qa/motion-crossbrowser.cjs
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 180s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Run native-scroll motion QA
+        env:
+          BROWSER_ENGINE: ${{ matrix.engine }}
+          BROWSER_DEVICE: ${{ matrix.device }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-motion.log 2>&1 &
+          timeout 250s node qa/motion-crossbrowser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: motion-${{ matrix.engine }}-${{ matrix.device }}
+          path: qa-motion-${{ matrix.engine }}-${{ matrix.device }}/
+          retention-days: 7
+  gate:
+    name: Motion final gate
+    needs: browser
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: motion-*
+          path: evidence
+      - name: Require all four compatible renders
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,os
+          rows=[]
+          for e in ('chromium','webkit'):
+            for d in ('desktop','mobile'):
+              p=pathlib.Path('evidence')/f'motion-{e}-{d}'/'report.json'
+              r=json.loads(p.read_text())
+              assert r['status']=='PASS' and r['commit']==os.environ['GITHUB_SHA'],(e,d,r.get('failure'))
+              assert len(r['images'])==6 and len(r['checks'])>=12
+              rows.append({'engine':e,'device':d,'checks':len(r['checks'])})
+          print(json.dumps({'status':'PASS','commit':os.environ['GITHUB_SHA'],'results':rows},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-motion-final
+          path: evidence/
+          retention-days: 7
