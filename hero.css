@@ -85,3 +85,7 @@
  .enhanced .stage.hero-active .chapter-current>span:last-child{display:none}
 }
 @media(prefers-reduced-motion:reduce){.hero-cta,.hero-cta>span{transition:none}}
+
+/* Motion Studio art-direction: space for a taller, more imposing product. */
+@media(max-width:760px){.enhanced .scene-hero{padding-top:101px}.scene-hero .eyebrow{margin-bottom:20px}.scene-hero .description{margin-top:18px}.hero-actions{margin-top:20px}}
+@media(max-width:360px){.enhanced .scene-hero{padding-top:93px}.scene-hero .eyebrow{margin-bottom:15px}.scene-hero .description{margin-top:12px}.hero-actions{margin-top:15px}}
