@@ -24,7 +24,7 @@ function render(p,active,ix,blend){
  if(mobile){
   const contentBottom=clamp((copyR?.bottom||vh*.47)-stageR.top+14,135,vh*.82);
   const freeEnd=clamp(barTop-15,250,vh-43),available=Math.max(80,freeEnd-contentBottom);
-  h=Math.min(vw<=355?360:410,available*.94);
+  h=Math.min(vw<=355?385:460,available*.994);
   h=Math.max(100,h);cx=vw*.5;cy=contentBottom+available*.48;
   if(active===6){h=Math.min(h,250);cy=Math.max(contentBottom+h*.45,Math.min(vh*.78,cy+10));}
  }else{
