@@ -23,21 +23,25 @@ const fail=(name,val,limit)=>assert.ok(val<=limit,name+': measured '+val+', limi
    page.on('pageerror',e=>report.errors.push(name+': '+e.message));
    await page.goto('http://127.0.0.1:8077/',{waitUntil:'load'});
    await page.waitForFunction(()=>window.__MOVVA_QA__?.ready&&window.MOVVA_DOM_DEVICE?.render,null,{timeout:26000});
+   // This is a *geometry continuity* test. Sample the deterministic DOM camera
+   // directly so Safari scroll-event scheduling cannot quantize the endpoints.
+   // Real scroll/visibility and browser screenshots remain covered by 4A/4B QA.
    async function sample(p){
-    await page.evaluate(v=>__MOVVA_QA__.setProgress(v),p);
-    await page.waitForTimeout(130);
-    await page.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.0026,p,{timeout:14000});
-    await page.waitForTimeout(80);
-    return page.evaluate(()=>{
+    return page.evaluate(value=>{
+     const thresholds=[.129,.28,.433,.593,.773,.939];
+     const chapter=thresholds.filter(cut=>value>=cut).length;
+     const screen=Math.max(0,Math.min(4,chapter-1));
+     MOVVA_DOM_DEVICE.render(value,chapter,screen,0);
      const rig=document.querySelector('#css3d-device');
      const state=MOVVA_3D_STATUS();
-     const frame={
-      x:parseFloat(rig.style.left),y:parseFloat(rig.style.top),
-      width:parseFloat(rig.style.width),height:parseFloat(rig.style.height)
+     return{
+      p:value,chapter:Number(rig.dataset.chapter),
+      frame:{x:parseFloat(rig.style.left),y:parseFloat(rig.style.top),
+       width:parseFloat(rig.style.width),height:parseFloat(rig.style.height)},
+      engine:state.engine,enabled:state.active,
+      overflow:document.documentElement.scrollWidth-innerWidth
      };
-     return {p:__MOVVA_QA__.progress,chapter:Number(rig.dataset.chapter),frame,
-      engine:state.engine,enabled:state.active,overflow:document.documentElement.scrollWidth-innerWidth};
-    });
+    },p);
    }
    let maxDistance=0,maxSizeChange=0,checks=0;
    const events=[],seen=new Map();
