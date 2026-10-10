@@ -6,7 +6,9 @@ const rig=document.getElementById('css3d-device');
 const device=document.getElementById('css3d-object');
 const shell=device?.querySelector('.css3d-unibody');
 if(!rig||!device||!shell)return;
-const W=170,H=W/.467,RX=W*.135,RY=H*.063,CORNER=14;
+// Apple 18 Pro Max physical ratio: 78 / 163.4 (MOVVA-exclusive finish).
+const PRO_MAX_RATIO=78/163.4;
+const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=14;
 // Each tangent is sized to the true contour; excessive strip overlap caused
 // visibly folded corners when CSS transformed the individual faces.
 const FACE=.056,WALL=.038,INSET=.0092;
@@ -72,6 +74,42 @@ for(const b of [{x:-.504,y:-.218,h:.115},{x:-.504,y:-.089,h:.115},{x:.504,y:-.17
  el.style.transform='translate3d(calc(var(--shell-w) * '+b.x+'),calc(var(--shell-h) * '+b.y+'),0) rotateY('+(b.x<0?-90:90)+'deg) translate(-50%,-50%)';
  device.appendChild(el);
 }
+// Physical camera-plateau walls. Unlike a shadow, their side faces occlude and
+// change perspective during the scroll rotation; radius remains round in profile.
+const camera=device.querySelector('.css3d-camera-rig .css3d-camera');
+let cameraWallCount=0;
+if(camera){
+ const pw=W*.939,ph=pw/1.88,pr=W*.105,steps=11;
+ const profile=[],add=(x,y)=>profile.push({x,y});
+ add(-pw/2+pr,-ph/2);add(pw/2-pr,-ph/2);
+ const corners=[
+  [pw/2-pr,-ph/2+pr,-Math.PI/2,0],
+  [pw/2-pr,ph/2-pr,0,Math.PI/2],
+  [-pw/2+pr,ph/2-pr,Math.PI/2,Math.PI],
+  [-pw/2+pr,-ph/2+pr,Math.PI,Math.PI*1.5]
+ ];
+ for(let c=0;c<4;c++){
+  const [cx,cy,start,end]=corners[c];
+  for(let j=1;j<=steps;j++){const theta=start+(end-start)*j/steps;add(cx+pr*Math.cos(theta),cy+pr*Math.sin(theta));}
+  if(c===0)add(pw/2,ph/2-pr);
+  if(c===1)add(-pw/2+pr,ph/2);
+  if(c===2)add(-pw/2,-ph/2+pr);
+ }
+ add(-pw/2+pr,-ph/2);
+ for(let i=0;i<profile.length-1;i++){
+  const a=profile[i],b=profile[i+1],dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy);
+  if(len<.00001)continue;
+  const wall=document.createElement('span');
+  wall.className='css3d-camera-wall-face';wall.setAttribute('aria-hidden','true');
+  wall.style.width='calc(var(--shell-w) * '+(len/W).toFixed(9)+' + .10px)';
+  wall.style.height='calc(var(--shell-w) * .021 + .10px)';
+  wall.style.transform='translate3d(calc(var(--shell-w) * '+((a.x+b.x)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * '+((a.y+b.y)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * .0145)) rotateZ('+(Math.atan2(dy,dx)*180/Math.PI).toFixed(4)+'deg) rotateX(90deg) translate(-50%,-50%)';
+  const n=dx/(len||1),light=.84+.17*n;
+  wall.style.filter='brightness('+light.toFixed(3)+')';
+  camera.insertBefore(wall,camera.querySelector('.css3d-camera-deck'));
+  cameraWallCount++;
+ }
+}
 function setSize(w,h){rig.style.setProperty('--shell-w',w.toFixed(3)+'px');rig.style.setProperty('--shell-h',h.toFixed(3)+'px')}
 setSize(W,H);
 
@@ -95,7 +133,7 @@ function setPose(ry,rx,rz){
  profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
-window.MOVVA_SHELL={setSize,setPose,isWebKit,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,
+window.MOVVA_SHELL={setSize,setPose,isWebKit,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };
