@@ -6,8 +6,11 @@ const rig=document.getElementById('css3d-device');
 const device=document.getElementById('css3d-object');
 const shell=device?.querySelector('.css3d-unibody');
 if(!rig||!device||!shell)return;
-const W=170,H=W/.467,RX=W*.135,RY=H*.063,CORNER=10;
-const FACE=.056,WALL=.038,INSET=.0092,OVERLAP=.70;
+const W=170,H=W/.467,RX=W*.135,RY=H*.063,CORNER=14;
+// Each tangent is sized to the true contour; excessive strip overlap caused
+// visibly folded corners when CSS transformed the individual faces.
+const FACE=.056,WALL=.038,INSET=.0092;
+const STRAIGHT_OVERLAP=.16,CURVE_OVERLAP=.055,DEPTH_OVERLAP=.02;
 const contour=[],pt=(x,y)=>contour.push({x,y});
 pt(-W/2+RX,-H/2);pt(W/2-RX,-H/2);
 const corners=[
@@ -29,6 +32,14 @@ const layers=[
  {aZ:-WALL,bZ:WALL,aInset:0,bInset:0,className:'wall'},
  {aZ:WALL,bZ:FACE,aInset:0,bInset:INSET,className:'front'}
 ];
+// A shared directional light is sampled per tangent (not per repeated CSS tile).
+// This keeps the highlight continuous as the phone turns past each corner.
+const palette={
+ rear:[[61,68,62],[106,114,104],[93,100,91]],
+ wall:[[62,69,63],[139,148,133],[83,91,82]],
+ front:[[84,91,83],[173,181,166],[107,115,105]]
+};
+const tone=(rgb,shade)=>'rgb('+rgb.map(v=>Math.round(Math.max(0,Math.min(255,v*shade)))).join(',')+')';
 let count=0;
 for(let i=0;i<contour.length-1;i++){
  const a=contour[i],b=contour[i+1],dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy);
@@ -40,11 +51,16 @@ for(let i=0;i<contour.length-1;i++){
   const dz=(layer.bZ-layer.aZ)*W,di=(layer.bInset-layer.aInset)*W;
   const height=Math.hypot(dz,di),angle=Math.atan2(dz,di)*180/Math.PI;
   const z=(layer.aZ+layer.bZ)*.5;
+  const isStraight=i===0||(i-1)%(CORNER+1)===CORNER;
+  const overlap=isStraight?STRAIGHT_OVERLAP:CURVE_OVERLAP;
+  const light=Math.max(.72,Math.min(1.12,.87+.23*(-.65*outX-.76*outY)));
+  const colors=palette[layer.className];
   const piece=document.createElement('i');
   piece.className='css3d-shell-face css3d-shell-face--'+layer.className;
   piece.setAttribute('aria-hidden','true');
-  piece.style.width='calc(var(--shell-w) * '+(L/W).toFixed(9)+' + '+OVERLAP+'px)';
-  piece.style.height='calc(var(--shell-w) * '+(height/W).toFixed(9)+' + .20px)';
+  piece.style.width='calc(var(--shell-w) * '+(L/W).toFixed(9)+' + '+overlap+'px)';
+  piece.style.height='calc(var(--shell-w) * '+(height/W).toFixed(9)+' + '+DEPTH_OVERLAP+'px)';
+  piece.style.background='linear-gradient(180deg,'+tone(colors[0],light)+' 0%,'+tone(colors[1],light)+' 48%,'+tone(colors[2],light)+' 100%)';
   piece.style.transform='translate3d(calc(var(--shell-w) * '+(x/W).toFixed(9)+'),calc(var(--shell-h) * '+(y/H).toFixed(9)+'),calc(var(--shell-w) * '+z.toFixed(9)+')) rotateZ('+tangent.toFixed(5)+'deg) rotateX('+angle.toFixed(5)+'deg) translate(-50%,-50%)';
   shell.appendChild(piece);count++;
  }
@@ -79,7 +95,7 @@ function setPose(ry,rx,rz){
  profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
-window.MOVVA_SHELL={setSize,setPose,isWebKit,partCount:count,edgeCount:contour.length-1,layerCount:layers.length,bodyDepthFactor:FACE*2,
+window.MOVVA_SHELL={setSize,setPose,isWebKit,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };
