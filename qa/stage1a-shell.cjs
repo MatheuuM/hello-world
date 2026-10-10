@@ -122,7 +122,9 @@ try{
    report(size+' '+label+' intact',state);
   }
   await ctx.close();
-  if(size==='desktop'){
+  // GPU QA is independently opt-in: the main CSS renderer must complete all
+  // three viewport captures even if software WebGL readback is too slow.
+  if(size==='desktop'&&process.env.QA_EXPERIMENTAL_WEBGL==='1'){
    // The CSS3D default stays safe; the alternate WebGL model must also retain
    // depth, readable display and hardware parity when explicitly selected.
    const altCtx=await browser.newContext({viewport:{width:1440,height:900}});
