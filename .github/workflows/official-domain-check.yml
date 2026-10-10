@@ -1,0 +1,45 @@
+name: MOVVA Official Domain and Mail Read-Only Check
+on:
+  push:
+    branches: [ops/check-movva-official-domain]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check HTTPS domain redirect and production document
+        run: |
+          set -euo pipefail
+          curl --connect-timeout 8 --max-time 30 -fsSI https://movvawellness.com.br/ > /tmp/apex.headers
+          curl --connect-timeout 8 --max-time 30 -fsSL -D /tmp/www.headers -o /tmp/www.html https://www.movvawellness.com.br/
+          echo "=== Apex response ==="
+          grep -iE '^HTTP/|^location:|^server:' /tmp/apex.headers
+          echo "=== WWW response ==="
+          grep -iE '^HTTP/|^server:|^content-type:' /tmp/www.headers
+          echo "=== Production content ==="
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          a=Path('/tmp/apex.headers').read_text().lower()
+          h=Path('/tmp/www.headers').read_text().lower()
+          html=Path('/tmp/www.html').read_text(errors='replace')
+          assert '308' in a.splitlines()[0],a[:600]
+          assert 'location: https://www.movvawellness.com.br/' in a,a[:600]
+          assert '200' in h.splitlines()[-1] or '200' in h,h[:600]
+          assert '<title>MOVVA Wellness' in html,html[:200]
+          assert '/experience.js' in html and '/motion-studio.js' in html
+          assert 'id="motion"' not in html
+          assert 'id="enable-motion"' not in html
+          assert 'id="motion-resume"' not in html
+          print('PASS: HTTPS redirect 308 and official WWW serves current always-on MOVVA 3D.')
+          PY
+      - name: Read MX records and preserve ImprovMX
+        run: |
+          set -euo pipefail
+          dig +short MX movvawellness.com.br | tee /tmp/mx.txt
+          grep -i 'mx1.improvmx.com' /tmp/mx.txt
+          grep -i 'mx2.improvmx.com' /tmp/mx.txt
+          echo 'PASS: ImprovMX mail routing present (read-only verification).'
