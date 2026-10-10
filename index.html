@@ -9,7 +9,7 @@
 <link rel="icon" href="/assets/movva.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;450;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<link rel="preload" as="image" href="/assets/home.webp"><link rel="stylesheet" href="/site.css">
+<link rel="preload" as="image" href="/assets/home.webp"><link rel="stylesheet" href="/site.css"><link rel="stylesheet" href="/motion-restore.css">
 <link rel="stylesheet" href="/hero.css">
 <script defer src="/hero-layout.js"></script>
 <link rel="stylesheet" href="/intro-scroll.css">
@@ -29,6 +29,14 @@
 <body>
 <a class="skip" href="#overview">Pular a experiência visual</a>
 <header class="header"><a class="brand" href="#start" aria-label="MOVVA Wellness, início"><img src="/assets/movva.svg" width="174" height="24" alt="MOVVA"><span>WELLNESS</span></a><nav aria-label="Navegação principal"><a href="#overview" class="nav-about">A MOVVA</a><button id="motion" type="button" aria-pressed="true" aria-label="Desativar animações"><svg width="19" height="15" viewBox="0 0 24 16" aria-hidden="true"><path d="M1 8c4-12 7 12 11 0s7 12 11 0" fill="none" stroke="currentColor" stroke-width="1.2"/></svg><span>Movimento</span></button><a class="nav-cta" href="#launch">Em breve <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M8 6h10v10"/></svg></span></a></nav></header>
+<aside id="motion-restorer" class="motion-restorer" hidden aria-label="Reativar experiência interativa">
+  <span class="eyebrow-small">Experiência interativa MOVVA</span>
+  <strong>Ver a MOVVA em 3D</strong>
+  <p id="motion-restore-reason">Os efeitos estão pausados neste navegador.</p>
+  <button id="motion-restore-button" type="button">Ativar experiência 3D
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 19 14-14M8 5h11v11"/></svg>
+  </button>
+</aside>
 <main>
 <div id="experience" class="experience">
 <div class="stage" id="stage">
