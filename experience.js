@@ -140,30 +140,42 @@ async function build(){
  uniforms={};['uModel','uViewProjection','uColor','uMetal','uShine','uMode','uMix','uRect','uTextureA','uTextureB','uDark','uMaterial'].forEach(n=>uniforms[n]=gl.getUniformLocation(program,n));
  const assetNames=['home','training','nutrition','evolution','circle'];
  await Promise.all(assetNames.map(async name=>{const image=await loadImage('/assets/'+name+'.webp');textureSizes[name]=[image.naturalWidth,image.naturalHeight];textures[name]=texture(image);}));
- // Satin warm titanium: frame, highlight lip, gasket and back glass.
- object(box(2.80,6.00,.312,.415,.052),[.68,.67,.64],[0,0,0],.86,182,[0,0,0],1);
- object(box(2.749,5.945,.043,.391,.014),[.38,.39,.375],[0,0,-.166],.55,110);
- object(box(2.713,5.907,.035,.374,.015),[.79,.773,.735],[0,0,-.189],.16,65,[0,0,0],2);
- object(box(2.769,5.969,.021,.393,.007),[.70,.70,.675],[0,0,.154],.93,200,[0,0,0],1);
- object(box(2.731,5.931,.030,.375,.009),[.043,.047,.043],[0,0,.169],.2,175);
+ // MOVVA satin aluminum unibody, ceramic glass inset and flush front seal.
+ object(box(2.80,6.00,.312,.415,.046),[.706,.744,.704],[0,0,0],.77,145,[0,0,0],1);
+ object(box(2.749,5.945,.043,.391,.014),[.365,.405,.376],[0,0,-.166],.51,98);
+ object(box(2.713,5.907,.035,.374,.015),[.805,.833,.793],[0,0,-.189],.12,72,[0,0,0],2);
+ // Inset rear glass below the elevated camera plateau, visibly distinct.
+ object(box(2.52,4.10,.014,.282,.006),[.870,.886,.854],[0,-.72,-.218],.11,112,[0,0,0],2);
+ object(box(2.769,5.969,.021,.393,.007),[.72,.75,.714],[0,0,.154],.83,178,[0,0,0],1);
+ object(box(2.731,5.931,.030,.375,.009),[.038,.046,.042],[0,0,.169],.18,165);
  screenMesh=object(face(2.626,5.813,.316),[1,1,1],[0,0,.190]);screenMesh.mode=1;
- object(box(.708,.165,.020,.081,.006),[.013,.016,.016],[0,2.66,.208],.08,110);
- object(cylinder(.036,.010),[.023,.034,.047],[.246,2.66,.222],.15,195,[0,0,0],3);
- object(box(.54,.020,.011,.009,.003),[.08,.09,.085],[0,2.927,.183],.15,80);
- // Camera platform, recessed optical pupils and hollow annular bezels.
- object(box(1.31,1.435,.055,.28,.018),[.43,.43,.405],[-.585,2.115,-.234],.55,145,[0,0,0],1);
- object(box(1.276,1.4,.085,.271,.025),[.77,.756,.716],[-.585,2.115,-.266],.16,75,[0,0,0],2);
- [[-.925,2.478],[-.328,2.188],[-.925,1.89]].forEach(([x,y])=>{
-  object(cylinder(.263,.048,64),[.13,.14,.13],[x,y,-.324],.45,155);
-  object(lensRing(.205,.252,.096),[.62,.62,.60],[x,y,-.369],.97,211,[0,0,0],1);
-  object(lensRing(.186,.215,.075),[.062,.07,.07],[x,y,-.370],.65,190);
-  object(cylinder(.19,.010,64),[.03,.045,.06],[x,y,-.399],.45,210,[0,0,0],3);
+ // Compact current-generation Dynamic Island with optical sensor inset.
+ object(box(.624,.132,.018,.065,.006),[.010,.014,.014],[0,2.78,.207],.08,110);
+ object(cylinder(.029,.010),[.018,.031,.043],[.213,2.78,.220],.13,195,[0,0,0],3);
+ object(box(.54,.020,.011,.009,.003),[.075,.089,.080],[0,2.927,.183],.14,80);
+ // MOVVA flagship camera plateau: physical full-width raised upper deck.
+ // Layers overlap through their depth instead of leaving air gaps.
+ object(box(2.665,1.495,.018,.271,.005),
+   [.31,.37,.33],[0,2.188,-.212],.27,120);
+ object(box(2.650,1.481,.071,.268,.025),
+   [.56,.635,.563],[0,2.188,-.237],.81,178,[0,0,0],1);
+ object(box(2.600,1.426,.077,.253,.024),
+   [.742,.798,.727],[0,2.188,-.282],.32,116,[0,0,0],2);
+ // Three independently extruded barrels and recessed coated glass.
+ const lensCenters=[[-.925,2.472],[-.318,2.172],[-.925,1.865]];
+ lensCenters.forEach(([x,y])=>{
+  object(cylinder(.266,.052,72),[.15,.175,.158],[x,y,-.337],.42,147);
+  object(lensRing(.208,.252,.098),[.705,.765,.714],[x,y,-.378],.92,215,[0,0,0],1);
+  object(lensRing(.184,.216,.064),[.058,.072,.066],[x,y,-.382],.56,193);
+  object(cylinder(.189,.010,72),[.024,.045,.051],[x,y,-.406],.42,219,[0,0,0],3);
+  object(lensRing(.157,.173,.014),[.214,.279,.260],[x,y,-.410],.43,170);
  });
- object(lensRing(.057,.071,.018),[.68,.68,.64],[-.328,2.642,-.317],.8,180,[0,0,0],1);
- object(cylinder(.057,.009,40),[.9,.866,.729],[-.328,2.642,-.322],.02,55);
- object(cylinder(.018,.012,24),[.018,.02,.019],[-.28,1.923,-.318],.08,100);
- object(lensRing(.041,.052,.022),[.4,.405,.39],[-.328,1.748,-.323],.7,155);
- object(cylinder(.04,.012,36),[.025,.032,.031],[-.328,1.748,-.336],.2,135,[0,0,0],3);
+ // Right-side flash, LiDAR and microphone, with real independent depth.
+ object(lensRing(.057,.075,.022),[.62,.689,.622],[.938,2.505,-.338],.74,177,[0,0,0],1);
+ object(cylinder(.056,.010,44),[.99,.911,.745],[.938,2.505,-.350],.03,59);
+ object(lensRing(.052,.070,.018),[.419,.497,.433],[.935,1.850,-.337],.73,158,[0,0,0],1);
+ object(cylinder(.048,.014,44),[.017,.035,.032],[.935,1.850,-.357],.2,153,[0,0,0],3);
+ object(cylinder(.024,.012,28),[.023,.035,.028],[.675,1.795,-.348],.06,97);
  [[1.0,1.13,.55],[-1.0,1.18,.43],[-1.0,.59,.43],[-1.0,1.9,.22]].forEach(([side,y,len])=>{
   object(box(.023,len+.035,.139,.009,.004),[.07,.08,.073],[side*1.4,y,0],.15,90);
   object(box(.036,len,.115,.014,.008),[.68,.674,.646],[side*1.407,y,.004],.9,175,[0,0,0],1);
@@ -172,14 +184,14 @@ async function build(){
  object(box(.424,.014,.107,.006,.003),[.015,.019,.018],[0,-3.005,0],.15,80);
  object(box(.309,.018,.03,.008,.003),[.43,.43,.40],[0,-3.008,.002],.6,150);
  for(const x of [-.98,-.87,-.76,-.65,-.54,.54,.65,.76,.87,.98])object(cylinder(.023,.012,20),[.015,.019,.017],[x,-3.005,0],.1,80,[Math.PI/2,0,0]);
- try{const image=await loadImage('/assets/movva.svg');const c=document.createElement('canvas');c.width=512;c.height=160;const ctx=c.getContext('2d');ctx.drawImage(image,40,58,432,59);backLogo=texture(c);const logo=object(face(1.2,.38,.01),[.62,.605,.575],[0,-.22,-.208],0,60,[0,Math.PI,0]);logo.mode=2;logo.fixedTexture=backLogo;}catch(_){}
+ try{const image=await loadImage('/assets/movva.svg');const c=document.createElement('canvas');c.width=512;c.height=160;const ctx=c.getContext('2d');ctx.drawImage(image,40,58,432,59);backLogo=texture(c);const logo=object(face(1.2,.38,.01),[.59,.63,.577],[0,-.47,-.229],0,60,[0,Math.PI,0]);logo.mode=2;logo.fixedTexture=backLogo;}catch(_){}
  panels=[
   {geom:face(2.15,1.04,.12),base:box(2.18,1.07,.048,.13,.006),tex:'training',rect:[.025,.554,.945,.188],chapter:2,x:1.05,y:.42,z:.90,rz:-.12},
   {geom:face(2.03,.95,.12),base:box(2.06,.98,.048,.13,.006),tex:'nutrition',rect:[.035,.09,.93,.154],chapter:3,x:1.19,y:-.73,z:1.12,rz:.09},
   {geom:face(2.14,1.32,.12),base:box(2.17,1.35,.048,.13,.006),tex:'evolution',rect:[.040,.39,.93,.292],chapter:4,x:-1.25,y:-.27,z:1.07,rz:-.08}
  ];
  ready=true;applyMode();
- window.__MOVVA_QA__={version:'intro-stage4-1',engine:'WebGL triangulated geometry',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return meshes.length},get drawCalls(){return drawCalls},get textureCount(){return Object.keys(textures).length},get textureSizes(){return{...textureSizes}},get frameCount(){return frameCount},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get renderSize(){return[canvas.width,canvas.height]},setProgress(p){jump(clamp(p),false);}};
+ window.__MOVVA_QA__={version:'intro-stage4-1',engine:'WebGL triangulated geometry',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return meshes.length},get drawCalls(){return drawCalls},get textureCount(){return Object.keys(textures).length},get textureSizes(){return{...textureSizes}},get hardware(){return {reference:'18 Pro Max proportions',cameraPlateau:'full-width',lensCount:3,physicalLensGeometry:true}},get frameCount(){return frameCount},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get renderSize(){return[canvas.width,canvas.height]},setProgress(p){jump(clamp(p),false);}};
 }
 const poses=[
  [0,.47,.05,.99,-.09,-.34,-.095],[.10,.45,.06,1.01,-.06,-.15,-.06],
