@@ -14,7 +14,14 @@ const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CI
 const scenes=$$('.scene'),dots=$$('.chapter-dots a');
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
 let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null,userMotion=true;
-try{userMotion=sessionStorage.getItem('movva-motion')!=='off';}catch(_){}
+const urlMotionOn=new URLSearchParams(location.search).get('motion')==='on';
+let forceMotion=urlMotionOn;
+try{
+ userMotion=sessionStorage.getItem('movva-motion')!=='off';
+ forceMotion=forceMotion || sessionStorage.getItem('movva-motion-override')==='on';
+ if(urlMotionOn){userMotion=true;sessionStorage.setItem('movva-motion','on');sessionStorage.setItem('movva-motion-override','on');}
+}catch(_) {if(urlMotionOn)userMotion=true;}
+const recovery=$('#motion-restorer'),recoveryReason=$('#motion-restore-reason'),recoveryButton=$('#motion-restore-button');
 const mat={
  identity:()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
  mul:(a,b)=>{const m=Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)m[c*4+r]+=a[k*4+r]*b[c*4+k];return m;},
@@ -256,10 +263,45 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
 function clearScenes(){window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
-function applyMode(){const short=innerWidth<=760&&innerHeight<580,landscape=innerHeight<500&&innerWidth>innerHeight;enabled=ready&&userMotion&&!media.matches&&!short&&!landscape;root.classList.toggle('enhanced',enabled);root.classList.toggle('dom-device',enabled&&domDevice);root.style.scrollBehavior=enabled?'auto':'';motion.setAttribute('aria-pressed',String(enabled));motion.setAttribute('aria-label',enabled?'Desativar animações':'Ativar animações');motion.title=enabled?'Trocar para leitura sem animações':'Experiência sem movimento';motion.querySelector('span').textContent=enabled?'Movimento':'Modo leve';if(enabled){resize();position=target=measure();requestTick();}else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}}
+function applyMode(){
+ const short=innerWidth<=760&&innerHeight<580,landscape=innerHeight<500&&innerWidth>innerHeight;
+ const unsupportedViewport=short||landscape;
+ enabled=ready&&userMotion&&(!media.matches||forceMotion)&&!unsupportedViewport;
+ root.classList.toggle('enhanced',enabled);
+ root.classList.toggle('dom-device',enabled&&domDevice);
+ root.classList.toggle('mode-static',ready&&!enabled);
+ root.style.scrollBehavior=enabled?'auto':'';
+ motion.setAttribute('aria-pressed',String(enabled));
+ motion.setAttribute('aria-label',enabled?'Desativar animações':'Ativar experiência 3D');
+ motion.title=enabled?'Mostrar versão sem animações':'Ativar experiência interativa';
+ motion.querySelector('span').textContent=enabled?'Movimento':'Ativar 3D';
+ motion.disabled=ready&&unsupportedViewport;
+ recovery.hidden=enabled||!ready;
+ recoveryButton.disabled=unsupportedViewport;
+ recoveryReason.textContent=unsupportedViewport
+  ?'Esta janela está baixa para a animação. Amplie o navegador para ativar o 3D.'
+  :(!userMotion?'Os efeitos foram pausados nesta aba. Você pode reativá-los.'
+  :(media.matches&&!forceMotion?'A redução de movimento está ativada no sistema. Você pode escolher ver o 3D.':'A visualização interativa está disponível. Ative o 3D para explorá-la.'));
+ if(enabled){resize();position=target=measure();requestTick();}
+ else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}
+}
+function setMotionPreference(wantsMotion){
+ const wasEnabled=enabled,active=weights(position).indexOf(Math.max(...weights(position)));
+ userMotion=wantsMotion;
+ forceMotion=wantsMotion;
+ try{
+  sessionStorage.setItem('movva-motion',wantsMotion?'on':'off');
+  if(wantsMotion)sessionStorage.setItem('movva-motion-override','on');
+  else sessionStorage.removeItem('movva-motion-override');
+ }catch(_){}
+ applyMode();
+ if(wasEnabled&&!enabled)scenes[active].scrollIntoView({behavior:'instant',block:'start'});
+ else if(!wasEnabled&&enabled)jump(0,false);
+}
 function jump(p,animated=true){if(!enabled)return;const top=experience.offsetTop+p*(experience.offsetHeight-stage.clientHeight);scrollTo({top,behavior:animated?'smooth':'auto'});target=p;requestTick();}
 $$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));
-motion.addEventListener('click',()=>{const previous=enabled,active=weights(position).indexOf(Math.max(...weights(position)));userMotion=!enabled;try{sessionStorage.setItem('movva-motion',userMotion?'on':'off')}catch(_){}applyMode();if(previous){scenes[active].scrollIntoView({behavior:'instant',block:'start'});}else if(enabled)jump(0,false);});
+motion.addEventListener('click',()=>setMotionPreference(!enabled));
+recoveryButton.addEventListener('click',()=>setMotionPreference(true));
 addEventListener('scroll',()=>{if(enabled){$('.header').style.position=scrollY>experience.offsetHeight-100?'absolute':'fixed';requestTick();}},{passive:true});
 addEventListener('movva:hero-layout',requestTick);
 let resizeId;addEventListener('resize',()=>{clearTimeout(resizeId);resizeId=setTimeout(()=>{applyMode();resize();},100);},{passive:true});
