@@ -35,6 +35,7 @@ function render(p,active,ix,blend){
  }
  const w=h*.467;
  rig.style.width=w+'px';rig.style.height=h+'px';rig.style.left=cx+'px';rig.style.top=cy+'px';
+ window.MOVVA_SHELL?.setSize(w,h);
  const [ry,rx,rz]=poseAt(p);
  const safeRy=mobile?clamp(ry,-398,-8):ry;
  device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg)';
