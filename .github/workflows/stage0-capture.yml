@@ -1,0 +1,39 @@
+name: MOVVA Stage 0 Browser Visual Capture
+on:
+  push:
+    branches: [audit/2026-10-09-movva-stage0]
+permissions:
+  contents: read
+jobs:
+  capture:
+    name: Baseline / ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source and install browser
+        run: |
+          node --check experience.js
+          node --check mobile-phone.js
+          node --check qa/stage0-capture.cjs
+          timeout 95s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 175s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Capture unchanged geometry across viewport sizes
+        env:
+          STAGE0_ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-stage0-server.log 2>&1 &
+          timeout 235s node qa/stage0-capture.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage0-${{ matrix.engine }}
+          path: stage0-evidence/${{ matrix.engine }}/
+          retention-days: 10
