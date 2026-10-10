@@ -1,0 +1,36 @@
+name: MOVVA Chassis 1A Visual Validation
+on:
+  push:
+    branches: [refine/phone-chassis-1a]
+permissions:
+  contents: read
+jobs:
+  browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install renderer
+        run: |
+          node --check qa/chassis-1a-qa.cjs
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 180s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Compare chassis angles
+        env:
+          ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-chassis.log 2>&1 &
+          timeout 210s node qa/chassis-1a-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chassis-1a-${{ matrix.engine }}
+          path: qa-chassis-1a/${{ matrix.engine }}/
+          retention-days: 10
