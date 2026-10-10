@@ -22,8 +22,48 @@
 .css3d-webkit-engine.enhanced .css3d-webkit-profile,
 .enhanced .css3d-webkit-engine .css3d-webkit-profile,
 .enhanced .css3d-device.css3d-webkit-engine .css3d-webkit-profile{display:block}
-.css3d-webkit-profile .profile-button{position:absolute;width:11%;height:16%;top:22%;left:7%;border-radius:99px;background:#c5cabc;box-shadow:0 0 1px #454d42}
-.css3d-webkit-profile .profile-button:nth-child(2){top:41%;height:13%}
+/* Edge-on Safari renderer: the geometry needs a credible physical profile,
+   not just a flat bar when nested CSS 3D faces are compositor-culled. */
+.css3d-webkit-profile{
+ border-radius:calc(var(--shell-w) * .018);
+ background:linear-gradient(90deg,#4e5a50 0%,#899b8c 14%,#bac7b7 32%,#a6b7a6 54%,#697a6d 81%,#435247 100%);
+ box-shadow:inset .8px 0 rgba(244,248,237,.48),inset -1px 0 rgba(25,37,27,.40),0 0 1px #818f81;
+}
+.css3d-webkit-profile .profile-camera-ledge{
+ display:block;position:absolute;z-index:1;top:3.3%;
+ right:calc(var(--shell-w) * -.045);
+ width:calc(var(--shell-w) * .053);height:23.4%;
+ border-radius:calc(var(--shell-w) * .018);
+ background:linear-gradient(90deg,#4a5c4d 0%,#899d8e 29%,#c7d4c2 55%,#667868 100%);
+ box-shadow:inset 1px 0 rgba(247,251,242,.44),1.5px 1px 2px rgba(38,49,39,.20);
+ pointer-events:none;
+}
+.css3d-webkit-profile[data-side="left"] .profile-camera-ledge{
+ right:auto;left:calc(var(--shell-w) * -.045);
+ transform:scaleX(-1);
+}
+.css3d-webkit-profile .profile-button{
+ display:block;position:absolute;z-index:2;
+ left:4%;width:30%;border-radius:calc(var(--shell-w) * .009);
+ background:linear-gradient(90deg,#4e5d52 0%,#dce6d4 38%,#7f9382 76%,#556559 100%);
+ box-shadow:inset 0 0 0 .55px rgba(250,252,242,.43),0 0 .65px rgba(20,30,22,.62);
+}
+.css3d-webkit-profile .profile-button--action{top:16.5%;height:4.7%}
+.css3d-webkit-profile .profile-button--volume-up{top:23.65%;height:9.5%}
+.css3d-webkit-profile .profile-button--volume-down{top:36.25%;height:9.5%}
+.css3d-webkit-profile .profile-button--lock{top:24.9%;height:14.6%}
+.css3d-webkit-profile .profile-button--camera-control{
+ top:67.3%;height:7.3%;width:23%;left:8%;
+ background:linear-gradient(90deg,#4a594d,#a6b5a4 47%,#3f5144);
+}
+.css3d-webkit-profile[data-side="left"] .profile-button[data-side="right"],
+.css3d-webkit-profile[data-side="right"] .profile-button[data-side="left"]{display:none}
+.css3d-webkit-profile .profile-antenna{
+ display:block;position:absolute;z-index:2;left:0;width:100%;height:calc(var(--shell-w) * .009);
+ background:linear-gradient(90deg,#526354 0%,#9fb0a0 52%,#526354 100%);
+}
+.css3d-webkit-profile .profile-antenna--top{top:7.4%}
+.css3d-webkit-profile .profile-antenna--bottom{bottom:8%}
 
 /* Stage 1B — physical camera rig. Sibling of .css3d-back: no rear-panel clipping.
    All levels share the same back-facing coordinate system and scale with shell width. */
