@@ -22,7 +22,7 @@ fs.mkdirSync(out,{recursive:true});
    await page.waitForFunction(()=>window.__MOVVA_QA__?.ready&&window.MOVVA_MOTION_QA,null,{timeout:25000});
    for(const [scene,progress] of scenes){
     await page.evaluate(p=>__MOVVA_QA__.setProgress(p),progress);
-    await page.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.001,p,{timeout:19000});
+    await page.waitForFunction(p=>Math.abs(__MOVVA_QA__.progress-p)<.001,progress,{timeout:19000});
     await page.waitForTimeout(140);
     const data=await page.evaluate(()=>{
      const cards=[...document.querySelectorAll('.motion-fragment')].filter(el=>{
