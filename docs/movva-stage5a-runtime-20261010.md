@@ -22,9 +22,9 @@ The headless WebKit software-compositing runtime showed a slow initial scroll at
 - Motion layout measurements: 2 per viewport in automated exercise, instead of forcing layout for each active fragment on every animation frame.
 - Existing motion composition regression: Chromium/WebKit **28 samples per engine**, zero newly introduced copy/nav/viewport collisions.
 - Existing reversible cinema regression: Chromium/WebKit **32 checks per engine**, 11 screenshots each; no reported errors.
-- Stage 4C camera continuity (Chromium): **35 checks × 4 viewports**, all passed.
+- Stage 4C camera continuity (Chromium **and** WebKit): **35 checks × 4 viewports per browser (140/browser)**, all passed; maximum desktop position shift over the close-spaced sample interval was 34.84 px, mobile 393 px was ~3.84 px.
 - Screenshot parity: 14 Chromium before/after screenshots, seven scenes on desktop and mobile; largest mean pixel difference **<0.21 level on 0–255 RGB**.
-- Safari Stage 4C camera-continuity re-run and production smoke test: required before release (record the actual results).
+- Safari Stage 4C camera-continuity re-run: completed, all 140 checks passed. Production smoke tests remain required **after** merge.
 - Physical iPhone/Safari FPS: remains unverified. No quantified real-user speedup claimed.
 
 ## Release guardrails
