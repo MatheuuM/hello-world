@@ -81,7 +81,7 @@ try{
      controls:document.querySelectorAll('.css3d-control').length
    }));
    assert.ok(Math.abs(state.overflow)<=1,JSON.stringify(state));
-   assert.ok(state.body!=='none');assert.equal(state.controls,3);
+   assert.ok(state.body!=='none');assert.equal(state.controls,5);
    assert.ok(Math.abs(Number(state.body.slice(state.body.indexOf('(')+1).split(',')[0])-Math.cos(a*Math.PI/180))<.028,JSON.stringify({angle:a,transform:state.body}));
    const file=size+'-angle-'+String(Math.abs(a)).padStart(3,'0')+'.png';
    await page.screenshot({path:path.join(root,file)});result.shots.push(file);
@@ -122,6 +122,37 @@ try{
    report(size+' '+label+' intact',state);
   }
   await ctx.close();
+  if(size==='desktop'){
+   // The CSS3D default stays safe; the alternate WebGL model must also retain
+   // depth, readable display and hardware parity when explicitly selected.
+   const altCtx=await browser.newContext({viewport:{width:1440,height:900}});
+   const alt=await altCtx.newPage();
+   alt.on('pageerror',e=>result.errors.push('WebGL alternate: '+String(e)));
+   await alt.goto('http://127.0.0.1:8077/?renderer=webgl',{waitUntil:'load'});
+   await alt.waitForFunction(()=>window.__MOVVA_QA__?.ready && window.MOVVA_3D_STATUS?.().active,null,{timeout:30000});
+   const status=await alt.evaluate(()=>({
+    status:MOVVA_3D_STATUS(),meshes:__MOVVA_QA__.meshCount,
+    hardware:__MOVVA_QA__.hardware??null
+   }));
+   if(status.status.engine==='WebGL'){
+    assert.ok(status.meshes>=29,JSON.stringify(status));
+    assert.equal(status.hardware?.cameraPlateau,'full-width');
+    assert.equal(status.hardware?.lensCount,3);
+    assert.ok(Math.abs(status.hardware?.aspect-78/163.4)<.0001);
+   } else if(engine==='chromium'){
+    throw new Error('WebGL mode unexpectedly unavailable in Chromium desktop: '+JSON.stringify(status));
+   }
+   report('Desktop alternate renderer '+status.status.engine,status);
+   for(const [label,p] of [['front',.055],['rear',.192],['transition',.305]]){
+    await alt.evaluate(v=>__MOVVA_QA__.setProgress(v),p);
+    await alt.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.001,p,{timeout:20000});
+    await alt.waitForTimeout(120);
+    const file='desktop-alternate-'+label+'.png';
+    await alt.screenshot({path:path.join(root,file)});
+    result.shots.push(file);
+   }
+   await altCtx.close();
+  }
  }
  assert.deepEqual(result.errors,[]);report('No browser JS errors');
  result.status='CAPTURED';
