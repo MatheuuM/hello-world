@@ -5,6 +5,11 @@ const stage=document.getElementById('stage'),rig=document.getElementById('css3d-
 const frames=[...rig.querySelectorAll('.css3d-screen')];
 const scenes=[...document.querySelectorAll('.scene')],bar=stage.querySelector('.chapter-bar');
 const PRO_MAX_ASPECT=78/163.4;
+// On every scroll frame the hardware contains hundreds of CSS3D faces.
+// Avoid invalidating the entire shell's calc()-driven geometry when its
+// width and height did not actually change.
+const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null};
+const metrics={renders:0,sizeWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -100,20 +105,36 @@ function render(p,active,ix,blend){
   mobileCamera(p,stageR,vw,vh,barTop):
   desktopCamera(p,vw,vh);
  const w=h*PRO_MAX_ASPECT;
- rig.style.width=w+'px';rig.style.height=h+'px';rig.style.left=cx+'px';rig.style.top=cy+'px';
- window.MOVVA_SHELL?.setSize(w,h);
+ metrics.renders++;
+ if(Math.abs(w-last.w)>.001||Math.abs(h-last.h)>.001||!Number.isFinite(last.w)){
+  rig.style.width=w+'px';rig.style.height=h+'px';
+  window.MOVVA_SHELL?.setSize(w,h);
+  last.w=w;last.h=h;metrics.sizeWrites++;
+ }
+ if(Math.abs(cx-last.x)>.001||Math.abs(cy-last.y)>.001||!Number.isFinite(last.x)){
+  rig.style.left=cx+'px';rig.style.top=cy+'px';
+  last.x=cx;last.y=cy;metrics.positionWrites++;
+ }
  const [ry,rx,rz]=poseAt(p);
  const safeRy=mobile?clamp(ry,-398,-8):ry;
  device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg)';
  window.MOVVA_SHELL?.setPose(safeRy,rx,rz);
  const selected=Math.min(frames.length-1,ix+(blend>=.5?1:0));
- frames.forEach((el,i)=>{el.style.display=i===selected?'block':'none';el.style.opacity='1';});
+ if(selected!==last.screen){
+  frames.forEach((el,i)=>{el.style.display=i===selected?'block':'none';el.style.opacity='1';});
+  last.screen=selected;metrics.screenWrites++;
+ }
  const degrees=((-safeRy%360)+360)%360;
  const rear=degrees>92&&degrees<268;
- rig.querySelector('.css3d-front').style.visibility=rear?'hidden':'visible';
- rig.querySelector('.css3d-back').style.visibility=rear?'visible':'hidden';
- rig.style.opacity=mobile&&h<135?String(clamp((h-100)/35)):'1';
- rig.setAttribute('data-screen',names[selected]||'home');rig.dataset.chapter=String(active);
+ if(rear!==last.rear){
+  rig.querySelector('.css3d-front').style.visibility=rear?'hidden':'visible';
+  rig.querySelector('.css3d-back').style.visibility=rear?'visible':'hidden';
+  last.rear=rear;
+ }
+ const opacity=mobile&&h<135?String(clamp((h-100)/35)):'1';
+ if(opacity!==last.opacity){rig.style.opacity=opacity;last.opacity=opacity;}
+ if(last.screen===selected&&rig.dataset.screen!==names[selected])rig.dataset.screen=names[selected]||'home';
+ if(active!==last.chapter){rig.dataset.chapter=String(active);last.chapter=active;metrics.chapterWrites++;}
 }
-window.MOVVA_DOM_DEVICE={render,poseAt,get active(){return document.documentElement.classList.contains('dom-device')}};
+window.MOVVA_DOM_DEVICE={render,poseAt,get metrics(){return {...metrics}},get active(){return document.documentElement.classList.contains('dom-device')}};
 })();
