@@ -3,6 +3,10 @@
 'use strict';
 const stage=document.getElementById('stage'),rig=document.getElementById('css3d-device'),device=document.getElementById('css3d-object');
 const frames=[...rig.querySelectorAll('.css3d-screen')];
+const scenes=[...document.querySelectorAll('.scene')],bar=stage.querySelector('.chapter-bar');
+const PRO_MAX_ASPECT=78/163.4;
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
 // Monotone cubic interpolation: continuous angular velocity at chapter knots.
 // Previous per-keyframe smoothstep forced the phone to stop/start at every beat.
@@ -32,28 +36,70 @@ function poseAt(p){
  );
 }
 const names=['home','training','nutrition','evolution','circle'];
+// Chapter switches are discrete accessibility states; the physical camera is
+// not. Positions must be sampled from continuous scroll progress alone.
+const desktopMoves=[
+ [.216,.334,.73,.27], // Connected -> Training, wider camera move
+ [.532,.653,.27,.73], // Nutrition -> Evolution
+ [.717,.831,.73,.27], // Evolution -> Circle
+ [.906,.983,.27,.50]  // Circle -> closing scene
+];
+function desktopX(p){
+ let value=.73;
+ for(const [start,end,from,to] of desktopMoves){
+  if(p<start)return value;
+  if(p<end)return lerp(from,to,smooth((p-start)/(end-start)));
+  value=to;
+ }
+ return value;
+}
+const sceneCuts=[.129,.280,.433,.593,.773,.939];
+const cutHalfWidths=[.028,.038,.028,.037,.031,.043];
+function mobileFrame(sceneIndex,stageR,vw,vh,barTop){
+ const copy=scenes[sceneIndex]?.querySelector('.copy');
+ const rect=copy?.getBoundingClientRect();
+ const contentBottom=clamp((rect?.bottom||vh*.47)-stageR.top+14,135,vh*.82);
+ const freeEnd=clamp(barTop-15,250,vh-43),available=Math.max(80,freeEnd-contentBottom);
+ let h=Math.max(100,Math.min(vw<=355?385:460,available*.994));
+ let cy=contentBottom+available*.48;
+ if(sceneIndex===6){
+  h=Math.min(h,250);
+  cy=Math.max(contentBottom+h*.45,Math.min(vh*.78,cy+10));
+ }
+ if(h*PRO_MAX_ASPECT>vw*.54)h=vw*.54/PRO_MAX_ASPECT;
+ return{cx:vw*.5,cy,h};
+}
+function mobileCamera(p,stageR,vw,vh,barTop){
+ let index=0;
+ for(let i=0;i<sceneCuts.length;i++){
+  const a=sceneCuts[i]-cutHalfWidths[i],b=sceneCuts[i]+cutHalfWidths[i];
+  if(p<a)break;
+  if(p<=b){
+   const from=mobileFrame(i,stageR,vw,vh,barTop);
+   const to=mobileFrame(i+1,stageR,vw,vh,barTop);
+   const t=smooth((p-a)/(b-a));
+   return{cx:lerp(from.cx,to.cx,t),cy:lerp(from.cy,to.cy,t),h:lerp(from.h,to.h,t)};
+  }
+  index=i+1;
+ }
+ return mobileFrame(index,stageR,vw,vh,barTop);
+}
+function desktopCamera(p,vw,vh){
+ const close=smooth((p-.906)/(.983-.906));
+ return {
+  cx:vw*desktopX(p),
+  cy:vh*lerp(.52,.73,close),
+  h:lerp(Math.min(610,vh*.71),Math.min(300,vh*.38),close)
+ };
+}
 function render(p,active,ix,blend){
  const stageR=stage.getBoundingClientRect(),vw=stage.clientWidth,vh=stage.clientHeight;
- const scene=document.querySelectorAll('.scene')[active],copy=scene?.querySelector('.copy');
- const copyR=copy?.getBoundingClientRect();
- const bar=stage.querySelector('.chapter-bar'),barTop=bar?.getBoundingClientRect().top-stageR.top;
  const mobile=vw<=760;
- let cx,cy,h;
- if(mobile){
-  const contentBottom=clamp((copyR?.bottom||vh*.47)-stageR.top+14,135,vh*.82);
-  const freeEnd=clamp(barTop-15,250,vh-43),available=Math.max(80,freeEnd-contentBottom);
-  h=Math.min(vw<=355?385:460,available*.994);
-  h=Math.max(100,h);cx=vw*.5;cy=contentBottom+available*.48;
-  if(active===6){h=Math.min(h,250);cy=Math.max(contentBottom+h*.45,Math.min(vh*.78,cy+10));}
- }else{
-  const right=active===2||active===3||active===5;
-  const left=active===4||active===0||active===1;
-  cx=vw*(left?.73:right?.27:.5);cy=vh*.52;h=Math.min(610,vh*.71);
-  if(active===6){cx=vw*.5;cy=vh*.73;h=Math.min(300,vh*.38)}
- }
- // Avoid CSS max-width squeezing only the X-axis on 320px devices.
- if(mobile&&h*(78/163.4)>vw*.54)h=vw*.54/(78/163.4);
- const w=h*(78/163.4);
+ const barTop=bar?.getBoundingClientRect().top-stageR.top;
+ const {cx,cy,h}=mobile?
+  mobileCamera(p,stageR,vw,vh,barTop):
+  desktopCamera(p,vw,vh);
+ const w=h*PRO_MAX_ASPECT;
  rig.style.width=w+'px';rig.style.height=h+'px';rig.style.left=cx+'px';rig.style.top=cy+'px';
  window.MOVVA_SHELL?.setSize(w,h);
  const [ry,rx,rz]=poseAt(p);
