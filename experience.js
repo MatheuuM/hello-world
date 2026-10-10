@@ -15,12 +15,15 @@ const scenes=$$('.scene'),dots=$$('.chapter-dots a');
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
 let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null;
 const launchParams=new URLSearchParams(location.search);
+ const PRO_MAX_REFERENCE_ASPECT=78/163.4;
+ const PRO_MAX_MODEL_Y=(2.8/6)/PRO_MAX_REFERENCE_ASPECT;
 // The immersive presentation is on by default; old per-tab settings no longer disable it.
 const mat={
  identity:()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
  mul:(a,b)=>{const m=Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)m[c*4+r]+=a[k*4+r]*b[c*4+k];return m;},
  translation:(x,y,z)=>[1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1],
  scale:s=>[s,0,0,0,0,s,0,0,0,0,s,0,0,0,0,1],
+ scaleY:y=>[1,0,0,0,0,y,0,0,0,0,1,0,0,0,0,1],
  rx:a=>{const c=Math.cos(a),s=Math.sin(a);return[1,0,0,0,0,c,s,0,0,-s,c,0,0,0,0,1]},
  ry:a=>{const c=Math.cos(a),s=Math.sin(a);return[c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1]},
  rz:a=>{const c=Math.cos(a),s=Math.sin(a);return[c,s,0,0,-s,c,0,0,0,0,1,0,0,0,0,1]},
@@ -176,7 +179,7 @@ async function build(){
  object(lensRing(.052,.070,.018),[.419,.497,.433],[.935,1.850,-.337],.73,158,[0,0,0],1);
  object(cylinder(.048,.014,44),[.017,.035,.032],[.935,1.850,-.357],.2,153,[0,0,0],3);
  object(cylinder(.024,.012,28),[.023,.035,.028],[.675,1.795,-.348],.06,97);
- [[1.0,1.13,.55],[-1.0,1.18,.43],[-1.0,.59,.43],[-1.0,1.9,.22]].forEach(([side,y,len])=>{
+ [[1.0,1.13,.55],[1.0,-1.18,.24],[-1.0,1.18,.43],[-1.0,.59,.43],[-1.0,1.9,.22]].forEach(([side,y,len])=>{
   object(box(.023,len+.035,.139,.009,.004),[.07,.08,.073],[side*1.4,y,0],.15,90);
   object(box(.036,len,.115,.014,.008),[.68,.674,.646],[side*1.407,y,.004],.9,175,[0,0,0],1);
  });
@@ -191,7 +194,7 @@ async function build(){
   {geom:face(2.14,1.32,.12),base:box(2.17,1.35,.048,.13,.006),tex:'evolution',rect:[.040,.39,.93,.292],chapter:4,x:-1.25,y:-.27,z:1.07,rz:-.08}
  ];
  ready=true;applyMode();
- window.__MOVVA_QA__={version:'intro-stage4-1',engine:'WebGL triangulated geometry',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return meshes.length},get drawCalls(){return drawCalls},get textureCount(){return Object.keys(textures).length},get textureSizes(){return{...textureSizes}},get hardware(){return {reference:'18 Pro Max proportions',cameraPlateau:'full-width',lensCount:3,physicalLensGeometry:true}},get frameCount(){return frameCount},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get renderSize(){return[canvas.width,canvas.height]},setProgress(p){jump(clamp(p),false);}};
+ window.__MOVVA_QA__={version:'intro-stage4-1',engine:'WebGL triangulated geometry',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return meshes.length},get drawCalls(){return drawCalls},get textureCount(){return Object.keys(textures).length},get textureSizes(){return{...textureSizes}},get hardware(){return {reference:'18 Pro Max proportions',aspect:PRO_MAX_REFERENCE_ASPECT,cameraPlateau:'full-width',lensCount:3,physicalLensGeometry:true}},get frameCount(){return frameCount},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get renderSize(){return[canvas.width,canvas.height]},setProgress(p){jump(clamp(p),false);}};
 }
 const poses=[
  [0,.47,.05,.99,-.09,-.34,-.095],[.10,.45,.06,1.01,-.06,-.15,-.06],
@@ -243,7 +246,8 @@ function render(p){
  const labels=['home','training','nutrition','evolution','circle'],txA=textures[labels[ix]],txB=textures[labels[Math.min(ix+1,4)]];
  if(domDevice){window.MOVVA_DOM_DEVICE?.render(p,active,ix,blend);window.MOVVA_MOTION?.render(p,active,{nx,ny,scale});lastModel=model;drawCalls=0;frameCount++;return;}
  gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(program);gl.uniformMatrix4fv(uniforms.uViewProjection,false,new Float32Array(viewProjection));gl.uniform1i(uniforms.uTextureA,0);gl.uniform1i(uniforms.uTextureB,1);gl.uniform1f(uniforms.uDark,active===2?1:0);drawCalls=0;frameCount++;lastModel=model;bindTexture(txA,0);bindTexture(txB,1);
- meshes.forEach(o=>draw(o,mm(model,o.local),txA,txB,blend));
+ const handsetModel=mm(model,mat.scaleY(PRO_MAX_MODEL_Y));
+ meshes.forEach(o=>draw(o,mm(handsetModel,o.local),txA,txB,blend));
  if(!mobile)for(const o of panels){const a=intro?intro.panel(p,o.chapter,w[o.chapter]):w[o.chapter];if(a<.015)continue;const spread=smooth(a);const panelM=mm(model,compose(o.x*spread,o.y,.20+o.z*spread,.02,-.10*spread,o.rz*spread,lerp(.02,1,spread)));
  draw({geom:o.base,color:[.85,.85,.79],metal:.22,shine:80},panelM,txA,txA,0);
  draw({geom:o.geom,color:[1,1,1],mode:1,rect:o.rect},mm(panelM,mat.translation(0,0,.027)),textures[o.tex],textures[o.tex],0);
