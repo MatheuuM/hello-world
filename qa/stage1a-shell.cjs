@@ -30,14 +30,12 @@ try{
   await page.evaluate(()=>__MOVVA_QA__.setProgress(.35));
   await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.35)<.0006,{timeout:18000});
   await page.waitForTimeout(150);
-  const mute=await page.addStyleTag({content:'.motion-studio{display:none!important}.halo,.ghost-word{display:none!important}'});
+  const mute=await page.addStyleTag({content:'.motion-studio{display:none!important}.halo,.ghost-word{display:none!important} #css3d-object{transform:rotateY(var(--qa-y,0deg)) rotateX(3deg) rotateZ(0deg)!important} html.qa-rear .css3d-front{visibility:hidden!important} html.qa-rear .css3d-back{visibility:visible!important} html:not(.qa-rear) .css3d-front{visibility:visible!important} html:not(.qa-rear) .css3d-back{visibility:hidden!important}'});
   for(const a of angles){
    await page.evaluate(angle=>{
-    const obj=document.querySelector('#css3d-object');
-    obj.style.transform='rotateY('+angle+'deg) rotateX(3deg) rotateZ(0deg)';
-    const degrees=(((-angle%360)+360)%360),rear=degrees>92&&degrees<268;
-    document.querySelector('.css3d-front').style.visibility=rear?'hidden':'visible';
-    document.querySelector('.css3d-back').style.visibility=rear?'visible':'hidden';
+    const degrees=(((-angle%360)+360)%360);
+    document.documentElement.classList.toggle('qa-rear',degrees>92&&degrees<268);
+    document.documentElement.style.setProperty('--qa-y',angle+'deg');
    },a);
    await page.waitForTimeout(65);
    const state=await page.evaluate(()=>({
@@ -48,11 +46,13 @@ try{
    }));
    assert.ok(Math.abs(state.overflow)<=1,JSON.stringify(state));
    assert.ok(state.body!=='none');assert.equal(state.controls,3);
+   assert.ok(Math.abs(new DOMMatrixReadOnly(state.body).m11-Math.cos(a*Math.PI/180))<.028,JSON.stringify({angle:a,transform:state.body}));
    const file=size+'-angle-'+String(Math.abs(a)).padStart(3,'0')+'.png';
    await page.screenshot({path:path.join(root,file)});result.shots.push(file);
    report(size+' phone '+a+'°',state.bands);
   }
   await mute.evaluate(x=>x.remove());
+  await page.evaluate(()=>{document.documentElement.classList.remove('qa-rear');document.documentElement.style.removeProperty('--qa-y')});
   for(const [label,p] of [['training',.35],['nutrition',.52],['evolution',.70]]){
    await page.evaluate(v=>__MOVVA_QA__.setProgress(v),p);
    await page.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.0006,p,{timeout:18000});
