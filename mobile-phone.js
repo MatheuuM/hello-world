@@ -4,15 +4,33 @@
 const stage=document.getElementById('stage'),rig=document.getElementById('css3d-device'),device=document.getElementById('css3d-object');
 const frames=[...rig.querySelectorAll('.css3d-screen')];
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
-const ease=v=>{v=clamp(v);return v*v*(3-2*v)};
-const tween=(a,b,t)=>a+(b-a)*ease(t);
+// Monotone cubic interpolation: continuous angular velocity at chapter knots.
+// Previous per-keyframe smoothstep forced the phone to stop/start at every beat.
+const slope=(i,k)=>{
+ if(i<=0||i>=rotations.length-1)return 0; // intentional rest at start and end
+ const a=rotations[i-1],b=rotations[i],c=rotations[i+1];
+ const left=(b[k]-a[k])/(b[0]-a[0]),right=(c[k]-b[k])/(c[0]-b[0]);
+ if(left*right<=0)return 0; // no overshoot through a held pose or change of direction
+ const h0=b[0]-a[0],h1=c[0]-b[0],w0=2*h1+h0,w1=h1+2*h0;
+ return (w0+w1)/(w0/left+w1/right);
+};
 const rotations=[
  [0,-12,-3,-3], [.10,-12,-3,-3], [.16,-135,1,0], [.215,-171,4,2],
  [.26,-235,4,2], [.32,-346,-2,-2], [.40,-350,1,2],
  [.46,-364,-2,2], [.58,-345,2,-2], [.66,-350,-2,2],
  [.77,-368,2,1], [.84,-379,-2,2], [.92,-385,2,-2], [1,-390,1,0]
 ];
-function poseAt(p){let i=0;while(i<rotations.length-2&&p>rotations[i+1][0])i++;const a=rotations[i],b=rotations[i+1],t=(p-a[0])/(b[0]-a[0]);return a.slice(1).map((v,k)=>tween(v,b[k+1],t))}
+function poseAt(p){
+ p=clamp(p);
+ if(p===1)return rotations[rotations.length-1].slice(1);
+ let i=0;
+ while(i<rotations.length-2&&p>rotations[i+1][0])i++;
+ const a=rotations[i],b=rotations[i+1],h=b[0]-a[0],t=(p-a[0])/h,t2=t*t,t3=t2*t;
+ const h00=2*t3-3*t2+1,h10=t3-2*t2+t,h01=-2*t3+3*t2,h11=t3-t2;
+ return [1,2,3].map(k=>
+  h00*a[k]+h10*h*slope(i,k)+h01*b[k]+h11*h*slope(i+1,k)
+ );
+}
 const names=['home','training','nutrition','evolution','circle'];
 function render(p,active,ix,blend){
  const stageR=stage.getBoundingClientRect(),vw=stage.clientWidth,vh=stage.clientHeight;
@@ -51,5 +69,5 @@ function render(p,active,ix,blend){
  rig.style.opacity=mobile&&h<135?String(clamp((h-100)/35)):'1';
  rig.setAttribute('data-screen',names[selected]||'home');rig.dataset.chapter=String(active);
 }
-window.MOVVA_DOM_DEVICE={render,get active(){return document.documentElement.classList.contains('dom-device')}};
+window.MOVVA_DOM_DEVICE={render,poseAt,get active(){return document.documentElement.classList.contains('dom-device')}};
 })();
