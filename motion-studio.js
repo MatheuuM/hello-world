@@ -16,6 +16,26 @@ const items=[{"scene":0,"kind":"activity","side":-1,"level":-0.26,"delay":0,"con
  return {...c,el:n,index:i,width:0};
 });
 const phases=[[0,0.126],[0.128,0.278],[0.29,0.433],[0.435,0.595],[0.598,0.775],[0.778,0.937]];
+// A deterministic, viewport-aware guard. Keep decorative fragments clear of
+// live chapter copy (including hero actions) without breaking scroll reversal.
+function protectCopy(x,y,w,h,copyRect,stageRect,limits){
+ if(!copyRect)return {x,y,hidden:false};
+ const left=copyRect.left-stageRect.left,right=copyRect.right-stageRect.left;
+ const top=copyRect.top-stageRect.top,bottom=copyRect.bottom-stageRect.top;
+ const pad=12;
+ const collision=x+w/2>left-pad&&x-w/2<right+pad&&
+                 y+h/2>top-pad&&y-h/2<bottom+pad;
+ if(!collision)return{x,y,hidden:false};
+ const candidates=[right+pad+w/2,left-pad-w/2]
+  .filter(v=>v>=limits.left&&v<=limits.right)
+  .sort((a,b)=>Math.abs(a-x)-Math.abs(b-x));
+ if(candidates.length)return{x:candidates[0],y,hidden:false};
+ const vertical=[bottom+pad+h/2,top-pad-h/2]
+  .filter(v=>v>=limits.top&&v<=limits.bottom)
+  .sort((a,b)=>Math.abs(a-y)-Math.abs(b-y));
+ if(vertical.length)return{x,y:vertical[0],hidden:false};
+ return{x,y,hidden:true};
+}
 function render(p,active,device){
  if(!document.documentElement.classList.contains('enhanced')){root.style.display='none';return;}
  root.style.display='';
