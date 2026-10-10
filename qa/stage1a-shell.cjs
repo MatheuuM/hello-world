@@ -5,7 +5,7 @@ fs.mkdirSync(root,{recursive:true});
 const result={engine,commit:process.env.GITHUB_SHA,status:'RUNNING',checks:[],shots:[],errors:[]};
 const report=(name,details)=>{result.checks.push({name,details});console.log('PASS',name)};
 const positions=[['desktop',1440,900],['mobile',393,852],['small',320,667]];
-const angles=[0,-25,-55,-85,-90,-110,-145,-180];
+const angles=[0,-25,-55,-85,-90,-110,-145,-180,-265,-270];
 (async()=>{
 let browser;
 try{
@@ -72,17 +72,33 @@ try{
     const degrees=(((-angle%360)+360)%360);
     document.documentElement.classList.toggle('qa-rear',degrees>92&&degrees<268);
     document.documentElement.style.setProperty('--qa-y',angle+'deg');
+    // The override used by QA bypasses the normal scroll render function.
+    // Keep WebKit's physical-profile compositor in sync with the forced pose.
+    window.MOVVA_SHELL?.setPose(angle,3,0);
    },a);
    await page.waitForTimeout(65);
    const state=await page.evaluate(()=>({
      overflow:document.documentElement.scrollWidth-innerWidth,
      body:getComputedStyle(document.querySelector('.css3d-object')).transform,
      bands:document.querySelectorAll('.css3d-shell-face--wall').length,
-     controls:document.querySelectorAll('.css3d-control').length
+     controls:document.querySelectorAll('.css3d-control').length,
+     edge:(()=>{
+      const p=document.querySelector('.css3d-webkit-profile');
+      const camera=p.querySelector('.profile-camera-ledge');
+      const shown=[...p.querySelectorAll('.profile-button')].filter(x=>getComputedStyle(x).display!=='none');
+      return {opacity:+getComputedStyle(p).opacity,visible:getComputedStyle(p).visibility==='visible',
+       side:p.dataset.side,buttons:shown.length,cameraWidth:camera.getBoundingClientRect().width};
+     })()
    }));
    assert.ok(Math.abs(state.overflow)<=1,JSON.stringify(state));
    assert.ok(state.body!=='none');assert.equal(state.controls,5);
    assert.ok(Math.abs(Number(state.body.slice(state.body.indexOf('(')+1).split(',')[0])-Math.cos(a*Math.PI/180))<.028,JSON.stringify({angle:a,transform:state.body}));
+   if(engine==='webkit'&&[-85,-90,-265,-270].includes(a)){
+    assert.ok(state.edge.visible && state.edge.opacity>.92,JSON.stringify({a,edge:state.edge}));
+    assert.equal(state.edge.side,a<=-180?'left':'right',JSON.stringify(state.edge));
+    assert.equal(state.edge.buttons,a<=-180?3:2,JSON.stringify(state.edge));
+    assert.ok(state.edge.cameraWidth>1,JSON.stringify(state.edge));
+   }
    const file=size+'-angle-'+String(Math.abs(a)).padStart(3,'0')+'.png';
    await page.screenshot({path:path.join(root,file)});result.shots.push(file);
    report(size+' phone '+a+'°',state.bands);
@@ -157,7 +173,7 @@ try{
   }
  }
  assert.deepEqual(result.errors,[]);report('No browser JS errors');
- result.status='CAPTURED';
+ result.status='CAPTURED_VISUAL_REVIEW_REQUIRED';
 }catch(e){result.status='FAIL';result.failure=e.stack||String(e);process.exitCode=1}
 finally{await browser?.close().catch(()=>{});fs.writeFileSync(path.join(root,'report.json'),JSON.stringify(result,null,2));console.log(JSON.stringify({engine,status:result.status,checks:result.checks.length,shots:result.shots.length,failure:result.failure},null,2));}
 })();
