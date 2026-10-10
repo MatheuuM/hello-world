@@ -67,12 +67,34 @@ for(let i=0;i<contour.length-1;i++){
   shell.appendChild(piece);count++;
  }
 }
-for(const b of [{x:-.504,y:-.218,h:.115},{x:-.504,y:-.089,h:.115},{x:.504,y:-.17,h:.14}]){
+// Five independent mechanical controls: action, volume up/down, lock, camera.
+for(const b of [
+ {x:-.504,y:-.312,h:.047,kind:'action'},
+ {x:-.504,y:-.216,h:.095,kind:'volume'},
+ {x:-.504,y:-.090,h:.095,kind:'volume'},
+ {x:.504,y:-.178,h:.146,kind:'lock'},
+ {x:.504,y:.210,h:.073,kind:'camera-control'}
+]){
  const el=document.createElement('i');
- el.className='css3d-control css3d-control--'+(b.x<0?'left':'right');
+ el.className='css3d-control css3d-control--'+(b.x<0?'left':'right')+' css3d-control--'+b.kind;
  el.style.height='calc(var(--shell-h) * '+b.h+')';
  el.style.transform='translate3d(calc(var(--shell-w) * '+b.x+'),calc(var(--shell-h) * '+b.y+'),0) rotateY('+(b.x<0?-90:90)+'deg) translate(-50%,-50%)';
  device.appendChild(el);
+}
+// Bottom-edge cutouts, visible only as the handset tilts away from camera.
+// Keep these in the device coordinate system, not as UI overlays.
+for(const klass of ['css3d-port','css3d-speakers']){
+ const e=document.createElement('span');
+ e.className=klass;e.setAttribute('aria-hidden','true');
+ device.appendChild(e);
+}
+for(const x of [-.499,.499]){
+ for(const y of [-.333,.333]){
+  const seam=document.createElement('i');
+  seam.className='css3d-antenna';seam.setAttribute('aria-hidden','true');
+  seam.style.transform='translate3d(calc(var(--shell-w) * '+x+'),calc(var(--shell-h) * '+y+'),0) rotateY('+(x<0?-90:90)+'deg) translate(-50%,-50%)';
+  device.appendChild(seam);
+ }
 }
 // Physical camera-plateau walls. Unlike a shadow, their side faces occlude and
 // change perspective during the scroll rotation; radius remains round in profile.
