@@ -58,7 +58,28 @@ for(const b of [{x:-.504,y:-.218,h:.115},{x:-.504,y:-.089,h:.115},{x:.504,y:-.17
 }
 function setSize(w,h){rig.style.setProperty('--shell-w',w.toFixed(3)+'px');rig.style.setProperty('--shell-h',h.toFixed(3)+'px')}
 setSize(W,H);
-window.MOVVA_SHELL={setSize,partCount:count,edgeCount:contour.length-1,layerCount:layers.length,bodyDepthFactor:FACE*2,
+
+const ua=navigator.userAgent||'';
+const isWebKit=/AppleWebKit/i.test(ua)&&(!/(?:Chrome|Chromium|Edg|OPR|SamsungBrowser)/i.test(ua)||/iPhone|iPad|iPod/i.test(ua));
+const profile=document.createElement('div');
+profile.className='css3d-webkit-profile';
+profile.setAttribute('aria-hidden','true');
+profile.innerHTML='<i class="profile-button"></i><i class="profile-button"></i>';
+rig.appendChild(profile);
+if(isWebKit)rig.classList.add('css3d-webkit-engine');
+function setPose(ry,rx,rz){
+ if(!isWebKit)return;
+ const a=ry*Math.PI/180,c=Math.abs(Math.cos(a)),sin=Math.sin(a);
+ const t=Math.max(0,Math.min(1,(.68-c)/.58)),fade=t*t*(3-2*t);
+ const width=parseFloat(rig.style.getPropertyValue('--shell-w'))||W;
+ const projected=width*c+width*FACE*2*Math.abs(sin);
+ const sign=Math.sign(-sin*Math.cos(a))||1;
+ const shift=sign*Math.max(0,(projected-width*FACE*2)*.5);
+ profile.style.opacity=fade.toFixed(4);
+ profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
+}
+
+window.MOVVA_SHELL={setSize,setPose,isWebKit,partCount:count,edgeCount:contour.length-1,layerCount:layers.length,bodyDepthFactor:FACE*2,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };
