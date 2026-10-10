@@ -1,0 +1,30 @@
+name: MOVVA Stage 0 Baseline Source Export
+on:
+  push:
+    branches: [audit/2026-10-09-movva-stage0]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export immutable source and asset inventory
+        run: |
+          mkdir -p /tmp/movva-stage0
+          tar czf /tmp/movva-stage0/source.tar.gz --exclude=.git -C "$GITHUB_WORKSPACE" .
+          python3 - <<'PY'
+          import os,json,pathlib,subprocess,hashlib
+          data={'base_sha':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'files':[]}
+          for p in pathlib.Path('.').rglob('*'):
+            if p.is_file() and '.git' not in p.parts:
+              data['files'].append({'path':str(p),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
+          pathlib.Path('/tmp/movva-stage0/inventory.json').write_text(json.dumps(data,indent=2))
+          print('Baseline source SHA:',data['base_sha'],'files:',len(data['files']))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: movva-stage0-baseline
+          path: /tmp/movva-stage0/
+          retention-days: 10
