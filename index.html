@@ -43,8 +43,19 @@
  <div class="css3d-object" id="css3d-object">
   <div class="css3d-unibody" aria-hidden="true"></div>
   <div class="css3d-back">
-   <div class="css3d-camera"><i></i><i></i><i></i><b></b></div>
    <img class="css3d-rear-logo" src="/assets/movva.svg" alt="">
+  </div>
+  <!-- Camera hardware must be a 3D sibling of the clipped rear panel. -->
+  <div class="css3d-camera-rig" aria-hidden="true">
+   <div class="css3d-camera">
+    <span class="css3d-camera-foot"></span>
+    <span class="css3d-camera-deck"></span>
+    <span class="css3d-camera-lens css3d-camera-lens--top"><i class="lens-barrel"></i><i class="lens-rim"></i><i class="lens-optic"></i><i class="lens-glass"></i></span>
+    <span class="css3d-camera-lens css3d-camera-lens--right"><i class="lens-barrel"></i><i class="lens-rim"></i><i class="lens-optic"></i><i class="lens-glass"></i></span>
+    <span class="css3d-camera-lens css3d-camera-lens--bottom"><i class="lens-barrel"></i><i class="lens-rim"></i><i class="lens-optic"></i><i class="lens-glass"></i></span>
+    <span class="css3d-camera-flash"><i></i></span>
+    <span class="css3d-camera-sensor"></span>
+   </div>
   </div>
   <div class="css3d-front"><div class="css3d-display">
     <img src="/assets/home.webp" alt="" class="css3d-screen css3d-screen-home" draggable="false" loading="eager" decoding="async">
