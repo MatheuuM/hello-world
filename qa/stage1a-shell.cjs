@@ -26,6 +26,9 @@ try{
   assert.ok(initial.parts>110&&initial.parts<200,JSON.stringify(initial));
   assert.equal(initial.obsolete,0);assert.equal(initial.renderer,'CSS3D DOM');
   assert.equal(initial.layers,3);assert.ok(initial.valid);assert.ok(Math.abs(initial.overflow)<=1);
+  const camera=await page.evaluate(()=>({rig:document.querySelectorAll('.css3d-camera-rig').length,lenses:document.querySelectorAll('.css3d-camera-lens').length,clipped:document.querySelector('.css3d-back').contains(document.querySelector('.css3d-camera-rig')),depth:getComputedStyle(document.querySelector('.css3d-camera-rig')).transform,segments:MOVVA_SHELL.cornerSegments,overlap:MOVVA_SHELL.curveOverlapPx}));
+  assert.equal(camera.rig,1);assert.equal(camera.lenses,3);assert.equal(camera.clipped,false);assert.notEqual(camera.depth,'none');assert.ok(camera.segments>=14);assert.ok(camera.overlap<.1);
+  report(size+' unclipped camera depth',camera);
   report(size+' shared-shell geometry',initial);
   await page.evaluate(()=>__MOVVA_QA__.setProgress(.35));
   await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.35)<.0006,{timeout:18000});
