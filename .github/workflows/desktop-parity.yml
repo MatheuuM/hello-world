@@ -1,7 +1,7 @@
 name: MOVVA Desktop 3D Parity
 on:
   push:
-    branches: [fix/desktop-motion-start-and-3d-parity]
+    branches: [fix/desktop-motion-start-and-3d-parity, fix/desktop-restore-control-visibility]
 permissions:
   contents: read
 jobs:
