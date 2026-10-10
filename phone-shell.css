@@ -96,3 +96,101 @@
  background:radial-gradient(circle,#111a18 24%,#53665e 48%,#28352d 70%);
  transform:translateZ(6px);box-shadow:0 0 0 1px #637169;
 }
+
+/* MOVVA hardware atelier / 18 Pro Max reference language.
+   Proportions follow 78 x 163.4 x 8.75 mm. Finish is MOVVA-exclusive
+   pearl titanium/sage, not a branded product replica. */
+.css3d-device{--shell-h:356.128px;--movva-radius:calc(var(--shell-w) * .135)}
+.css3d-front,.css3d-back{border-radius:13.5% / 6.44%}
+.css3d-front{
+ border-width:calc(var(--shell-w) * .021);
+ border-color:#3d4640;
+ box-shadow:inset 0 0 0 .65px rgba(236,242,234,.33);
+}
+.css3d-display{border-radius:11.8% / 5.6%}
+.css3d-island{top:1.55%;width:22.7%;height:2.62%;background:#080c0c;box-shadow:0 0 0 .55px #46504b}
+.css3d-back{
+ border-width:calc(var(--shell-w) * .011);
+ border-color:#747d71;
+ background:linear-gradient(115deg,#b4bcb0 0%,#e2e4d9 33%,#c3c9bf 70%,#909a8e 100%);
+ box-shadow:inset 0 0 0 .75px rgba(255,255,255,.50);
+}
+.css3d-back::before{
+ content:"";position:absolute;z-index:0;top:28.0%;left:4.1%;right:4.1%;bottom:3.7%;
+ border-radius:11.5% / 6.1%;
+ background:linear-gradient(132deg,rgba(244,244,234,.80) 0%,rgba(224,229,218,.68) 42%,rgba(192,200,187,.66) 100%);
+ box-shadow:0 0 0 .8px rgba(89,104,92,.30),inset 1.2px 1.8px 4px rgba(255,255,255,.61),inset -1px -2px 3px rgba(55,68,58,.12);
+ pointer-events:none;
+}
+.css3d-back::after{
+ content:"";position:absolute;z-index:0;inset:0;border-radius:inherit;
+ background:linear-gradient(105deg,rgba(255,255,255,.10),transparent 24%,rgba(255,255,255,.08) 71%,transparent);
+ pointer-events:none;
+}
+.css3d-rear-logo{z-index:1;top:58%;width:37%;opacity:.60;filter:grayscale(1)}
+.css3d-camera-rig .css3d-camera{
+ top:3.05%;left:3.05%;width:93.90%;
+ height:auto;aspect-ratio:1.88;
+ border-radius:calc(var(--shell-w) * .105);
+ background:transparent;border:0;box-shadow:none;
+}
+.css3d-camera-foot,.css3d-camera-deck{border-radius:inherit}
+.css3d-camera-foot{
+ transform:translateZ(calc(var(--shell-w) * .004));
+ background:linear-gradient(135deg,#57665a 0%,#99a89a 35%,#636f65 72%,#465147 100%);
+ box-shadow:0 2px 7px rgba(30,40,33,.35),0 0 0 .7px rgba(52,64,54,.66);
+}
+.css3d-camera-deck{
+ inset:1.25%;border-radius:calc(var(--shell-w) * .096);
+ transform:translateZ(calc(var(--shell-w) * .025));
+ background:linear-gradient(112deg,#bbc6b7 0%,#d8ded0 20%,#b3c0b1 45%,#849487 78%,#a3b1a2 100%);
+ border:.6px solid rgba(71,90,74,.45);
+ box-shadow:inset 1.4px 1.4px 2.5px rgba(255,255,255,.69),inset -2px -2.5px 4px rgba(35,53,38,.24);
+}
+.css3d-camera-lens{
+ width:19.1%;aspect-ratio:1;transform:translateZ(calc(var(--shell-w) * .035));
+}
+.css3d-camera-lens--top{top:11%;left:9.3%}
+.css3d-camera-lens--bottom{bottom:11%;left:9.3%}
+.css3d-camera-lens--right{top:32%;right:auto;left:34.0%}
+.css3d-camera-rig .css3d-camera .lens-barrel{
+ inset:-6%;border-radius:50%;transform:translateZ(0);
+ background:linear-gradient(134deg,#222c29 0%,#99aaa1 24%,#515f55 53%,#141d1b 89%);
+ box-shadow:1px 2px 3px rgba(14,25,19,.42),inset 0 0 0 1.1px rgba(232,235,218,.39);
+}
+.css3d-camera-rig .css3d-camera .lens-rim{
+ inset:2.8%;transform:translateZ(calc(var(--shell-w) * .008));
+ background:linear-gradient(135deg,#c6d1c4 0%,#202f2d 33%,#7e8b82 57%,#222e2b 85%);
+ box-shadow:inset 0 0 0 1.2px #202927,0 1px 2px rgba(21,29,25,.69);
+}
+.css3d-camera-rig .css3d-camera .lens-optic{
+ inset:15.5%;transform:translateZ(calc(var(--shell-w) * .011));
+ background:radial-gradient(circle at 41% 34%,#365c61 0 8%,#0b1c20 20%,#020608 43%,#152d33 58%,#050b0d 83%);
+ box-shadow:inset 1.5px 2px 5px rgba(0,0,0,.87),inset -1px -1px 2px rgba(171,199,188,.29);
+}
+.css3d-camera-rig .css3d-camera .lens-glass{
+ inset:17.5%;transform:translateZ(calc(var(--shell-w) * .013));
+ background:radial-gradient(ellipse at 34% 22%,rgba(194,224,222,.28),transparent 39%),linear-gradient(128deg,transparent 37%,rgba(173,210,210,.11) 51%,transparent 65%);
+}
+.css3d-camera-flash{
+ top:19%;right:14%;width:7.2%;transform:translateZ(calc(var(--shell-w) * .030));
+ box-shadow:0 0 0 1.3px #6d786c,0 1px 3px rgba(42,57,45,.25);
+}
+.css3d-camera-sensor{
+ bottom:21%;right:15%;width:6.7%;transform:translateZ(calc(var(--shell-w) * .030));
+ box-shadow:0 0 0 1.2px rgba(81,97,82,.91),0 1px 2px rgba(18,29,25,.44);
+}
+.css3d-camera-microphone{
+ position:absolute;right:22.5%;bottom:16%;width:2.4%;aspect-ratio:1;
+ border-radius:50%;transform:translateZ(calc(var(--shell-w) * .028));
+ background:radial-gradient(circle,#151d1b 40%,#66756a 65%);
+ box-shadow:0 0 0 .6px #899789;
+}
+/* Walls form a genuine perimeter extrusion; no disconnected corner caps. */
+.css3d-camera-wall-face{
+ position:absolute;display:block;left:50%;top:50%;margin:0;box-sizing:border-box;
+ transform-origin:center center;backface-visibility:visible;-webkit-backface-visibility:visible;
+ background:linear-gradient(180deg,#cad7c6 0%,#9cae9f 30%,#5a695c 90%);
+ pointer-events:none;
+}
+@media(max-width:760px){.css3d-front{border-width:calc(var(--shell-w) * .021)}}
