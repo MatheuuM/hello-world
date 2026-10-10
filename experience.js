@@ -5,7 +5,7 @@
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const root=document.documentElement,canvas=$('#world'),stage=$('#stage'),experience=$('#experience');
-const media=matchMedia('(prefers-reduced-motion: reduce)'),motion=$('#motion');
+const media=matchMedia('(prefers-reduced-motion: reduce)');
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>{t=clamp(t);return t*t*(3-2*t);};
 const range=(p,a,b)=>smooth((p-a)/(b-a));
@@ -13,16 +13,9 @@ const windows=[[0,.13],[.125,.275],[.27,.435],[.43,.595],[.59,.775],[.77,.935],[
 const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CIRCLE','MOVVA'];
 const scenes=$$('.scene'),dots=$$('.chapter-dots a');
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
-let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null,userMotion=true,forcedMotion=false;
+let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null;
 const launchParams=new URLSearchParams(location.search);
-const requestMotion=launchParams.get('motion');
-let storedMotion=null;
-try{storedMotion=sessionStorage.getItem('movva-motion')}catch(_){}
-if(requestMotion==='on'||requestMotion==='off'){
- storedMotion=requestMotion;try{sessionStorage.setItem('movva-motion',storedMotion)}catch(_){}
-}
-userMotion=storedMotion!=='off';
-forcedMotion=storedMotion==='on';
+// The immersive presentation is on by default; old per-tab settings no longer disable it.
 const mat={
  identity:()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
  mul:(a,b)=>{const m=Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)m[c*4+r]+=a[k*4+r]*b[c*4+k];return m;},
@@ -265,46 +258,20 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,
 }
 function clearScenes(){window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
 function applyMode(){
- const short=innerWidth<=760&&innerHeight<580;
- const landscape=innerHeight<500&&innerWidth>innerHeight;
- const systemReduced=media.matches&&!forcedMotion;
- enabled=ready&&userMotion&&!systemReduced&&!short&&!landscape;
- root.classList.toggle('motion-ready',ready);
+ // Keep the phone and scroll-driven cards active at every viewport size.
+ // WebGL failure is handled by the existing CSS3D renderer; static HTML remains
+ // the last-resort fallback if JavaScript or both rendering paths are unavailable.
+ enabled=ready;
  root.classList.toggle('enhanced',enabled);
  root.classList.toggle('dom-device',enabled&&domDevice);
- root.classList.toggle('motion-override',enabled&&media.matches&&forcedMotion);
+ // Ensure the Motion Studio is visible even under OS-level reduced-motion settings.
+ root.classList.toggle('motion-override',enabled&&media.matches);
  root.style.scrollBehavior=enabled?'auto':'';
- motion.setAttribute('aria-pressed',String(enabled));
- motion.setAttribute('aria-label',enabled?'Desativar animações':'Ativar experiência 3D');
- motion.title=enabled?'Trocar para leitura sem animações':'Ativar experiência 3D';
- motion.querySelector('span').textContent=enabled?'Movimento':'Ativar 3D';
- const resume=$('#motion-resume');
- const activate=$('#enable-motion');
- const note=$('#motion-resume-reason');
- if(resume&&activate&&note){
-  resume.hidden=enabled||!ready;
-  activate.disabled=short||landscape;
-  note.textContent=(short||landscape)
-    ?'Aumente a altura da janela do navegador para abrir a experiência 3D.'
-    :(!userMotion?'A experiência animada foi desativada nesta aba. Você pode reativá-la aqui.'
-    :(systemReduced?'Seu sistema solicita menos movimento. Ative o 3D aqui se desejar ver a experiência completa.':'Ative os movimentos para acompanhar o celular e os cards.'));
- }
  if(enabled){resize();position=target=measure();requestTick();}
  else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}
 }
 function jump(p,animated=true){if(!enabled)return;const top=experience.offsetTop+p*(experience.offsetHeight-stage.clientHeight);scrollTo({top,behavior:animated?'smooth':'auto'});target=p;requestTick();}
 $$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));
-function setMotion(next){
- const previous=enabled,active=weights(position).indexOf(Math.max(...weights(position)));
- userMotion=Boolean(next);
- forcedMotion=Boolean(next);
- try{sessionStorage.setItem('movva-motion',next?'on':'off')}catch(_){}
- applyMode();
- if(previous&&!enabled){scenes[active].scrollIntoView({behavior:'instant',block:'start'});}
- else if(enabled){jump(0,false);}
-}
-motion.addEventListener('click',()=>setMotion(!enabled));
-$('#enable-motion')?.addEventListener('click',()=>setMotion(true));
 addEventListener('scroll',()=>{if(enabled){$('.header').style.position=scrollY>experience.offsetHeight-100?'absolute':'fixed';requestTick();}},{passive:true});
 addEventListener('movva:hero-layout',requestTick);
 let resizeId;addEventListener('resize',()=>{clearTimeout(resizeId);resizeId=setTimeout(()=>{applyMode();resize();},100);},{passive:true});
@@ -327,11 +294,9 @@ const preferDOM=launchParams.get('renderer')!=='webgl' || matchMedia('(max-width
 window.MOVVA_3D_STATUS=()=>({
  engine:domDevice?'CSS3D DOM':'WebGL',
  ready,active:enabled,
- prefersReducedMotion:media.matches,
- motionAllowed:userMotion,
- explicitOverride:forcedMotion,
- windowTooShort:(innerWidth<=760&&innerHeight<580)||(innerHeight<500&&innerWidth>innerHeight),
- storedPreference:storedMotion,
+ reducedMotionPreference:media.matches,
+ motionPolicy:'always-on',
+ renderingFallback:domDevice,
  viewport:[innerWidth,innerHeight]
 });
 if(preferDOM){activateDOM('mobile-safari-safe');}
