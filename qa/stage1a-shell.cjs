@@ -77,6 +77,8 @@ try{
     window.MOVVA_SHELL?.setPose(angle,3,0);
    },a);
    await page.waitForTimeout(65);
+   // Apply after the RAF settles: CSS QA overrides the visual angle only.
+   await page.evaluate(angle=>MOVVA_SHELL.setPose(angle,3,0),a);
    const state=await page.evaluate(()=>({
      overflow:document.documentElement.scrollWidth-innerWidth,
      body:getComputedStyle(document.querySelector('.css3d-object')).transform,
