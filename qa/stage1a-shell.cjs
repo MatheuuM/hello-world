@@ -52,6 +52,24 @@ try{
    report(size+' phone '+a+'°',state.bands);
   }
   await mute.evaluate(x=>x.remove());
+  // The WebKit safety silhouette must also work during the actual scroll path.
+  // These are unmodified, production-style poses (no geometry-only override).
+  for(const [label,p] of [['real-edge',.135],['real-three-quarter',.20]]){
+   await page.evaluate(v=>__MOVVA_QA__.setProgress(v),p);
+   await page.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.0006,p,{timeout:18000});
+   await page.waitForTimeout(160);
+   const actual=await page.evaluate(()=>({
+    engine:MOVVA_SHELL.isWebKit?'webkit':'chromium',
+    profileOpacity:+getComputedStyle(document.querySelector('.css3d-webkit-profile')).opacity,
+    profileDisplay:getComputedStyle(document.querySelector('.css3d-webkit-profile')).display,
+    scrollProgress:__MOVVA_QA__.progress
+   }));
+   if(actual.engine==='webkit'&&label==='real-edge')assert.ok(actual.profileOpacity>.55,JSON.stringify(actual));
+   const file=size+'-'+label+'.png';
+   await page.screenshot({path:path.join(root,file)});result.shots.push(file);
+   report(size+' true-scroll '+label,actual);
+  }
+
   await page.evaluate(()=>{document.documentElement.classList.remove('qa-rear');document.documentElement.style.removeProperty('--qa-y')});
   for(const [label,p] of [['training',.35],['nutrition',.52],['evolution',.70]]){
    await page.evaluate(v=>__MOVVA_QA__.setProgress(v),p);
