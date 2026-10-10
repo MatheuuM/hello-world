@@ -26,9 +26,42 @@ try{
   assert.ok(initial.parts>110&&initial.parts<200,JSON.stringify(initial));
   assert.equal(initial.obsolete,0);assert.equal(initial.renderer,'CSS3D DOM');
   assert.equal(initial.layers,3);assert.ok(initial.valid);assert.ok(Math.abs(initial.overflow)<=1);
-  const camera=await page.evaluate(()=>({rig:document.querySelectorAll('.css3d-camera-rig').length,lenses:document.querySelectorAll('.css3d-camera-lens').length,clipped:document.querySelector('.css3d-back').contains(document.querySelector('.css3d-camera-rig')),depth:getComputedStyle(document.querySelector('.css3d-camera-rig')).transform,segments:MOVVA_SHELL.cornerSegments,overlap:MOVVA_SHELL.curveOverlapPx}));
-  assert.equal(camera.rig,1);assert.equal(camera.lenses,3);assert.equal(camera.clipped,false);assert.notEqual(camera.depth,'none');assert.ok(camera.segments>=14);assert.ok(camera.overlap<.1);
-  report(size+' unclipped camera depth',camera);
+  const camera=await page.evaluate(()=>{
+   const cam=document.querySelector('.css3d-camera-rig .css3d-camera');
+   const rig=document.querySelector('#css3d-device');
+   const rect=cam.getBoundingClientRect();
+   const lens=cam.querySelector('.css3d-camera-lens');
+   return {
+    rig:document.querySelectorAll('.css3d-camera-rig').length,
+    lenses:cam.querySelectorAll('.css3d-camera-lens').length,
+    walls:cam.querySelectorAll('.css3d-camera-wall-face').length,
+    clipped:document.querySelector('.css3d-back').contains(cam),
+    cameraDepth:getComputedStyle(document.querySelector('.css3d-camera-rig')).transform,
+    lensDepth:getComputedStyle(lens).transform,
+    ratio:MOVVA_SHELL.width/MOVVA_SHELL.height,
+    referenceRatio:MOVVA_SHELL.referenceAspectRatio,
+    plateauWidth:parseFloat(getComputedStyle(cam).width)/MOVVA_SHELL.width,
+    segments:MOVVA_SHELL.cornerSegments,
+    overlap:MOVVA_SHELL.curveOverlapPx,
+    glassPanel:getComputedStyle(document.querySelector('.css3d-back'),'::before').content,
+    microphone:!!cam.querySelector('.css3d-camera-microphone'),
+    viewport:[innerWidth,innerHeight],rect:rect.toJSON()
+   };
+  });
+  assert.equal(camera.rig,1);
+  assert.equal(camera.lenses,3);
+  assert.equal(camera.clipped,false);
+  assert.ok(camera.walls>=45 && camera.walls<=90,JSON.stringify(camera));
+  assert.ok(camera.plateauWidth>.90 && camera.plateauWidth<.96);
+  assert.ok(camera.microphone);
+  assert.ok(camera.glassPanel!=='none');
+  assert.ok(Math.abs(camera.ratio-78/163.4)<.002);
+  assert.ok(Math.abs(camera.referenceRatio-78/163.4)<.0001);
+  assert.notEqual(camera.cameraDepth,'none');
+  assert.notEqual(camera.lensDepth,'none');
+  assert.ok(camera.segments>=14);
+  assert.ok(camera.overlap<.1);
+  report(size+' raised flagship plateau and three optical barrels',camera);
   report(size+' shared-shell geometry',initial);
   await page.evaluate(()=>__MOVVA_QA__.setProgress(.35));
   await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.35)<.0006,{timeout:18000});
@@ -54,6 +87,11 @@ try{
    await page.screenshot({path:path.join(root,file)});result.shots.push(file);
    report(size+' phone '+a+'°',state.bands);
   }
+  // Dedicated close-up of the back-facing shell; full-screen shots remain above.
+  await page.evaluate(()=>{document.documentElement.classList.add('qa-rear');document.documentElement.style.setProperty('--qa-y','-159deg');});
+  await page.waitForTimeout(150);
+  await page.locator('#css3d-device').screenshot({path:path.join(root,size+'-camera-closeup.png')});
+  result.shots.push(size+'-camera-closeup.png');
   await mute.evaluate(x=>x.remove());
   // The WebKit safety silhouette must also work during the actual scroll path.
   // These are unmodified, production-style poses (no geometry-only override).
