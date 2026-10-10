@@ -46,7 +46,7 @@ try{
    }));
    assert.ok(Math.abs(state.overflow)<=1,JSON.stringify(state));
    assert.ok(state.body!=='none');assert.equal(state.controls,3);
-   assert.ok(Math.abs(new DOMMatrixReadOnly(state.body).m11-Math.cos(a*Math.PI/180))<.028,JSON.stringify({angle:a,transform:state.body}));
+   assert.ok(Math.abs(Number(state.body.slice(state.body.indexOf('(')+1).split(',')[0])-Math.cos(a*Math.PI/180))<.028,JSON.stringify({angle:a,transform:state.body}));
    const file=size+'-angle-'+String(Math.abs(a)).padStart(3,'0')+'.png';
    await page.screenshot({path:path.join(root,file)});result.shots.push(file);
    report(size+' phone '+a+'°',state.bands);
