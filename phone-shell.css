@@ -1,7 +1,7 @@
 /* MOVVA Stage 1A — continuous rounded phone shell (geometric prototype). */
 .css3d-device{--shell-w:170px;--shell-h:364.026px}
 .css3d-unibody{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
-.css3d-shell-face{position:absolute;left:50%;top:50%;margin:0;display:block;box-sizing:border-box;transform-origin:center center;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.css3d-shell-face{position:absolute;left:50%;top:50%;margin:0;display:block;box-sizing:border-box;transform-origin:0 0;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .css3d-shell-face--wall{background:linear-gradient(0deg,#3b413d 0%,#707971 16%,#a1aa9d 48%,#777f76 82%,#444b45 100%)}
 .css3d-shell-face--front{background:linear-gradient(0deg,#555e56,#c1c7b9 42%,#848c81 100%)}
 .css3d-shell-face--rear{background:linear-gradient(0deg,#4d554d,#aeb4a8 45%,#656d62 100%)}
@@ -9,6 +9,6 @@
 .css3d-front{border:calc(var(--shell-w) * .027) solid #434b44;transform:translateZ(calc(var(--shell-w) * .056));box-shadow:inset 0 0 0 1px rgba(255,255,255,.36),0 0 0 .4px #343a34}
 .css3d-back{border:calc(var(--shell-w) * .012) solid #7b8378;transform:rotateY(180deg) translateZ(calc(var(--shell-w) * .056));box-shadow:inset 0 0 0 1.2px rgba(255,255,255,.21)}
 .css3d-display{border-radius:9.4% / 4.7%}
-.css3d-control{position:absolute;top:50%;left:50%;display:block;width:calc(var(--shell-w) * .04);border-radius:calc(var(--shell-w) * .012);background:linear-gradient(90deg,#6f786f,#c3cbbc 45%,#4f574f);box-shadow:0 1px 2px #292d2975;transform-origin:center;backface-visibility:visible;pointer-events:none}
+.css3d-control{position:absolute;top:50%;left:50%;display:block;width:calc(var(--shell-w) * .04);border-radius:calc(var(--shell-w) * .012);background:linear-gradient(90deg,#6f786f,#c3cbbc 45%,#4f574f);box-shadow:0 1px 2px #292d2975;transform-origin:0 0;backface-visibility:visible;pointer-events:none}
 .css3d-control--right{background:linear-gradient(90deg,#606860,#bcc4b6 55%,#424941)}
 @media(max-width:760px){.css3d-front{border-width:calc(var(--shell-w) * .027)}}
