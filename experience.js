@@ -13,8 +13,16 @@ const windows=[[0,.13],[.125,.275],[.27,.435],[.43,.595],[.59,.775],[.77,.935],[
 const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CIRCLE','MOVVA'];
 const scenes=$$('.scene'),dots=$$('.chapter-dots a');
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
-let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null,userMotion=true;
-try{userMotion=sessionStorage.getItem('movva-motion')!=='off';}catch(_){}
+let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null,userMotion=true,forcedMotion=false;
+const launchParams=new URLSearchParams(location.search);
+const requestMotion=launchParams.get('motion');
+let storedMotion=null;
+try{storedMotion=sessionStorage.getItem('movva-motion')}catch(_){}
+if(requestMotion==='on'||requestMotion==='off'){
+ storedMotion=requestMotion;try{sessionStorage.setItem('movva-motion',storedMotion)}catch(_){}
+}
+userMotion=storedMotion!=='off';
+forcedMotion=storedMotion==='on';
 const mat={
  identity:()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
  mul:(a,b)=>{const m=Array(16).fill(0);for(let c=0;c<4;c++)for(let r=0;r<4;r++)for(let k=0;k<4;k++)m[c*4+r]+=a[k*4+r]*b[c*4+k];return m;},
@@ -256,10 +264,47 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
 function clearScenes(){window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
-function applyMode(){const short=innerWidth<=760&&innerHeight<580,landscape=innerHeight<500&&innerWidth>innerHeight;enabled=ready&&userMotion&&!media.matches&&!short&&!landscape;root.classList.toggle('enhanced',enabled);root.classList.toggle('dom-device',enabled&&domDevice);root.style.scrollBehavior=enabled?'auto':'';motion.setAttribute('aria-pressed',String(enabled));motion.setAttribute('aria-label',enabled?'Desativar animações':'Ativar animações');motion.title=enabled?'Trocar para leitura sem animações':'Experiência sem movimento';motion.querySelector('span').textContent=enabled?'Movimento':'Modo leve';if(enabled){resize();position=target=measure();requestTick();}else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}}
+function applyMode(){
+ const short=innerWidth<=760&&innerHeight<580;
+ const landscape=innerHeight<500&&innerWidth>innerHeight;
+ const systemReduced=media.matches&&!forcedMotion;
+ enabled=ready&&userMotion&&!systemReduced&&!short&&!landscape;
+ root.classList.toggle('motion-ready',ready);
+ root.classList.toggle('enhanced',enabled);
+ root.classList.toggle('dom-device',enabled&&domDevice);
+ root.classList.toggle('motion-override',enabled&&media.matches&&forcedMotion);
+ root.style.scrollBehavior=enabled?'auto':'';
+ motion.setAttribute('aria-pressed',String(enabled));
+ motion.setAttribute('aria-label',enabled?'Desativar animações':'Ativar experiência 3D');
+ motion.title=enabled?'Trocar para leitura sem animações':'Ativar experiência 3D';
+ motion.querySelector('span').textContent=enabled?'Movimento':'Ativar 3D';
+ const resume=$('#motion-resume');
+ const activate=$('#enable-motion');
+ const note=$('#motion-resume-reason');
+ if(resume&&activate&&note){
+  resume.hidden=enabled||!ready;
+  activate.disabled=short||landscape;
+  note.textContent=(short||landscape)
+    ?'Aumente a altura da janela do navegador para abrir a experiência 3D.'
+    :(!userMotion?'A experiência animada foi desativada nesta aba. Você pode reativá-la aqui.'
+    :(systemReduced?'Seu sistema solicita menos movimento. Ative o 3D aqui se desejar ver a experiência completa.':'Ative os movimentos para acompanhar o celular e os cards.'));
+ }
+ if(enabled){resize();position=target=measure();requestTick();}
+ else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}
+}
 function jump(p,animated=true){if(!enabled)return;const top=experience.offsetTop+p*(experience.offsetHeight-stage.clientHeight);scrollTo({top,behavior:animated?'smooth':'auto'});target=p;requestTick();}
 $$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));
-motion.addEventListener('click',()=>{const previous=enabled,active=weights(position).indexOf(Math.max(...weights(position)));userMotion=!enabled;try{sessionStorage.setItem('movva-motion',userMotion?'on':'off')}catch(_){}applyMode();if(previous){scenes[active].scrollIntoView({behavior:'instant',block:'start'});}else if(enabled)jump(0,false);});
+function setMotion(next){
+ const previous=enabled,active=weights(position).indexOf(Math.max(...weights(position)));
+ userMotion=Boolean(next);
+ forcedMotion=Boolean(next);
+ try{sessionStorage.setItem('movva-motion',next?'on':'off')}catch(_){}
+ applyMode();
+ if(previous&&!enabled){scenes[active].scrollIntoView({behavior:'instant',block:'start'});}
+ else if(enabled){jump(0,false);}
+}
+motion.addEventListener('click',()=>setMotion(!enabled));
+$('#enable-motion')?.addEventListener('click',()=>setMotion(true));
 addEventListener('scroll',()=>{if(enabled){$('.header').style.position=scrollY>experience.offsetHeight-100?'absolute':'fixed';requestTick();}},{passive:true});
 addEventListener('movva:hero-layout',requestTick);
 let resizeId;addEventListener('resize',()=>{clearTimeout(resizeId);resizeId=setTimeout(()=>{applyMode();resize();},100);},{passive:true});
@@ -276,8 +321,19 @@ function activateDOM(reason){
  window.__MOVVA_QA__={version:'safari-device-hotfix',engine:'CSS3D DOM',ready:true,get progress(){return position},get enabled(){return enabled},get meshCount(){return 0},get drawCalls(){return drawCalls},get textureCount(){return 5},get settled(){return Math.abs(position-measure())<.00003},get modelMatrix(){return lastModel?[...lastModel]:null},get frameCount(){return frameCount},get reason(){return reason},setProgress(p){jump(clamp(p),false)}};
 }
 // ?renderer=css3d uses the same 3D hardware presentation as mobile on desktop.
-const explicitCSS3D=new URLSearchParams(location.search).get('renderer')==='css3d';
-const preferDOM=explicitCSS3D || matchMedia('(max-width:760px)').matches || /iPad|iPhone|iPod/.test(navigator.userAgent);
+// Consistent with mobile: CSS3D is the default on desktop as well.
+ // WebGL remains available as an explicit experimental opt-in on capable desktop browsers.
+const preferDOM=launchParams.get('renderer')!=='webgl' || matchMedia('(max-width:760px)').matches || /iPad|iPhone|iPod/.test(navigator.userAgent);
+window.MOVVA_3D_STATUS=()=>({
+ engine:domDevice?'CSS3D DOM':'WebGL',
+ ready,active:enabled,
+ prefersReducedMotion:media.matches,
+ motionAllowed:userMotion,
+ explicitOverride:forcedMotion,
+ windowTooShort:(innerWidth<=760&&innerHeight<580)||(innerHeight<500&&innerWidth>innerHeight),
+ storedPreference:storedMotion,
+ viewport:[innerWidth,innerHeight]
+});
 if(preferDOM){activateDOM('mobile-safari-safe');}
 else build().catch(err=>{console.warn('MOVVA: falling back to CSS 3D.',err.message);activateDOM('WebGL fallback: '+err.message);});
 })();
