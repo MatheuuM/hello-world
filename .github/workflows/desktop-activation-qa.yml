@@ -1,0 +1,58 @@
+name: MOVVA Desktop 3D Activation QA
+on:
+  push:
+    branches: [fix/desktop-interactive-mode-restore]
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser dependencies
+        run: |
+          node --check experience.js
+          node --check qa/desktop-mode-recovery.cjs
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 180s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Test desktop paused/restored
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-qa.log 2>&1 &
+          timeout 210s node qa/desktop-mode-recovery.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-restore-${{ matrix.engine }}
+          path: qa-recovery/${{ matrix.engine }}/
+          retention-days: 7
+  gate:
+    needs: browser
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-restore-*
+          path: evidence
+      - name: Require both browsers and each scenario
+        run: |
+          python3 - <<'PY'
+          import pathlib,json,os
+          checks=0
+          for name in ['chromium','webkit']:
+            r=json.loads((pathlib.Path('evidence')/('desktop-restore-'+name)/'report.json').read_text())
+            assert r['status']=='PASS' and r['sha']==os.environ['GITHUB_SHA'],(name,r.get('failure'))
+            assert len(r['checks'])>=10 and len(r['screenshots'])>=2
+            checks+=len(r['checks'])
+          print('PASS: 3D activation in both engines;',checks,'checks')
+          PY
