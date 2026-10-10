@@ -6,7 +6,7 @@
 .motion-atmosphere .m-orbit:nth-child(2){inset:12%;transform:rotate(-32deg) rotateX(69deg);border-color:rgba(151,168,134,.26)}
 .motion-atmosphere .m-orbit:nth-child(3){inset:20%;transform:rotate(65deg) rotateX(72deg);border-color:rgba(206,187,140,.17)}
 .motion-atmosphere:after{content:"";position:absolute;inset:13%;border-radius:50%;background:radial-gradient(circle at 64% 42%,rgba(235,225,196,.38),rgba(207,217,190,.10) 42%,transparent 68%);z-index:-1}
-.motion-fragment{position:absolute;left:0;top:0;width:192px;min-height:106px;padding:15px 17px 15px;border:1px solid rgba(255,255,255,.85);border-radius:22px;background:linear-gradient(145deg,rgba(255,254,250,.97),rgba(246,241,231,.93));color:#343b31;box-shadow:0 19px 50px rgba(46,53,40,.115),0 3px 10px rgba(75,70,56,.045),inset 0 1px rgba(255,255,255,.91);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);opacity:0;transform:translate(-50%,-50%) scale(.25);transform-style:preserve-3d;backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:transform,opacity;overflow:hidden;transform-origin:50% 55%}
+.motion-fragment{position:absolute;left:0;top:0;width:192px;min-height:106px;padding:15px 17px 15px;border:1px solid rgba(255,255,255,.85);border-radius:22px;background:linear-gradient(145deg,rgba(255,254,250,.97),rgba(246,241,231,.93));color:#343b31;box-shadow:0 19px 50px rgba(46,53,40,.115),0 3px 10px rgba(75,70,56,.045),inset 0 1px rgba(255,255,255,.91);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);opacity:0;transform:translate(-50%,-50%) scale(.25);transform-style:preserve-3d;backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:transform,opacity;overflow:hidden;transform-origin:50% 55%}
 .motion-fragment::after{content:"";position:absolute;left:-45%;top:-180%;width:170%;height:95%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.35),transparent);transform:rotate(25deg);pointer-events:none;opacity:.34}
 .motion-fragment h3{margin:0;font-size:10px;font-weight:500;letter-spacing:-.008em;line-height:1.24}
 .motion-fragment .fragment-eyebrow{font-size:8px;letter-spacing:.115em;line-height:1.3;text-transform:uppercase;color:#6a7564;margin-bottom:11px;display:flex;gap:7px;align-items:center}
@@ -79,3 +79,60 @@
 }
 /* Explicit opt-in overrides the OS motion reduction for this single site only. */
 @media(prefers-reduced-motion:reduce){html.enhanced.motion-override .motion-studio{display:block!important}}
+
+
+/* Stage 5B — Quietly legible editorial labels, including narrow iPhones.
+   Cards remain decorative highlights, but their small text should not rely
+   on 7px labels or 6px pills. Respect the existing scene colour families. */
+.motion-fragment{
+ border-color:rgba(255,255,255,.90);
+ box-shadow:0 20px 48px rgba(46,53,40,.10),0 3px 9px rgba(75,70,56,.036),inset 0 1px rgba(255,255,255,.93);
+}
+.motion-fragment .fragment-eyebrow{
+ font-size:10px;
+ letter-spacing:.09em;
+ line-height:1.35;
+ color:#56644f;
+ margin-bottom:10px;
+}
+.motion-fragment h3{font-size:13px;line-height:1.33;letter-spacing:-.015em}
+.motion-fragment .subline{font-size:11px;line-height:1.42;color:#626b61}
+.m-multi-meter{font-size:10px}
+.m-pill-row em{font-size:10px}
+.m-nut-rings .nr{font-size:9px}
+
+@media(max-width:760px){
+ .motion-fragment{
+  min-height:78px;
+  border-radius:17px;
+  padding:11px 12px;
+  box-shadow:0 12px 27px rgba(51,55,42,.12),0 2px 5px rgba(75,70,56,.03),inset 0 1px rgba(255,255,255,.95);
+ }
+ .motion-fragment .fragment-eyebrow{
+  font-size:9px;
+  line-height:1.28;
+  letter-spacing:.045em;
+  margin-bottom:7px;
+  gap:5px;
+ }
+ .motion-fragment .fragment-eyebrow .m-icon{width:18px;height:18px;flex:0 0 18px}
+ .motion-fragment strong{font-size:25px;letter-spacing:-.055em}
+ .motion-fragment strong small{font-size:11.5px}
+ .motion-fragment .subline{font-size:9.5px;line-height:1.34;margin-top:3px}
+ .motion-fragment h3{font-size:11px;line-height:1.32}
+ .m-multi-meter{font-size:8.5px;grid-template-columns:34px 1fr;gap:4px 5px}
+ .m-pill-row em{font-size:8px;padding:3px 5px}
+ .m-nut-rings .nr{font-size:8px}
+ .m-week i{font-size:7px}
+}
+@media(max-width:360px){
+ .motion-fragment{min-height:76px;padding:9px 10px;border-radius:15px}
+ .motion-fragment .fragment-eyebrow{font-size:8px;line-height:1.25;margin-bottom:6px;letter-spacing:.025em}
+ .motion-fragment strong{font-size:22px}
+ .motion-fragment strong small{font-size:10px}
+ .motion-fragment .subline{font-size:8.5px;margin-top:3px}
+ .motion-fragment h3{font-size:10px}
+ .m-multi-meter{font-size:7.8px;grid-template-columns:31px 1fr}
+ .m-pill-row em{font-size:7.5px;padding:3px 4px}
+ .m-nut-rings .nr{font-size:7.5px}
+}
