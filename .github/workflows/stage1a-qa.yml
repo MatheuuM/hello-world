@@ -1,7 +1,7 @@
 name: MOVVA Stage 1A Prototype Visual QA
 on:
   push:
-    branches: [prototype/3d-unibody-stage1a, refine/phone-stage1a2-corners-camera, refine/phone-18promax-hardware]
+    branches: [prototype/3d-unibody-stage1a, refine/phone-stage1a2-corners-camera, refine/phone-18promax-hardware, refine/phone-safari-profile-qa]
 permissions:
   contents: read
 jobs:
@@ -22,8 +22,9 @@ jobs:
         run: |
           node --check phone-shell.js
           node --check mobile-phone.js
+          node --check experience.js
           node --check qa/stage1a-shell.cjs
-          timeout 95s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 120s npm install --no-save --package-lock=false playwright@1.64.0
           timeout 180s npx playwright install --with-deps ${{ matrix.engine }}
       - name: Capture all shell angles and viewports
         env:
