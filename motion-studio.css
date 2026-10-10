@@ -77,3 +77,5 @@
 @media(prefers-reduced-motion:reduce){
  .motion-studio{display:none!important}
 }
+/* Explicit opt-in overrides the OS motion reduction for this single site only. */
+@media(prefers-reduced-motion:reduce){html.enhanced.motion-override .motion-studio{display:block!important}}
