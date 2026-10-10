@@ -68,6 +68,17 @@ try{
  assert.equal(state.active,false);assert.equal(state.activationVisible,true);
  assert.match(state.switchLabel,/Ativar 3D/);
  ok('Previously saved Modo leve shows a clear reactivation option',state);
+ await saved.p.evaluate(()=>scrollTo(0,innerHeight*1.2));
+ await saved.p.waitForTimeout(150);
+ const pinned=await saved.p.evaluate(()=>({
+   header:getComputedStyle(document.querySelector('.header')).position,
+   control:getComputedStyle(document.querySelector('#motion-resume')).position,
+   rect:document.querySelector('#motion-resume').getBoundingClientRect().toJSON()
+ }));
+ assert.equal(pinned.header,'fixed');
+ assert.equal(pinned.control,'fixed');
+ assert.ok(pinned.rect.bottom<=900&&pinned.rect.top>=0,JSON.stringify(pinned));
+ ok('3D recovery button stays within desktop viewport after scrolling',pinned);
  await record(saved.p,'desktop-restore-prompt.png');
  await saved.p.locator('#enable-motion').click();
  await saved.p.waitForFunction(()=>document.documentElement.classList.contains('enhanced'),{timeout:12000});
