@@ -1,0 +1,31 @@
+name: MOVVA Public DNS Read-only Audit
+on:
+  push:
+    branches: [ops/domain-readonly-audit]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read domain routing without changing DNS or Vercel
+        run: |
+          set -e
+          echo "Apex A records"
+          dig +short movvawellness.com.br A
+          echo "Apex CNAME"
+          dig +short movvawellness.com.br CNAME
+          echo "Nameservers"
+          dig +short movvawellness.com.br NS
+          echo "MX mail servers"
+          dig +short movvawellness.com.br MX
+          echo "WWW CNAME"
+          dig +short www.movvawellness.com.br CNAME
+          echo "WWW A"
+          dig +short www.movvawellness.com.br A
+          echo "HTTP HTTPS headers apex"
+          curl -k -I -L --max-time 15 -sS https://movvawellness.com.br/ | grep -iE '^HTTP/|^server:|^location:|^x-vercel|^x-matched-path|^content-type:' || true
+          echo "HTTP HTTPS headers www"
+          curl -k -I -L --max-time 15 -sS https://www.movvawellness.com.br/ | grep -iE '^HTTP/|^server:|^location:|^x-vercel|^x-matched-path|^content-type:' || true
