@@ -56,7 +56,12 @@ function render(p,active,device){
  const delta=Math.sin(sceneProg*Math.PI);
  const fragmentSide=mobile?Math.min(vw*.345,130):Math.min(vw*.145,205);
  const leftGuard=mobile?(vw<=360?10:12):22;
- let visible=0;
+ const stageRect=stage.getBoundingClientRect();
+ const navRect=stage.querySelector('.chapter-bar')?.getBoundingClientRect();
+ const navY=navRect?navRect.top-stageRect.top:vh-48;
+ const copyRect=stage.querySelector('.scene[aria-hidden="false"] .copy')?.getBoundingClientRect();
+ const copyBottom=copyRect?.bottom-stageRect.top||0;
+ let visible=0,protectedCards=0;
  for(const c of items){
   const [start,end]=phases[c.scene],time=(p-start)/(end-start),delay=c.delay;
   const arrive=c.scene===0?1:smooth((time-.035-delay)/.18);
@@ -76,15 +81,21 @@ function render(p,active,device){
   const keepLeft=elWidth*.78+leftGuard,keepRight=vw-elWidth*.78-leftGuard;
   let px=clamp(cx+offX*factor+wobble*(mobile?3:7),keepLeft,keepRight);
   let py=cy+offY*factor+(1-factor)*(c.level<0?40:-35);
-  const nav=document.querySelector('.chapter-bar'),navY=nav?nav.getBoundingClientRect().top-stage.getBoundingClientRect().top:vh-48;
-  const copy=document.querySelector('.scene[aria-hidden="false"] .copy');
-  const copyBottom=copy?.getBoundingClientRect().bottom-stage.getBoundingClientRect().top||0;
-  // Never hide the hero CTA or the chapter selector.
+  // Keep the chapter navigation and the hero CTA accessible.
   const roomTop=mobile?Math.max(copyBottom+16,vh*.25):Math.max(80,vh*.11);
   const lower=navY-(mobile?13:18);
   const elHeight=c.el.offsetHeight||80;
   py=clamp(py,roomTop+elHeight*.5,Math.max(roomTop+elHeight*.5,lower-elHeight*.5));
   const scale=mobile?.58+.42*factor:.53+.47*factor;
+  if(!mobile){
+   // Include perspective/rotation headroom; fixes overlaps at ~880px laptops.
+   const protectedPos=protectCopy(px,py,elWidth*scale*1.12,elHeight*scale*1.16,
+    copyRect,stageRect,{left:keepLeft,right:keepRight,
+     top:roomTop+elHeight*scale*.58,bottom:lower-elHeight*scale*.58});
+   if(protectedPos.hidden){c.el.style.opacity='0';c.el.style.visibility='hidden';continue;}
+   if(Math.abs(protectedPos.x-px)>.5||Math.abs(protectedPos.y-py)>.5)protectedCards++;
+   px=protectedPos.x;py=protectedPos.y;
+  }
   const tilt=c.side*(mobile?-5:-10)+(1-factor)*c.side*18+wobble*(mobile?1.5:3);
   c.el.style.left=px.toFixed(2)+'px';c.el.style.top=py.toFixed(2)+'px';
   c.el.style.opacity=String(Math.min(.98,factor*(c.scene===0?.94:.98)));
@@ -100,7 +111,7 @@ function render(p,active,device){
  const water=smooth((p-.466)/(.557-.466));
  root.querySelectorAll('[data-water-card]').forEach(e=>e.textContent=(2*water).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}));
  root.querySelectorAll('[data-water-meter]').forEach(e=>e.style.width=(74*water)+'%');
- window.MOVVA_MOTION_QA={visible,active,progress:p,cards:items.length,phone:{x:cx,y:cy,h:phoneH},mobile};
+ window.MOVVA_MOTION_QA={visible,protectedCards,active,progress:p,cards:items.length,phone:{x:cx,y:cy,h:phoneH},mobile};
 }
 function reset(){root.style.display='none';}
 window.MOVVA_MOTION={render,reset,get cards(){return items.length}};
