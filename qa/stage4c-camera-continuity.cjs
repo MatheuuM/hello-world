@@ -7,7 +7,7 @@ const engine=process.env.QA_ENGINE||'chromium';
 const sizes=[['desktop',1440,900],['laptop',880,765],['mobile',393,852],['small',320,667]]
  .filter(([name])=>!process.env.QA_VIEWPORT||process.env.QA_VIEWPORT===name);
 const cuts=[.129,.28,.433,.593,.773,.939];
-const moveEdges=[.228,.322,.548,.642,.733,.811,.909,.982];
+const moveEdges=[.216,.334,.532,.653,.717,.831,.906,.983];
 const samples=[...new Set([...cuts,...moveEdges])];
 const out='qa-stage4c/'+engine,report={engine,status:'RUNNING',views:[],errors:[],screenshots:[]};
 fs.mkdirSync(out,{recursive:true});
