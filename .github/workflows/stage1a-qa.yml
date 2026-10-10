@@ -1,0 +1,39 @@
+name: MOVVA Stage 1A Prototype Visual QA
+on:
+  push:
+    branches: [prototype/3d-unibody-stage1a]
+permissions:
+  contents: read
+jobs:
+  browser:
+    name: Shell / ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JS and install browser
+        run: |
+          node --check phone-shell.js
+          node --check mobile-phone.js
+          node --check qa/stage1a-shell.cjs
+          timeout 95s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 180s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Capture all shell angles and viewports
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-1a-server.log 2>&1 &
+          timeout 245s node qa/stage1a-shell.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage1a-${{ matrix.engine }}
+          path: qa-stage1a/${{ matrix.engine }}/
+          retention-days: 8
