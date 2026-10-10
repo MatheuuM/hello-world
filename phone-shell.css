@@ -24,3 +24,75 @@
 .enhanced .css3d-device.css3d-webkit-engine .css3d-webkit-profile{display:block}
 .css3d-webkit-profile .profile-button{position:absolute;width:11%;height:16%;top:22%;left:7%;border-radius:99px;background:#c5cabc;box-shadow:0 0 1px #454d42}
 .css3d-webkit-profile .profile-button:nth-child(2){top:41%;height:13%}
+
+/* Stage 1B — physical camera rig. Sibling of .css3d-back: no rear-panel clipping.
+   All levels share the same back-facing coordinate system and scale with shell width. */
+.css3d-camera-rig{
+ position:absolute;inset:0;pointer-events:none;transform-style:preserve-3d;
+ -webkit-transform-style:preserve-3d;
+ transform:rotateY(180deg) translateZ(calc(var(--shell-w) * .056 + 1px));
+ backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
+.css3d-camera-rig .css3d-camera{
+ position:absolute;top:4.1%;left:7%;width:43%;aspect-ratio:1/1.08;
+ border:0;border-radius:24%;background:transparent;box-shadow:none;
+ transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+}
+.css3d-camera-rig .css3d-camera i{
+ position:absolute;box-sizing:border-box;aspect-ratio:auto;width:auto;height:auto;
+ border:0;background:none;box-shadow:none;transform-style:preserve-3d;
+}
+.css3d-camera-foot,.css3d-camera-deck{
+ position:absolute;inset:0;border-radius:24%;display:block;
+ backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
+.css3d-camera-foot{
+ transform:translateZ(1px);
+ background:linear-gradient(138deg,#596158,#9ba295 40%,#626c61);
+ box-shadow:0 3px 9px rgba(31,39,32,.34),0 0 0 1px #586256;
+}
+.css3d-camera-deck{
+ inset:2%;border-radius:23%;transform:translateZ(5px);
+ background:linear-gradient(128deg,#b8c0b0 0%,#899587 41%,#737e72 100%);
+ border:1px solid rgba(58,70,60,.48);
+ box-shadow:inset 2px 2px 4px rgba(255,255,255,.43),inset -2px -3px 6px rgba(26,34,28,.26),0 2px 3px rgba(34,42,36,.2);
+}
+.css3d-camera-lens{
+ position:absolute;display:block;width:34%;aspect-ratio:1;transform:translateZ(7px);
+ transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+ border-radius:50%;isolation:isolate;
+}
+.css3d-camera-lens--top{top:10%;left:10%}
+.css3d-camera-lens--right{top:40%;right:8%}
+.css3d-camera-lens--bottom{bottom:6%;left:10%}
+.css3d-camera-rig .css3d-camera .lens-barrel{
+ inset:-4%;width:auto;height:auto;border-radius:50%;transform:translateZ(0);
+ background:linear-gradient(135deg,#353e37 5%,#a6ada2 32%,#424c44 70%,#202822);
+ box-shadow:0 3px 4px rgba(16,23,18,.42),inset 0 0 0 1px rgba(232,236,221,.36);
+}
+.css3d-camera-rig .css3d-camera .lens-rim{
+ inset:3%;width:auto;height:auto;border-radius:50%;transform:translateZ(3px);
+ background:linear-gradient(135deg,#a9b1a5,#232d29 37%,#697369 63%,#242b28);
+ box-shadow:inset 0 0 0 1px #171e1b,0 1px 3px #111a1680;
+}
+.css3d-camera-rig .css3d-camera .lens-optic{
+ inset:15%;width:auto;height:auto;border-radius:50%;transform:translateZ(4px);
+ background:radial-gradient(circle at 41% 35%,#315257 0 9%,#0c171b 22%,#030709 49%,#233437 68%,#080d0f 86%);
+ box-shadow:inset 2px 3px 7px rgba(0,0,0,.85),inset -1px -1px 2px #79969655,0 0 0 1px #111915;
+}
+.css3d-camera-rig .css3d-camera .lens-glass{
+ inset:17%;width:auto;height:auto;border-radius:50%;transform:translateZ(5px);
+ background:radial-gradient(ellipse at 35% 23%,rgba(157,214,215,.30),transparent 33%),linear-gradient(120deg,transparent 40%,rgba(187,221,220,.09) 48%,transparent 62%);
+ box-shadow:inset 0 0 0 1px rgba(140,173,169,.14);
+}
+.css3d-camera-flash{
+ position:absolute;top:13%;right:16%;width:12%;aspect-ratio:1;border-radius:50%;
+ transform:translateZ(7px);background:radial-gradient(circle,#fff3c5 0 27%,#c4b98b 54%,#6f786e 73%);
+ box-shadow:0 0 0 1px #586258,0 1px 2px #34403666;
+}
+.css3d-camera-flash i{inset:15%;border-radius:50%;background:rgba(255,251,224,.34)!important}
+.css3d-camera-sensor{
+ position:absolute;right:8%;bottom:18%;width:9%;aspect-ratio:1;border-radius:50%;
+ background:radial-gradient(circle,#111a18 24%,#53665e 48%,#28352d 70%);
+ transform:translateZ(6px);box-shadow:0 0 0 1px #637169;
+}
