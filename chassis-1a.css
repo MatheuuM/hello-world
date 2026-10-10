@@ -1,0 +1,38 @@
+/* Stage 1A — geometric continuity. Original assets and choreography unchanged.
+   Shared thickness, matching radii, recessed side strips, flush top caps. */
+.css3d-object{--chassis-depth:12px;--chassis-half:6px;--chassis-radius:12.5% / 5.6%;transform-style:preserve-3d}
+.css3d-front,.css3d-back{
+ border-radius:var(--chassis-radius);outline:none;
+ -webkit-backface-visibility:hidden;backface-visibility:hidden
+}
+.css3d-front{transform:translateZ(var(--chassis-half));border:4px solid #404740;
+ box-shadow:inset 0 0 0 1px #c5c8bc6e,0 0 0 .5px #4d574b;
+}
+.css3d-back{transform:rotateY(180deg) translateZ(var(--chassis-half));
+ border:3px solid #687065;box-shadow:inset 0 0 0 1px #e6e5d5a8;
+}
+.css3d-rail{top:5.6%;bottom:5.6%;width:var(--chassis-depth);
+ background:linear-gradient(90deg,#343c35 0%,#60685e 14%,#c2c4b7 40%,#aeb2a5 66%,#40483f 100%);
+ border-radius:0;box-shadow:inset 0 0 0 .5px #616a5f;
+}
+.css3d-rail-left{left:0;transform:translateX(calc(var(--chassis-half)*-1)) rotateY(-90deg)}
+.css3d-rail-right{right:0;transform:translateX(var(--chassis-half)) rotateY(90deg)}
+.css3d-rail i{left:4px;width:3px;border-radius:3px;background:#4b554b;box-shadow:inset .5px 0 #d8ded1aa,0 .5px 1px #252b25}
+.css3d-top,.css3d-bottom{
+ left:12.5%;right:12.5%;height:var(--chassis-depth);border-radius:0;
+ background:linear-gradient(#485248,#9da79a 33%,#cbd0c3 53%,#4d594e);
+ box-shadow:inset 0 0 0 .5px #657064
+}
+.css3d-top{top:0;transform:translateY(calc(var(--chassis-half)*-1)) rotateX(90deg)}
+.css3d-bottom{bottom:0;transform:translateY(var(--chassis-half)) rotateX(-90deg)}
+/* Four curved corner patches resolve the gaps where the inset straight
+   sidewalls meet the rounded front/back faces. */
+.css3d-corner{position:absolute;width:12.5%;height:5.6%;pointer-events:none;
+ background:linear-gradient(125deg,#606a5e 0%,#b4bbae 35%,#5b6559 76%,#40483f);
+ transform-style:preserve-3d;opacity:1
+}
+.css3d-corner.tl{top:0;left:0;border-radius:100% 0 0 0;transform:translateZ(0)}
+.css3d-corner.tr{top:0;right:0;border-radius:0 100% 0 0;transform:translateZ(0)}
+.css3d-corner.bl{bottom:0;left:0;border-radius:0 0 0 100%;transform:translateZ(0)}
+.css3d-corner.br{bottom:0;right:0;border-radius:0 0 100% 0;transform:translateZ(0)}
+@media(max-width:760px){.css3d-front{border-width:3px}.css3d-back{border-width:3px}}
