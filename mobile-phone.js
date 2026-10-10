@@ -34,8 +34,8 @@ function render(p,active,ix,blend){
   if(active===6){cx=vw*.5;cy=vh*.73;h=Math.min(300,vh*.38)}
  }
  // Avoid CSS max-width squeezing only the X-axis on 320px devices.
- if(mobile&&h*.467>vw*.54)h=vw*.54/.467;
- const w=h*.467;
+ if(mobile&&h*(78/163.4)>vw*.54)h=vw*.54/(78/163.4);
+ const w=h*(78/163.4);
  rig.style.width=w+'px';rig.style.height=h+'px';rig.style.left=cx+'px';rig.style.top=cy+'px';
  window.MOVVA_SHELL?.setSize(w,h);
  const [ry,rx,rz]=poseAt(p);
