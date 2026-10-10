@@ -39,10 +39,10 @@ const names=['home','training','nutrition','evolution','circle'];
 // Chapter switches are discrete accessibility states; the physical camera is
 // not. Positions must be sampled from continuous scroll progress alone.
 const desktopMoves=[
- [.228,.322,.73,.27], // Connected -> Training, phone travels right to left
- [.548,.642,.27,.73], // Nutrition -> Evolution
- [.733,.811,.73,.27], // Evolution -> Circle
- [.909,.982,.27,.50]  // Circle -> closing scene
+ [.216,.334,.73,.27], // Connected -> Training, wider camera move
+ [.532,.653,.27,.73], // Nutrition -> Evolution
+ [.717,.831,.73,.27], // Evolution -> Circle
+ [.906,.983,.27,.50]  // Circle -> closing scene
 ];
 function desktopX(p){
  let value=.73;
@@ -85,7 +85,7 @@ function mobileCamera(p,stageR,vw,vh,barTop){
  return mobileFrame(index,stageR,vw,vh,barTop);
 }
 function desktopCamera(p,vw,vh){
- const close=smooth((p-.909)/(.982-.909));
+ const close=smooth((p-.906)/(.983-.906));
  return {
   cx:vw*desktopX(p),
   cy:vh*lerp(.52,.73,close),
