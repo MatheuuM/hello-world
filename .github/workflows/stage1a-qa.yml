@@ -1,0 +1,48 @@
+name: MOVVA Immersive Cinematic QA
+on:
+  push:
+    branches: [prototype/3d-unibody-stage1a, refine/phone-stage1a2-corners-camera, refine/phone-18promax-hardware, refine/phone-safari-profile-qa, refine/movva-motion-composition-4a, refine/movva-cinema-4b, master]
+permissions:
+  contents: read
+jobs:
+  browser:
+    name: Shell / ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JS and install browser
+        run: |
+          node --check phone-shell.js
+          node --check mobile-phone.js
+          node --check experience.js
+          node --check qa/stage1a-shell.cjs
+          node --check motion-studio.js
+          node --check qa/motion-composition-qa.cjs
+          node --check qa/cinema-scrub-qa.cjs
+          timeout 120s npm install --no-save --package-lock=false playwright@1.64.0
+          timeout 180s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Capture all shell angles and viewports
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-1a-server.log 2>&1 &
+          timeout 245s node qa/stage1a-shell.cjs
+          timeout 150s node qa/motion-composition-qa.cjs
+          timeout 125s node qa/cinema-scrub-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage1a-${{ matrix.engine }}
+          path: |
+            qa-stage1a/${{ matrix.engine }}/
+            qa-motion/${{ matrix.engine }}/
+            qa-cinema/${{ matrix.engine }}/
+          retention-days: 8

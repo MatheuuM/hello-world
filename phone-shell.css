@@ -1,0 +1,272 @@
+/* MOVVA Stage 1A — continuous rounded phone shell (geometric prototype). */
+.css3d-device{--shell-w:170px;--shell-h:364.026px}
+.css3d-unibody{position:absolute;inset:0;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;pointer-events:none}
+.css3d-shell-face{position:absolute;left:50%;top:50%;margin:0;display:block;box-sizing:border-box;transform-origin:0 0;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.css3d-shell-face--wall{background:linear-gradient(0deg,#3b413d 0%,#707971 16%,#a1aa9d 48%,#777f76 82%,#444b45 100%)}
+.css3d-shell-face--front{background:linear-gradient(0deg,#555e56,#c1c7b9 42%,#848c81 100%)}
+.css3d-shell-face--rear{background:linear-gradient(0deg,#4d554d,#aeb4a8 45%,#656d62 100%)}
+.css3d-front,.css3d-back{inset:calc(var(--shell-w) * .0092);border-radius:12.8% / 5.92%;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.css3d-front{border:calc(var(--shell-w) * .027) solid #434b44;transform:translateZ(calc(var(--shell-w) * .056));box-shadow:inset 0 0 0 1px rgba(255,255,255,.36)}
+.css3d-back{border:calc(var(--shell-w) * .012) solid #7b8378;transform:rotateY(180deg) translateZ(calc(var(--shell-w) * .056));box-shadow:inset 0 0 0 1.2px rgba(255,255,255,.21)}
+.css3d-display{border-radius:9.4% / 4.7%}
+.css3d-control{position:absolute;top:50%;left:50%;display:block;width:calc(var(--shell-w) * .04);border-radius:calc(var(--shell-w) * .012);background:linear-gradient(90deg,#6f786f,#c3cbbc 45%,#4f574f);box-shadow:0 1px 2px #292d2975;transform-origin:0 0;backface-visibility:visible;pointer-events:none}
+.css3d-control--right{background:linear-gradient(90deg,#606860,#bcc4b6 55%,#424941)}
+@media(max-width:760px){.css3d-front{border-width:calc(var(--shell-w) * .027)}}
+/* Safari: don't allow layout containment to flatten nested 3D compositor layers.
+   The wall's back face remains visible as a fallback at exact edge-on poses. */
+.css3d-device.css3d-webkit-engine{contain:style}
+.css3d-webkit-engine .css3d-shell-face--wall{backface-visibility:visible;-webkit-backface-visibility:visible}
+/* Safari/WebKit compositor mitigation: a 2D, correctly scaled metal silhouette
+   replaces an unsupported edge-on group of 3D planes. Hidden in other engines. */
+.css3d-webkit-profile{display:none;position:absolute;top:0;left:50%;width:calc(var(--shell-w) * .112);height:100%;z-index:9;pointer-events:none;transform-origin:center center;opacity:0;border-radius:999px;background:linear-gradient(90deg,#4e584f 0%,#8b9487 22%,#b8c0af 47%,#929a8b 68%,#485249 100%);box-shadow:inset 1px 0 rgba(255,255,255,.6),inset -1px 0 rgba(19,29,20,.38),0 0 1px #a3ad9b;will-change:opacity,transform}
+.css3d-webkit-engine.enhanced .css3d-webkit-profile,
+.enhanced .css3d-webkit-engine .css3d-webkit-profile,
+.enhanced .css3d-device.css3d-webkit-engine .css3d-webkit-profile{display:block}
+/* Edge-on Safari renderer: the geometry needs a credible physical profile,
+   not just a flat bar when nested CSS 3D faces are compositor-culled. */
+.css3d-webkit-profile{
+ border-radius:calc(var(--shell-w) * .018);
+ background:linear-gradient(90deg,#4e5a50 0%,#899b8c 14%,#bac7b7 32%,#a6b7a6 54%,#697a6d 81%,#435247 100%);
+ box-shadow:inset .8px 0 rgba(244,248,237,.48),inset -1px 0 rgba(25,37,27,.40),0 0 1px #818f81;
+}
+.css3d-webkit-profile .profile-camera-ledge{
+ display:block;position:absolute;z-index:1;top:3.3%;
+ right:calc(var(--shell-w) * -.045);
+ width:calc(var(--shell-w) * .053);height:23.4%;
+ border-radius:calc(var(--shell-w) * .018);
+ background:linear-gradient(90deg,#4a5c4d 0%,#899d8e 29%,#c7d4c2 55%,#667868 100%);
+ box-shadow:inset 1px 0 rgba(247,251,242,.44),1.5px 1px 2px rgba(38,49,39,.20);
+ pointer-events:none;
+}
+.css3d-webkit-profile[data-side="left"] .profile-camera-ledge{
+ right:auto;left:calc(var(--shell-w) * -.045);
+ transform:scaleX(-1);
+}
+.css3d-webkit-profile .profile-button{
+ display:block;position:absolute;z-index:2;
+ left:4%;width:30%;border-radius:calc(var(--shell-w) * .009);
+ background:linear-gradient(90deg,#4e5d52 0%,#dce6d4 38%,#7f9382 76%,#556559 100%);
+ box-shadow:inset 0 0 0 .55px rgba(250,252,242,.43),0 0 .65px rgba(20,30,22,.62);
+}
+.css3d-webkit-profile .profile-button--action{top:16.5%;height:4.7%}
+.css3d-webkit-profile .profile-button--volume-up{top:23.65%;height:9.5%}
+.css3d-webkit-profile .profile-button--volume-down{top:36.25%;height:9.5%}
+.css3d-webkit-profile .profile-button--lock{top:24.9%;height:14.6%}
+.css3d-webkit-profile .profile-button--camera-control{
+ top:67.3%;height:7.3%;width:23%;left:8%;
+ background:linear-gradient(90deg,#4a594d,#a6b5a4 47%,#3f5144);
+}
+.css3d-webkit-profile[data-side="left"] .profile-button[data-side="right"],
+.css3d-webkit-profile[data-side="right"] .profile-button[data-side="left"]{display:none}
+.css3d-webkit-profile .profile-antenna{
+ display:block;position:absolute;z-index:2;left:0;width:100%;height:calc(var(--shell-w) * .009);
+ background:linear-gradient(90deg,#526354 0%,#9fb0a0 52%,#526354 100%);
+}
+.css3d-webkit-profile .profile-antenna--top{top:7.4%}
+.css3d-webkit-profile .profile-antenna--bottom{bottom:8%}
+
+/* Stage 1B — physical camera rig. Sibling of .css3d-back: no rear-panel clipping.
+   All levels share the same back-facing coordinate system and scale with shell width. */
+.css3d-camera-rig{
+ position:absolute;inset:0;pointer-events:none;transform-style:preserve-3d;
+ -webkit-transform-style:preserve-3d;
+ transform:rotateY(180deg) translateZ(calc(var(--shell-w) * .056 + 1px));
+ backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
+.css3d-camera-rig .css3d-camera{
+ position:absolute;top:4.1%;left:7%;width:43%;aspect-ratio:1/1.08;
+ border:0;border-radius:24%;background:transparent;box-shadow:none;
+ transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+}
+.css3d-camera-rig .css3d-camera i{
+ position:absolute;box-sizing:border-box;aspect-ratio:auto;width:auto;height:auto;
+ border:0;background:none;box-shadow:none;transform-style:preserve-3d;
+}
+.css3d-camera-foot,.css3d-camera-deck{
+ position:absolute;inset:0;border-radius:24%;display:block;
+ backface-visibility:hidden;-webkit-backface-visibility:hidden;
+}
+.css3d-camera-foot{
+ transform:translateZ(1px);
+ background:linear-gradient(138deg,#596158,#9ba295 40%,#626c61);
+ box-shadow:0 3px 9px rgba(31,39,32,.34),0 0 0 1px #586256;
+}
+.css3d-camera-deck{
+ inset:2%;border-radius:23%;transform:translateZ(5px);
+ background:linear-gradient(128deg,#b8c0b0 0%,#899587 41%,#737e72 100%);
+ border:1px solid rgba(58,70,60,.48);
+ box-shadow:inset 2px 2px 4px rgba(255,255,255,.43),inset -2px -3px 6px rgba(26,34,28,.26),0 2px 3px rgba(34,42,36,.2);
+}
+.css3d-camera-lens{
+ position:absolute;display:block;width:34%;aspect-ratio:1;transform:translateZ(7px);
+ transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+ border-radius:50%;isolation:isolate;
+}
+.css3d-camera-lens--top{top:10%;left:10%}
+.css3d-camera-lens--right{top:40%;right:8%}
+.css3d-camera-lens--bottom{bottom:6%;left:10%}
+.css3d-camera-rig .css3d-camera .lens-barrel{
+ inset:-4%;width:auto;height:auto;border-radius:50%;transform:translateZ(0);
+ background:linear-gradient(135deg,#353e37 5%,#a6ada2 32%,#424c44 70%,#202822);
+ box-shadow:0 3px 4px rgba(16,23,18,.42),inset 0 0 0 1px rgba(232,236,221,.36);
+}
+.css3d-camera-rig .css3d-camera .lens-rim{
+ inset:3%;width:auto;height:auto;border-radius:50%;transform:translateZ(3px);
+ background:linear-gradient(135deg,#a9b1a5,#232d29 37%,#697369 63%,#242b28);
+ box-shadow:inset 0 0 0 1px #171e1b,0 1px 3px #111a1680;
+}
+.css3d-camera-rig .css3d-camera .lens-optic{
+ inset:15%;width:auto;height:auto;border-radius:50%;transform:translateZ(4px);
+ background:radial-gradient(circle at 41% 35%,#315257 0 9%,#0c171b 22%,#030709 49%,#233437 68%,#080d0f 86%);
+ box-shadow:inset 2px 3px 7px rgba(0,0,0,.85),inset -1px -1px 2px #79969655,0 0 0 1px #111915;
+}
+.css3d-camera-rig .css3d-camera .lens-glass{
+ inset:17%;width:auto;height:auto;border-radius:50%;transform:translateZ(5px);
+ background:radial-gradient(ellipse at 35% 23%,rgba(157,214,215,.30),transparent 33%),linear-gradient(120deg,transparent 40%,rgba(187,221,220,.09) 48%,transparent 62%);
+ box-shadow:inset 0 0 0 1px rgba(140,173,169,.14);
+}
+.css3d-camera-flash{
+ position:absolute;top:13%;right:16%;width:12%;aspect-ratio:1;border-radius:50%;
+ transform:translateZ(7px);background:radial-gradient(circle,#fff3c5 0 27%,#c4b98b 54%,#6f786e 73%);
+ box-shadow:0 0 0 1px #586258,0 1px 2px #34403666;
+}
+.css3d-camera-flash i{inset:15%;border-radius:50%;background:rgba(255,251,224,.34)!important}
+.css3d-camera-sensor{
+ position:absolute;right:8%;bottom:18%;width:9%;aspect-ratio:1;border-radius:50%;
+ background:radial-gradient(circle,#111a18 24%,#53665e 48%,#28352d 70%);
+ transform:translateZ(6px);box-shadow:0 0 0 1px #637169;
+}
+
+/* MOVVA hardware atelier / 18 Pro Max reference language.
+   Proportions follow 78 x 163.4 x 8.75 mm. Finish is MOVVA-exclusive
+   pearl titanium/sage, not a branded product replica. */
+.css3d-device{--shell-h:356.128px;--movva-radius:calc(var(--shell-w) * .135)}
+.css3d-front,.css3d-back{border-radius:13.5% / 6.44%}
+.css3d-front{
+ border-width:calc(var(--shell-w) * .021);
+ border-color:#3d4640;
+ box-shadow:inset 0 0 0 .65px rgba(236,242,234,.33);
+}
+.css3d-display{border-radius:11.8% / 5.6%}
+.css3d-island{top:1.55%;width:22.7%;height:2.62%;background:#080c0c;box-shadow:0 0 0 .55px #46504b}
+.css3d-back{
+ border-width:calc(var(--shell-w) * .011);
+ border-color:#747d71;
+ background:linear-gradient(115deg,#b4bcb0 0%,#e2e4d9 33%,#c3c9bf 70%,#909a8e 100%);
+ box-shadow:inset 0 0 0 .75px rgba(255,255,255,.50);
+}
+.css3d-back::before{
+ content:"";position:absolute;z-index:0;top:28.0%;left:4.1%;right:4.1%;bottom:3.7%;
+ border-radius:11.5% / 6.1%;
+ background:linear-gradient(132deg,rgba(244,244,234,.80) 0%,rgba(224,229,218,.68) 42%,rgba(192,200,187,.66) 100%);
+ box-shadow:0 0 0 .8px rgba(89,104,92,.30),inset 1.2px 1.8px 4px rgba(255,255,255,.61),inset -1px -2px 3px rgba(55,68,58,.12);
+ pointer-events:none;
+}
+.css3d-back::after{
+ content:"";position:absolute;z-index:0;inset:0;border-radius:inherit;
+ background:linear-gradient(105deg,rgba(255,255,255,.10),transparent 24%,rgba(255,255,255,.08) 71%,transparent);
+ pointer-events:none;
+}
+.css3d-rear-logo{z-index:1;top:58%;width:37%;opacity:.60;filter:grayscale(1)}
+.css3d-camera-rig .css3d-camera{
+ top:3.05%;left:3.05%;width:93.90%;
+ height:auto;aspect-ratio:1.88;
+ border-radius:calc(var(--shell-w) * .105);
+ background:transparent;border:0;box-shadow:none;
+}
+.css3d-camera-foot,.css3d-camera-deck{border-radius:inherit}
+.css3d-camera-foot{
+ transform:translateZ(calc(var(--shell-w) * .004));
+ background:linear-gradient(135deg,#57665a 0%,#99a89a 35%,#636f65 72%,#465147 100%);
+ box-shadow:0 2px 7px rgba(30,40,33,.35),0 0 0 .7px rgba(52,64,54,.66);
+}
+.css3d-camera-deck{
+ inset:1.25%;border-radius:calc(var(--shell-w) * .096);
+ transform:translateZ(calc(var(--shell-w) * .025));
+ background:linear-gradient(112deg,#bbc6b7 0%,#d8ded0 20%,#b3c0b1 45%,#849487 78%,#a3b1a2 100%);
+ border:.6px solid rgba(71,90,74,.45);
+ box-shadow:inset 1.4px 1.4px 2.5px rgba(255,255,255,.69),inset -2px -2.5px 4px rgba(35,53,38,.24);
+}
+.css3d-camera-lens{
+ width:19.1%;aspect-ratio:1;transform:translateZ(calc(var(--shell-w) * .035));
+}
+.css3d-camera-lens--top{top:11%;left:9.3%}
+.css3d-camera-lens--bottom{bottom:11%;left:9.3%}
+.css3d-camera-lens--right{top:32%;right:auto;left:34.0%}
+.css3d-camera-rig .css3d-camera .lens-barrel{
+ inset:-6%;border-radius:50%;transform:translateZ(0);
+ background:linear-gradient(134deg,#222c29 0%,#99aaa1 24%,#515f55 53%,#141d1b 89%);
+ box-shadow:1px 2px 3px rgba(14,25,19,.42),inset 0 0 0 1.1px rgba(232,235,218,.39);
+}
+.css3d-camera-rig .css3d-camera .lens-rim{
+ inset:2.8%;transform:translateZ(calc(var(--shell-w) * .008));
+ background:linear-gradient(135deg,#c6d1c4 0%,#202f2d 33%,#7e8b82 57%,#222e2b 85%);
+ box-shadow:inset 0 0 0 1.2px #202927,0 1px 2px rgba(21,29,25,.69);
+}
+.css3d-camera-rig .css3d-camera .lens-optic{
+ inset:15.5%;transform:translateZ(calc(var(--shell-w) * .011));
+ background:radial-gradient(circle at 41% 34%,#365c61 0 8%,#0b1c20 20%,#020608 43%,#152d33 58%,#050b0d 83%);
+ box-shadow:inset 1.5px 2px 5px rgba(0,0,0,.87),inset -1px -1px 2px rgba(171,199,188,.29);
+}
+.css3d-camera-rig .css3d-camera .lens-glass{
+ inset:17.5%;transform:translateZ(calc(var(--shell-w) * .013));
+ background:radial-gradient(ellipse at 34% 22%,rgba(194,224,222,.28),transparent 39%),linear-gradient(128deg,transparent 37%,rgba(173,210,210,.11) 51%,transparent 65%);
+}
+.css3d-camera-flash{
+ top:19%;right:14%;width:7.2%;transform:translateZ(calc(var(--shell-w) * .030));
+ box-shadow:0 0 0 1.3px #6d786c,0 1px 3px rgba(42,57,45,.25);
+}
+.css3d-camera-sensor{
+ bottom:21%;right:15%;width:6.7%;transform:translateZ(calc(var(--shell-w) * .030));
+ box-shadow:0 0 0 1.2px rgba(81,97,82,.91),0 1px 2px rgba(18,29,25,.44);
+}
+.css3d-camera-microphone{
+ position:absolute;right:22.5%;bottom:16%;width:2.4%;aspect-ratio:1;
+ border-radius:50%;transform:translateZ(calc(var(--shell-w) * .028));
+ background:radial-gradient(circle,#151d1b 40%,#66756a 65%);
+ box-shadow:0 0 0 .6px #899789;
+}
+/* Walls form a genuine perimeter extrusion; no disconnected corner caps. */
+.css3d-camera-wall-face{
+ position:absolute;display:block;left:50%;top:50%;margin:0;box-sizing:border-box;
+ transform-origin:center center;backface-visibility:visible;-webkit-backface-visibility:visible;
+ background:linear-gradient(180deg,#cad7c6 0%,#9cae9f 30%,#5a695c 90%);
+ pointer-events:none;
+}
+@media(max-width:760px){.css3d-front{border-width:calc(var(--shell-w) * .021)}}
+
+/* Hardware micro-details: machined controls and USB-C edge silhouette. */
+.css3d-control--action{background:linear-gradient(90deg,#58685c,#d8ddd1 44%,#637467)}
+.css3d-control--camera-control{
+ width:calc(var(--shell-w) * .027);
+ background:linear-gradient(90deg,#526257,#b1bbae 45%,#475448);
+ border-radius:calc(var(--shell-w) * .011);
+ box-shadow:inset 0 0 0 .55px rgba(241,242,229,.35),0 .5px 1.5px rgba(26,37,29,.5);
+}
+.css3d-port,.css3d-speakers{
+ position:absolute;display:block;left:50%;top:100%;pointer-events:none;
+ backface-visibility:visible;-webkit-backface-visibility:visible;
+ transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+ transform:translate(-50%,-50%) rotateX(90deg);
+}
+.css3d-port{
+ width:calc(var(--shell-w) * .145);height:calc(var(--shell-w) * .046);
+ border-radius:999px;z-index:3;border:1px solid #5b685c;
+ background:linear-gradient(#141d18,#060b09 55%,#304135);
+ box-shadow:inset 0 0 0 .6px rgba(238,242,226,.31),0 0 0 .55px #b2beb0;
+}
+.css3d-speakers{
+ width:57%;height:calc(var(--shell-w) * .06);
+ background:radial-gradient(circle,#202b25 0 1px,transparent 1.6px) center/9px 100% repeat-x;
+ -webkit-mask-image:linear-gradient(90deg,#000 0 34%,transparent 35% 65%,#000 66% 100%);
+ mask-image:linear-gradient(90deg,#000 0 34%,transparent 35% 65%,#000 66% 100%);
+ opacity:.8;z-index:2;
+}
+.css3d-antenna{
+ position:absolute;top:50%;left:50%;
+ width:calc(var(--shell-w) * .11);height:calc(var(--shell-w) * .009);
+ background:linear-gradient(90deg,#a8b5a5,#596b5f 55%,#aeb9ac);
+ box-shadow:0 0 .6px #4a574c;
+ pointer-events:none;
+ transform-origin:0 0;
+}

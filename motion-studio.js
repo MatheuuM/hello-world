@@ -16,6 +16,26 @@ const items=[{"scene":0,"kind":"activity","side":-1,"level":-0.26,"delay":0,"con
  return {...c,el:n,index:i,width:0};
 });
 const phases=[[0,0.126],[0.128,0.278],[0.29,0.433],[0.435,0.595],[0.598,0.775],[0.778,0.937]];
+// A deterministic, viewport-aware guard. Keep decorative fragments clear of
+// live chapter copy (including hero actions) without breaking scroll reversal.
+function protectCopy(x,y,w,h,copyRect,stageRect,limits){
+ if(!copyRect)return {x,y,hidden:false};
+ const left=copyRect.left-stageRect.left,right=copyRect.right-stageRect.left;
+ const top=copyRect.top-stageRect.top,bottom=copyRect.bottom-stageRect.top;
+ const pad=12;
+ const collision=x+w/2>left-pad&&x-w/2<right+pad&&
+                 y+h/2>top-pad&&y-h/2<bottom+pad;
+ if(!collision)return{x,y,hidden:false};
+ const candidates=[right+pad+w/2,left-pad-w/2]
+  .filter(v=>v>=limits.left&&v<=limits.right)
+  .sort((a,b)=>Math.abs(a-x)-Math.abs(b-x));
+ if(candidates.length)return{x:candidates[0],y,hidden:false};
+ const vertical=[bottom+pad+h/2,top-pad-h/2]
+  .filter(v=>v>=limits.top&&v<=limits.bottom)
+  .sort((a,b)=>Math.abs(a-y)-Math.abs(b-y));
+ if(vertical.length)return{x,y:vertical[0],hidden:false};
+ return{x,y,hidden:true};
+}
 function render(p,active,device){
  if(!document.documentElement.classList.contains('enhanced')){root.style.display='none';return;}
  root.style.display='';
@@ -32,11 +52,16 @@ function render(p,active,device){
  }
  ring.style.left=cx+'px';ring.style.top=cy+'px';ring.style.opacity=String(mobile?.35:.46);
  ring.style.transform='translate(-50%,-50%) rotate('+(p*168).toFixed(2)+'deg) scale('+(mobile?.9:1.04)+')';
- const current=phases[active]||[.93,1],sceneProg=clamp((p-current[0])/(current[1]-current[0]));
- const delta=Math.sin(sceneProg*Math.PI);
+ // Every fragment is evaluated from scroll progress alone; reversing scroll
+ // retraces exactly the same 3D path, with no time-based drift or autoplay.
  const fragmentSide=mobile?Math.min(vw*.345,130):Math.min(vw*.145,205);
  const leftGuard=mobile?(vw<=360?10:12):22;
- let visible=0;
+ const stageRect=stage.getBoundingClientRect();
+ const navRect=stage.querySelector('.chapter-bar')?.getBoundingClientRect();
+ const navY=navRect?navRect.top-stageRect.top:vh-48;
+ const copyRect=stage.querySelector('.scene[aria-hidden="false"] .copy')?.getBoundingClientRect();
+ const copyBottom=copyRect?.bottom-stageRect.top||0;
+ let visible=0,protectedCards=0;
  for(const c of items){
   const [start,end]=phases[c.scene],time=(p-start)/(end-start),delay=c.delay;
   const arrive=c.scene===0?1:smooth((time-.035-delay)/.18);
@@ -50,25 +75,39 @@ function render(p,active,device){
   c.el.style.visibility='visible';
   const offX=c.side*fragmentSide*(mobile?1:1.0);
   const offY=phoneH*c.level*(mobile?.70:.85);
-  const wobble=Math.sin((local+.07*c.index)*Math.PI*2);
-  const movement=.15*(1-factor);
+  const orbit=Math.sin((local+.07*c.index)*Math.PI*2);
   const elWidth=c.el.offsetWidth|| (mobile?132:190);
   const keepLeft=elWidth*.78+leftGuard,keepRight=vw-elWidth*.78-leftGuard;
-  let px=clamp(cx+offX*factor+wobble*(mobile?3:7),keepLeft,keepRight);
+  let px=clamp(cx+offX*factor+orbit*(mobile?1.5:3.5),keepLeft,keepRight);
   let py=cy+offY*factor+(1-factor)*(c.level<0?40:-35);
-  const nav=document.querySelector('.chapter-bar'),navY=nav?nav.getBoundingClientRect().top-stage.getBoundingClientRect().top:vh-48;
-  const copy=document.querySelector('.scene[aria-hidden="false"] .copy');
-  const copyBottom=copy?.getBoundingClientRect().bottom-stage.getBoundingClientRect().top||0;
-  // Never hide the hero CTA or the chapter selector.
+  // Keep the chapter navigation and the hero CTA accessible.
   const roomTop=mobile?Math.max(copyBottom+16,vh*.25):Math.max(80,vh*.11);
   const lower=navY-(mobile?13:18);
   const elHeight=c.el.offsetHeight||80;
   py=clamp(py,roomTop+elHeight*.5,Math.max(roomTop+elHeight*.5,lower-elHeight*.5));
   const scale=mobile?.58+.42*factor:.53+.47*factor;
-  const tilt=c.side*(mobile?-5:-10)+(1-factor)*c.side*18+wobble*(mobile?1.5:3);
+  // Depth is physically legible in 3/4 views: fragments emerge slightly
+  // behind the screen plane and settle 110px towards the studio camera.
+  const release=smooth(factor),depth=-38+148*release;
+  const perspectiveGain=1400/(1400-Math.max(0,depth));
+  if(!mobile){
+   // Include perspective/rotation headroom; fixes overlaps at ~880px laptops.
+   const projected=scale*perspectiveGain;
+   const protectedPos=protectCopy(px,py,elWidth*projected*1.16,elHeight*projected*1.2,
+    copyRect,stageRect,{left:keepLeft,right:keepRight,
+     top:roomTop+elHeight*scale*.58,bottom:lower-elHeight*scale*.58});
+   if(protectedPos.hidden){c.el.style.opacity='0';c.el.style.visibility='hidden';continue;}
+   if(Math.abs(protectedPos.x-px)>.5||Math.abs(protectedPos.y-py)>.5)protectedCards++;
+   px=protectedPos.x;py=protectedPos.y;
+  }
+  const tilt=c.side*(mobile?-5:-10)+(1-factor)*c.side*18+orbit*(mobile?1.2:2);
+  const pitch=(c.level<0?-1:1)*(1-factor)*6+1.2*Math.sin(local*Math.PI);
+  const roll=c.side*1.8+orbit*1.15;
+  const opacity=Math.min(.98,(c.scene===0?.94:.98)*smooth((factor-.04)/.86));
   c.el.style.left=px.toFixed(2)+'px';c.el.style.top=py.toFixed(2)+'px';
-  c.el.style.opacity=String(Math.min(.98,factor*(c.scene===0?.94:.98)));
-  c.el.style.transform='translate(-50%,-50%) translateZ('+(factor*90).toFixed(2)+'px) rotateY('+(tilt*(1-factor*.3)).toFixed(2)+'deg) rotateZ('+(c.side*3+wobble*2).toFixed(2)+'deg) scale('+scale.toFixed(4)+')';
+  c.el.style.opacity=String(opacity);
+  c.el.style.setProperty('--movva-card-depth',depth.toFixed(2));
+  c.el.style.transform='translate(-50%,-50%) translateZ('+depth.toFixed(2)+'px) rotateY('+(tilt*(1-factor*.32)).toFixed(2)+'deg) rotateX('+pitch.toFixed(2)+'deg) rotateZ('+roll.toFixed(2)+'deg) scale('+scale.toFixed(4)+')';
   visible++;
  }
  const evo=clamp((p-.674)/(.730-.674));
@@ -80,7 +119,7 @@ function render(p,active,device){
  const water=smooth((p-.466)/(.557-.466));
  root.querySelectorAll('[data-water-card]').forEach(e=>e.textContent=(2*water).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}));
  root.querySelectorAll('[data-water-meter]').forEach(e=>e.style.width=(74*water)+'%');
- window.MOVVA_MOTION_QA={visible,active,progress:p,cards:items.length,phone:{x:cx,y:cy,h:phoneH},mobile};
+ window.MOVVA_MOTION_QA={visible,protectedCards,active,progress:p,cards:items.length,phone:{x:cx,y:cy,h:phoneH},mobile};
 }
 function reset(){root.style.display='none';}
 window.MOVVA_MOTION={render,reset,get cards(){return items.length}};
