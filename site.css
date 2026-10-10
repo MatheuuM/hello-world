@@ -15,3 +15,14 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
 
 .activity-story{max-width:265px;margin:24px 0 0}.activity-story>div{display:flex;justify-content:space-between;align-items:baseline;font-size:9px;color:var(--muted)}.activity-story strong{font-size:13px;font-weight:400;color:var(--ink)}.activity-story b{font-weight:500}.activity-story svg{width:100%;height:82px;overflow:visible;margin-top:4px}.activity-bar{fill:#819071}.activity-story text{text-anchor:middle;font:8px var(--sans);fill:#737967}@media(max-width:760px),(max-height:790px){.activity-story{display:none}}
+
+/* Visible, actionable mode explanation when a desktop opens in linear reading mode. */
+.motion-resume{display:none}
+.motion-ready:not(.enhanced) .motion-resume{display:flex;gap:24px;align-items:center;justify-content:space-between;margin:108px var(--gutter) 0;padding:23px 27px;background:#e6eadf;border:1px solid #d4d9cd;border-radius:26px;color:var(--ink)}
+.motion-resume-eyebrow{font-size:9px;letter-spacing:.16em;font-weight:600;color:#64725e}
+.motion-resume h2{font-size:clamp(28px,3vw,40px);line-height:1.1;letter-spacing:-.04em;margin:8px 0 7px}
+.motion-resume p{font-size:12px;line-height:1.5;color:#606b5d;margin:0}
+.motion-resume button{border:1px solid #394834;color:#f6f5ee;background:#394834;border-radius:999px;padding:15px 20px;white-space:nowrap;display:flex;align-items:center;gap:18px;font-size:12px;font-weight:600}
+.motion-resume button span{font-size:18px}
+.motion-resume button:disabled{background:#a5ab9e;border-color:#a5ab9e;cursor:not-allowed}
+@media(max-width:760px){.motion-ready:not(.enhanced) .motion-resume{flex-direction:column;align-items:flex-start;margin:88px 20px 0;padding:21px;gap:17px}.motion-resume button{font-size:12px;width:100%;justify-content:space-between}}
