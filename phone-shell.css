@@ -12,3 +12,11 @@
 .css3d-control{position:absolute;top:50%;left:50%;display:block;width:calc(var(--shell-w) * .04);border-radius:calc(var(--shell-w) * .012);background:linear-gradient(90deg,#6f786f,#c3cbbc 45%,#4f574f);box-shadow:0 1px 2px #292d2975;transform-origin:0 0;backface-visibility:visible;pointer-events:none}
 .css3d-control--right{background:linear-gradient(90deg,#606860,#bcc4b6 55%,#424941)}
 @media(max-width:760px){.css3d-front{border-width:calc(var(--shell-w) * .027)}}
+/* Safari/WebKit compositor mitigation: a 2D, correctly scaled metal silhouette
+   replaces an unsupported edge-on group of 3D planes. Hidden in other engines. */
+.css3d-webkit-profile{display:none;position:absolute;top:0;left:50%;width:calc(var(--shell-w) * .112);height:100%;z-index:9;pointer-events:none;transform-origin:center center;opacity:0;border-radius:999px;background:linear-gradient(90deg,#4e584f 0%,#8b9487 22%,#b8c0af 47%,#929a8b 68%,#485249 100%);box-shadow:inset 1px 0 rgba(255,255,255,.6),inset -1px 0 rgba(19,29,20,.38),0 0 1px #a3ad9b;will-change:opacity,transform}
+.css3d-webkit-engine.enhanced .css3d-webkit-profile,
+.enhanced .css3d-webkit-engine .css3d-webkit-profile,
+.enhanced .css3d-device.css3d-webkit-engine .css3d-webkit-profile{display:block}
+.css3d-webkit-profile .profile-button{position:absolute;width:11%;height:16%;top:22%;left:7%;border-radius:99px;background:#c5cabc;box-shadow:0 0 1px #454d42}
+.css3d-webkit-profile .profile-button:nth-child(2){top:41%;height:13%}
