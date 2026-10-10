@@ -1,0 +1,67 @@
+name: MOVVA Desktop 3D Parity
+on:
+  push:
+    branches: [fix/desktop-motion-start-and-3d-parity]
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate and install
+        run: |
+          node --check experience.js
+          node --check mobile-phone.js
+          node --check motion-studio.js
+          node --check qa/desktop-start-qa.cjs
+          timeout 90s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 165s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Check automatic desktop 3D and explicit opt-in
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-server.log 2>&1 &
+          timeout 220s node qa/desktop-start-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-parity-${{ matrix.engine }}
+          path: qa-desktop-start/${{ matrix.engine }}/
+          retention-days: 6
+  gate:
+    needs: browser
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-parity-*
+          path: evidence
+      - name: Require both browsers passing
+        run: |
+          python3 - <<'PY'
+          import os,json,pathlib
+          rows=[]
+          for engine in ('chromium','webkit'):
+            r=json.loads((pathlib.Path('evidence')/('desktop-parity-'+engine)/'report.json').read_text())
+            assert r['sha']==os.environ['GITHUB_SHA'] and r['status']=='PASS',r.get('failure')
+            assert len(r['checks'])>=12 and len(r['images'])>=4,r
+            rows.append({'engine':engine,'checks':len(r['checks'])})
+          pathlib.Path('evidence/summary.json').write_text(json.dumps({'status':'PASS','commit':os.environ['GITHUB_SHA'],'results':rows},indent=2))
+          print(rows)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-desktop-parity-final
+          path: evidence/
+          retention-days: 6
