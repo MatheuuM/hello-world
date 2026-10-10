@@ -29,3 +29,13 @@ jobs:
           curl -k -I -L --max-time 15 -sS https://movvawellness.com.br/ | grep -iE '^HTTP/|^server:|^location:|^x-vercel|^x-matched-path|^content-type:' || true
           echo "HTTP HTTPS headers www"
           curl -k -I -L --max-time 15 -sS https://www.movvawellness.com.br/ | grep -iE '^HTTP/|^server:|^location:|^x-vercel|^x-matched-path|^content-type:' || true
+
+          echo "Current public site signature"
+          curl -L -sS --max-time 15 https://www.movvawellness.com.br/ | python3 -c '
+          import sys,re
+          s=sys.stdin.read(200000)
+          title=re.search(r"<title[^>]*>(.*?)</title>",s,re.I|re.S)
+          print("TITLE:", re.sub(r"\s+"," ",title.group(1)).strip()[:160] if title else "(no title)")
+          for token in ("motion-studio.js","experience.js","__next","MOVVA Wellness","FERA"):
+            print(token,token.lower() in s.lower())
+          '
