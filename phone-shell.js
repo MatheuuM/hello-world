@@ -140,18 +140,32 @@ const isWebKit=/AppleWebKit/i.test(ua)&&(!/(?:Chrome|Chromium|Edg|OPR|SamsungBro
 const profile=document.createElement('div');
 profile.className='css3d-webkit-profile';
 profile.setAttribute('aria-hidden','true');
-profile.innerHTML='<i class="profile-button"></i><i class="profile-button"></i>';
+profile.innerHTML=[
+ '<span class="profile-camera-ledge"></span>',
+ '<i class="profile-button profile-button--action" data-side="left"></i>',
+ '<i class="profile-button profile-button--volume-up" data-side="left"></i>',
+ '<i class="profile-button profile-button--volume-down" data-side="left"></i>',
+ '<i class="profile-button profile-button--lock" data-side="right"></i>',
+ '<i class="profile-button profile-button--camera-control" data-side="right"></i>',
+ '<i class="profile-antenna profile-antenna--top"></i>',
+ '<i class="profile-antenna profile-antenna--bottom"></i>'
+].join('');
 rig.appendChild(profile);
 if(isWebKit)rig.classList.add('css3d-webkit-engine');
 function setPose(ry,rx,rz){
  if(!isWebKit)return;
  const a=ry*Math.PI/180,c=Math.abs(Math.cos(a)),sin=Math.sin(a);
+ const side=sin<=0?'right':'left';
  const t=Math.max(0,Math.min(1,(.68-c)/.58)),fade=t*t*(3-2*t);
+ // In a -90° turn the right rail faces the viewer; +90° reveals the left.
+ // The fallback hardware follows this side, not a generic two-button bar.
+ profile.dataset.side=side;
  const width=parseFloat(rig.style.getPropertyValue('--shell-w'))||W;
  const projected=width*c+width*FACE*2*Math.abs(sin);
  const sign=Math.sign(-sin*Math.cos(a))||1;
  const shift=sign*Math.max(0,(projected-width*FACE*2)*.5);
  profile.style.opacity=fade.toFixed(4);
+ profile.style.visibility=fade>.001?'visible':'hidden';
  profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
