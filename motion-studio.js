@@ -16,6 +16,29 @@ const items=[{"scene":0,"kind":"activity","side":-1,"level":-0.26,"delay":0,"con
  return {...c,el:n,index:i,width:0};
 });
 const phases=[[0,0.126],[0.128,0.278],[0.29,0.433],[0.435,0.595],[0.598,0.775],[0.778,0.937]];
+// Cache intrinsic dimensions per viewport instead of forcing a layout read
+// after writing card transforms on every scroll frame.
+const layout={w:NaN,h:NaN,measurements:0};
+const dynamic={
+ score:[...root.querySelectorAll('[data-score-card]')],
+ minutes:[...root.querySelectorAll('[data-minutes-card]')],
+ scoreMeter:[...root.querySelectorAll('[data-score-meter]')],
+ water:[...root.querySelectorAll('[data-water-card]')],
+ waterMeter:[...root.querySelectorAll('[data-water-meter]')]
+};
+let lastGraph='';
+const updateText=(elements,value)=>elements.forEach(el=>{if(el.textContent!==value)el.textContent=value;});
+const updateWidth=(elements,value)=>elements.forEach(el=>{if(el.style.width!==value)el.style.width=value;});
+function measureCards(w,h){
+ if(layout.w===w&&layout.h===h)return;
+ layout.w=w;layout.h=h;layout.measurements++;
+ for(const item of items){
+  item.width=item.el.offsetWidth||192;
+  item.height=item.el.offsetHeight||106;
+ }
+}
+document.fonts?.ready?.then(()=>{layout.w=NaN;});
+document.fonts?.addEventListener?.('loadingdone',()=>{layout.w=NaN;});
 // A deterministic, viewport-aware guard. Keep decorative fragments clear of
 // live chapter copy (including hero actions) without breaking scroll reversal.
 function protectCopy(x,y,w,h,copyRect,stageRect,limits){
@@ -40,6 +63,7 @@ function render(p,active,device){
  if(!document.documentElement.classList.contains('enhanced')){root.style.display='none';return;}
  root.style.display='';
  const vw=stage.clientWidth,vh=stage.clientHeight,mobile=vw<=760;
+ measureCards(vw,vh);
  let cx=vw*.5,cy=vh*.5,phoneH=430;
  if(rig&&document.documentElement.classList.contains('dom-device')){
   cx=parseFloat(rig.style.left)||vw*.5;
@@ -76,14 +100,14 @@ function render(p,active,device){
   const offX=c.side*fragmentSide*(mobile?1:1.0);
   const offY=phoneH*c.level*(mobile?.70:.85);
   const orbit=Math.sin((local+.07*c.index)*Math.PI*2);
-  const elWidth=c.el.offsetWidth|| (mobile?132:190);
+  const elWidth=c.width|| (mobile?132:190);
   const keepLeft=elWidth*.78+leftGuard,keepRight=vw-elWidth*.78-leftGuard;
   let px=clamp(cx+offX*factor+orbit*(mobile?1.5:3.5),keepLeft,keepRight);
   let py=cy+offY*factor+(1-factor)*(c.level<0?40:-35);
   // Keep the chapter navigation and the hero CTA accessible.
   const roomTop=mobile?Math.max(copyBottom+16,vh*.25):Math.max(80,vh*.11);
   const lower=navY-(mobile?13:18);
-  const elHeight=c.el.offsetHeight||80;
+  const elHeight=c.height||80;
   py=clamp(py,roomTop+elHeight*.5,Math.max(roomTop+elHeight*.5,lower-elHeight*.5));
   const scale=mobile?.58+.42*factor:.53+.47*factor;
   // Depth is physically legible in 3/4 views: fragments emerge slightly
@@ -111,15 +135,16 @@ function render(p,active,device){
   visible++;
  }
  const evo=clamp((p-.674)/(.730-.674));
- const evoE=smooth(evo);
- root.style.setProperty('--graph-progress',evoE.toFixed(4));
- root.querySelectorAll('[data-score-card]').forEach(e=>e.textContent=String(Math.round(52*evoE)));
- root.querySelectorAll('[data-minutes-card]').forEach(e=>e.textContent=String(Math.round(425*smooth((p-.623)/(.662-.623)))));
- root.querySelectorAll('[data-score-meter]').forEach(e=>e.style.width=(52*evoE)+'%');
+ const evoE=smooth(evo),graph=evoE.toFixed(4);
+ if(graph!==lastGraph){root.style.setProperty('--graph-progress',graph);lastGraph=graph;}
+ updateText(dynamic.score,String(Math.round(52*evoE)));
+ updateText(dynamic.minutes,String(Math.round(425*smooth((p-.623)/(.662-.623)))));
+ updateWidth(dynamic.scoreMeter,(52*evoE)+'%');
  const water=smooth((p-.466)/(.557-.466));
- root.querySelectorAll('[data-water-card]').forEach(e=>e.textContent=(2*water).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}));
- root.querySelectorAll('[data-water-meter]').forEach(e=>e.style.width=(74*water)+'%');
- window.MOVVA_MOTION_QA={visible,protectedCards,active,progress:p,cards:items.length,phone:{x:cx,y:cy,h:phoneH},mobile};
+ updateText(dynamic.water,(2*water).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}));
+ updateWidth(dynamic.waterMeter,(74*water)+'%');
+ window.MOVVA_MOTION_QA={visible,protectedCards,active,progress:p,cards:items.length,phone:{x:cx,y:cy,h:phoneH},mobile,
+  layoutMeasurements:layout.measurements};
 }
 function reset(){root.style.display='none';}
 window.MOVVA_MOTION={render,reset,get cards(){return items.length}};
