@@ -194,3 +194,39 @@
  pointer-events:none;
 }
 @media(max-width:760px){.css3d-front{border-width:calc(var(--shell-w) * .021)}}
+
+/* Hardware micro-details: machined controls and USB-C edge silhouette. */
+.css3d-control--action{background:linear-gradient(90deg,#58685c,#d8ddd1 44%,#637467)}
+.css3d-control--camera-control{
+ width:calc(var(--shell-w) * .027);
+ background:linear-gradient(90deg,#526257,#b1bbae 45%,#475448);
+ border-radius:calc(var(--shell-w) * .011);
+ box-shadow:inset 0 0 0 .55px rgba(241,242,229,.35),0 .5px 1.5px rgba(26,37,29,.5);
+}
+.css3d-port,.css3d-speakers{
+ position:absolute;display:block;left:50%;top:100%;pointer-events:none;
+ backface-visibility:visible;-webkit-backface-visibility:visible;
+ transform-style:preserve-3d;-webkit-transform-style:preserve-3d;
+ transform:translate(-50%,-50%) rotateX(90deg);
+}
+.css3d-port{
+ width:calc(var(--shell-w) * .145);height:calc(var(--shell-w) * .046);
+ border-radius:999px;z-index:3;border:1px solid #5b685c;
+ background:linear-gradient(#141d18,#060b09 55%,#304135);
+ box-shadow:inset 0 0 0 .6px rgba(238,242,226,.31),0 0 0 .55px #b2beb0;
+}
+.css3d-speakers{
+ width:57%;height:calc(var(--shell-w) * .06);
+ background:radial-gradient(circle,#202b25 0 1px,transparent 1.6px) center/9px 100% repeat-x;
+ -webkit-mask-image:linear-gradient(90deg,#000 0 34%,transparent 35% 65%,#000 66% 100%);
+ mask-image:linear-gradient(90deg,#000 0 34%,transparent 35% 65%,#000 66% 100%);
+ opacity:.8;z-index:2;
+}
+.css3d-antenna{
+ position:absolute;top:50%;left:50%;
+ width:calc(var(--shell-w) * .11);height:calc(var(--shell-w) * .009);
+ background:linear-gradient(90deg,#a8b5a5,#596b5f 55%,#aeb9ac);
+ box-shadow:0 0 .6px #4a574c;
+ pointer-events:none;
+ transform-origin:0 0;
+}
