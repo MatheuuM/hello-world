@@ -41,6 +41,7 @@ function render(p,active,ix,blend){
  const [ry,rx,rz]=poseAt(p);
  const safeRy=mobile?clamp(ry,-398,-8):ry;
  device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg)';
+ window.MOVVA_SHELL?.setPose(safeRy,rx,rz);
  const selected=Math.min(frames.length-1,ix+(blend>=.5?1:0));
  frames.forEach((el,i)=>{el.style.display=i===selected?'block':'none';el.style.opacity='1';});
  const degrees=((-safeRy%360)+360)%360;
