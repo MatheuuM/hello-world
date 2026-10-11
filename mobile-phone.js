@@ -179,5 +179,5 @@ function render(p,active,ix,blend){
  if(last.screen===selected&&rig.dataset.screen!==names[selected])rig.dataset.screen=names[selected]||'home';
  if(active!==last.chapter){rig.dataset.chapter=String(active);last.chapter=active;metrics.chapterWrites++;}
 }
-window.MOVVA_DOM_DEVICE={render,poseAt,get metrics(){return {...metrics}},get active(){return document.documentElement.classList.contains('dom-device')}};
+window.MOVVA_DOM_DEVICE={render,poseAt,get visualSize(){return{w:last.w,h:last.h,x:last.x,y:last.y}},get metrics(){return {...metrics}},get active(){return document.documentElement.classList.contains('dom-device')}};
 })();
