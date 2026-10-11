@@ -330,3 +330,19 @@
 .css3d-webkit-engine.css3d-profile-active .css3d-webkit-profile{
  visibility:visible;
 }
+
+/* Stage 1A edge continuity — protect the same rounded chassis silhouette
+   in Chromium and WebKit. Do not render a second wall at exact 90° profiles.
+   Avoid new GPU layers outside the profile window. */
+.enhanced .css3d-device.css3d-profile-capable .css3d-webkit-profile{
+ display:block;
+}
+.enhanced .css3d-device.css3d-profile-capable.css3d-profile-active .css3d-shell-face,
+.enhanced .css3d-device.css3d-profile-capable.css3d-profile-active .css3d-control,
+.enhanced .css3d-device.css3d-profile-capable.css3d-profile-active .css3d-antenna,
+.enhanced .css3d-device.css3d-profile-capable.css3d-profile-active .css3d-camera-rig{
+ visibility:hidden;
+}
+.enhanced .css3d-device.css3d-profile-capable.css3d-profile-active .css3d-webkit-profile{
+ visibility:visible;
+}
