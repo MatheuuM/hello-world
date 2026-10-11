@@ -151,6 +151,7 @@ jobs:
           node --check motion-studio.js
           node --check qa/ios-projection-performance.cjs
           node --check qa/ios-side-profile-qa.cjs
+          node --check qa/ios-orientation-qa.cjs
           timeout 130s npm install --no-save --package-lock=false playwright@1.64.0
           timeout 220s npx playwright install --with-deps ${{ matrix.engine }}
       - name: Verify semantic screen origins and compact 3D
@@ -160,6 +161,7 @@ jobs:
           python3 -m http.server 8077 >/tmp/movva-ios-qa.log 2>&1 &
           timeout 225s node qa/ios-projection-performance.cjs
           timeout 150s node qa/ios-side-profile-qa.cjs
+          timeout 140s node qa/ios-orientation-qa.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -167,4 +169,5 @@ jobs:
           path: |
             qa-ios/${{ matrix.engine }}/
             qa-ios-edge/${{ matrix.engine }}/
+            qa-ios-orientation/${{ matrix.engine }}/
           retention-days: 8
