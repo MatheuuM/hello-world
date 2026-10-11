@@ -12,7 +12,7 @@ const PRO_MAX_ASPECT=78/163.4;
 // Avoid invalidating the entire shell's calc()-driven geometry when its
 // width and height did not actually change.
 const BASE_WIDTH=170,BASE_HEIGHT=BASE_WIDTH/PRO_MAX_ASPECT;
-const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null,mode:null,rigTransform:null};
+const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null,mode:null,rigTransform:null,pose:null,dolly:1};
 const metrics={renders:0,sizeWrites:0,scaleWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
@@ -143,6 +143,7 @@ function render(p,active,ix,blend){
  // Stage 5A's inexpensive static CSS3D geometry and Stage 4C framing.
  const rearShow=smooth((p-.112)/.055)*(1-smooth((p-.224)/.085));
  const dolly=1+.032*rearShow;
+ last.pose=[safeRy,rx,rz];last.dolly=dolly;
  device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg) scale('+dolly.toFixed(5)+')';
  // Studio specular ribbons move in lockstep with the scroll in physical
  // device coordinates. No time-based animations or full-screen blur.
