@@ -192,10 +192,12 @@ function setPose(ry,rx,rz){
  // Near a perfect side view Safari otherwise composites its real facets
  // over the fallback rail: the doubled sidewall is the visible artifact.
  // Switch compositor groups only near a fully dominant safety profile.
- rig.classList.toggle('css3d-profile-active',fade>=.94);
+ // Paint the composited silhouette before hiding the original facets.
+ // A z-separated layer avoids intermittent WebKit blank profiles at 90°.
+ profile.style.transform='translate3d(calc(-50% + '+shift.toFixed(3)+'px),0,1px) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
  profile.style.opacity=fade.toFixed(4);
  profile.style.visibility=fade>.001?'visible':'hidden';
- profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
+ rig.classList.toggle('css3d-profile-active',fade>=.94);
 }
 
 window.MOVVA_SHELL={setSize,setPose,isWebKit,profileInBothEngines:true,compact,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
