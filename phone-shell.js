@@ -161,9 +161,14 @@ profile.innerHTML=[
  '<i class="profile-antenna profile-antenna--bottom"></i>'
 ].join('');
 rig.appendChild(profile);
+// Use the same physically proportioned edge-on profile in Chromium and WebKit.
+// This masks individual faceted shell tiles only at the exact profile angles;
+// the continuous CSS3D chassis remains visible in all three-quarter poses.
+rig.classList.add('css3d-profile-capable');
 if(isWebKit)rig.classList.add('css3d-webkit-engine');
 function setPose(ry,rx,rz){
- if(!isWebKit)return;
+ // Chromium has visible facet stripes at 85–95°; WebKit already relied on
+ // this narrow shared mechanical silhouette. Neither engine uses it face-on.
  const a=ry*Math.PI/180,c=Math.abs(Math.cos(a)),sin=Math.sin(a);
  const side=sin<=0?'right':'left';
  // The compositor safety edge must not draw a second visible rail throughout
@@ -190,7 +195,7 @@ function setPose(ry,rx,rz){
  profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
-window.MOVVA_SHELL={setSize,setPose,isWebKit,compact,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
+window.MOVVA_SHELL={setSize,setPose,isWebKit,profileInBothEngines:true,compact,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };
