@@ -168,7 +168,7 @@ function setPose(ry,rx,rz){
  const side=sin<=0?'right':'left';
  // The compositor safety edge must not draw a second visible rail throughout
  // the ordinary three-quarter turn. Activate it only close to a true profile.
- const t=Math.max(0,Math.min(1,(.20-c)/.16)),fade=t*t*(3-2*t);
+ const t=Math.max(0,Math.min(1,(.33-c)/.27)),fade=t*t*(3-2*t);
  // In a -90° turn the right rail faces the viewer; +90° reveals the left.
  // The fallback hardware follows this side, not a generic two-button bar.
  if(profile.dataset.side!==side)profile.dataset.side=side;
