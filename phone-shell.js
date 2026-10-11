@@ -164,8 +164,8 @@ rig.appendChild(profile);
 // Use the same physically proportioned edge-on profile in Chromium and WebKit.
 // This masks individual faceted shell tiles only at the exact profile angles;
 // the continuous CSS3D chassis remains visible in all three-quarter poses.
-rig.classList.add('css3d-profile-capable');
 if(isWebKit)rig.classList.add('css3d-webkit-engine');
+else rig.classList.add('css3d-profile-capable');
 function setPose(ry,rx,rz){
  // Chromium has visible facet stripes at 85–95°; WebKit already relied on
  // this narrow shared mechanical silhouette. Neither engine uses it face-on.
@@ -173,7 +173,10 @@ function setPose(ry,rx,rz){
  const side=sin<=0?'right':'left';
  // The compositor safety edge must not draw a second visible rail throughout
  // the ordinary three-quarter turn. Activate it only close to a true profile.
- const t=Math.max(0,Math.min(1,(.33-c)/.27)),fade=t*t*(3-2*t);
+ // Safari keeps its existing profile treatment. Only Chromium receives a
+ // tightly scoped faceting correction very close to 90/270 degrees.
+ const start=isWebKit?.33:.070,window=isWebKit?.27:.058;
+ const t=Math.max(0,Math.min(1,(start-c)/window)),fade=t*t*(3-2*t);
  // In a -90° turn the right rail faces the viewer; +90° reveals the left.
  // The fallback hardware follows this side, not a generic two-button bar.
  if(profile.dataset.side!==side)profile.dataset.side=side;
