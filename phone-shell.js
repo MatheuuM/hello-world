@@ -174,12 +174,17 @@ function setPose(ry,rx,rz){
  if(profile.dataset.side!==side)profile.dataset.side=side;
  if(fade<=.001){
   if(profile.style.visibility!=='hidden')profile.style.visibility='hidden';
+  rig.classList.remove('css3d-profile-active');
   return;
  }
  const width=parseFloat(rig.style.getPropertyValue('--shell-w'))||W;
  const projected=width*c+width*FACE*2*Math.abs(sin);
  const sign=Math.sign(-sin*Math.cos(a))||1;
  const shift=sign*Math.max(0,(projected-width*FACE*2)*.5);
+ // Near a perfect side view Safari otherwise composites its real facets
+ // over the fallback rail: the doubled sidewall is the visible artifact.
+ // Switch compositor groups only near a fully dominant safety profile.
+ rig.classList.toggle('css3d-profile-active',fade>=.94);
  profile.style.opacity=fade.toFixed(4);
  profile.style.visibility=fade>.001?'visible':'hidden';
  profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
