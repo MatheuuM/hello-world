@@ -124,7 +124,7 @@ function render(p,active,ix,blend){
  // Transform the assembled object, not the shell width; this preserves
  // Stage 5A's inexpensive static CSS3D geometry and Stage 4C framing.
  const rearShow=smooth((p-.112)/.055)*(1-smooth((p-.224)/.085));
- const dolly=1+.044*rearShow;
+ const dolly=1+.032*rearShow;
  device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg) scale('+dolly.toFixed(5)+')';
  // Studio specular ribbons move in lockstep with the scroll in physical
  // device coordinates. No time-based animations or full-screen blur.
