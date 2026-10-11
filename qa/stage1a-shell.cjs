@@ -4,7 +4,7 @@ const engine=process.env.QA_ENGINE||'chromium',root='qa-stage1a/'+engine;
 fs.mkdirSync(root,{recursive:true});
 const result={engine,commit:process.env.GITHUB_SHA,status:'RUNNING',checks:[],shots:[],errors:[]};
 const report=(name,details)=>{result.checks.push({name,details});console.log('PASS',name)};
-const positions=[['desktop',1440,900],['mobile',393,852],['small',320,667]];
+const positions=[['desktop',1440,900],['mobile',393,852],['small',320,667]].filter(([name])=>!process.env.QA_VIEWPORT||process.env.QA_VIEWPORT===name);
 const angles=[0,-25,-55,-85,-90,-110,-145,-180,-265,-270];
 (async()=>{
 let browser;
