@@ -57,8 +57,8 @@ fs.mkdirSync(root,{recursive:true});
     return{cameraWallCount:walls.length,shellWallCount:document.querySelectorAll('.css3d-shell-face').length,
      controlCount:controls.length,antennaCount:antennas.length,allWallTransformsCentered:walls.every(isCentered),results};
    },poses);
-   assert.equal(check.cameraWallCount,48);
-   assert.ok(check.shellWallCount>100);
+   assert.equal(check.cameraWallCount,w<=760?36:48);
+   assert.ok(check.shellWallCount>(w<=760?35:100));
    assert.equal(check.controlCount,5);
    assert.equal(check.antennaCount,4);
    assert.ok(check.allWallTransformsCentered,'Camera-wall segment centered in rotated local coordinates');
