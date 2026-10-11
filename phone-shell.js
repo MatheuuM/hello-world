@@ -96,6 +96,10 @@ for(const x of [-.499,.499]){
   device.appendChild(seam);
  }
 }
+// Camera plateau walls use a center transform origin. Center them in the
+// parent plane *before* rotation; doing this after rotateZ/rotateX applies the
+// half-width offset in rotated axes and ejects long side/bottom faces outside
+// the handset (visible as vertical bars and dotted detached rays).
 // Physical camera-plateau walls. Unlike a shadow, their side faces occlude and
 // change perspective during the scroll rotation; radius remains round in profile.
 const camera=device.querySelector('.css3d-camera-rig .css3d-camera');
@@ -125,7 +129,7 @@ if(camera){
   wall.className='css3d-camera-wall-face';wall.setAttribute('aria-hidden','true');
   wall.style.width='calc(var(--shell-w) * '+(len/W).toFixed(9)+' + .10px)';
   wall.style.height='calc(var(--shell-w) * .021 + .10px)';
-  wall.style.transform='translate3d(calc(var(--shell-w) * '+((a.x+b.x)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * '+((a.y+b.y)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * .0145)) rotateZ('+(Math.atan2(dy,dx)*180/Math.PI).toFixed(4)+'deg) rotateX(90deg) translate(-50%,-50%)';
+  wall.style.transform='translate3d(calc(var(--shell-w) * '+((a.x+b.x)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * '+((a.y+b.y)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * .0145)) translate(-50%,-50%) rotateZ('+(Math.atan2(dy,dx)*180/Math.PI).toFixed(4)+'deg) rotateX(90deg)';
   const n=dx/(len||1),light=.84+.17*n;
   wall.style.filter='brightness('+light.toFixed(3)+')';
   camera.insertBefore(wall,camera.querySelector('.css3d-camera-deck'));
