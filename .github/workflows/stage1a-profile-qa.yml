@@ -1,0 +1,61 @@
+name: MOVVA Stage1A Edge Continuity QA
+on:
+  push:
+    branches: [refine/stage1a-profile-continuity-20261011]
+permissions:
+  contents: read
+jobs:
+  browser:
+    name: Edge / ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax and browser setup
+        run: |
+          node --check phone-shell.js
+          node --check qa/stage1a-profile-qa.cjs
+          timeout 100s npm install --no-save --package-lock=false playwright@1.56.1
+          timeout 185s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Capture physical body at 0/55/85/90/95/110/180/270 degrees
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-3d-test.log 2>&1 &
+          timeout 230s node qa/stage1a-profile-qa.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: profile-${{ matrix.engine }}
+          path: qa-profile-continuity/${{ matrix.engine }}/
+          retention-days: 7
+  gate:
+    name: Stage1A acceptance gate
+    if: always()
+    needs: browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: profile-*
+          path: evidence
+      - name: Require both engines and same tested commit
+        run: |
+          python3 - <<'PY'
+          import json,pathlib,os
+          checks=0
+          for e in ['chromium','webkit']:
+            p=pathlib.Path('evidence')/('profile-'+e)/'report.json'
+            r=json.loads(p.read_text())
+            assert r['status']=='PASS' and r['sha']==os.environ['GITHUB_SHA'],(e,r.get('failure'))
+            assert len(r['screenshots'])==32 and len(r['checks'])==32
+            checks+=len(r['checks'])
+          print('PASS:',checks,'profile continuity assertions on both engines')
+          PY
