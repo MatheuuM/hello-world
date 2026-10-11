@@ -1,7 +1,7 @@
 name: MOVVA Immersive Cinematic QA
 on:
   push:
-    branches: [prototype/3d-unibody-stage1a, refine/phone-stage1a2-corners-camera, refine/phone-18promax-hardware, refine/phone-safari-profile-qa, refine/movva-motion-composition-4a, refine/movva-cinema-4b, refine/movva-cinema-4c-continuous-stage, refine/movva-stage5a-runtime-performance, refine/movva-stage5b-card-legibility, fix/movva-camera-wall-continuity-20261011, master]
+    branches: [prototype/3d-unibody-stage1a, refine/phone-stage1a2-corners-camera, refine/phone-18promax-hardware, refine/phone-safari-profile-qa, refine/movva-motion-composition-4a, refine/movva-cinema-4b, refine/movva-cinema-4c-continuous-stage, refine/movva-stage5a-runtime-performance, refine/movva-stage5b-card-legibility, fix/movva-camera-wall-continuity-20261011, refine/movva-motion6a-screen-emergence, master]
 permissions:
   contents: read
 jobs:
@@ -57,4 +57,37 @@ jobs:
             qa-stage5a/${{ matrix.engine }}/
             qa-stage5b/${{ matrix.engine }}/
             qa-camera-integrity/${{ matrix.engine }}/
+          retention-days: 8
+
+  signature:
+    name: Motion 6A / ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browsers and validate motion scripts
+        run: |
+          node --check mobile-phone.js
+          node --check motion-studio.js
+          node --check qa/stage6a-motion-signature.cjs
+          timeout 130s npm install --no-save --package-lock=false playwright@1.64.0
+          timeout 200s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Test phone-origin card extraction and studio light
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva6a-server.log 2>&1 &
+          timeout 225s node qa/stage6a-motion-signature.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-stage6a-${{ matrix.engine }}
+          path: qa-motion6a/${{ matrix.engine }}/
           retention-days: 8
