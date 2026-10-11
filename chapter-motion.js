@@ -45,13 +45,16 @@ for(const ch of chapters){
 // exactly as written in the demo. Use already-existing ring and meter markup.
 const rings=nutrition?[...nutrition.querySelectorAll('.m-nut-rings .nr i')]:[];
 const amounts=rings.map(el=>parseFloat(el.style.getPropertyValue('--value'))||0);
+const lastRingValues=rings.map(()=>null);
 const nutrientMeter=nutrition?.querySelector('.m-meter i');
 const meterFull=nutrientMeter?(parseFloat(nutrientMeter.style.width)||86):86;
+let lastMeterValue=null;
 // The graph stroke is already scroll-controlled. Add a small marker that
 // follows the real SVG path, without introducing another animation loop.
 const trace=graph?.querySelector('.trace');
 let marker=null;
 let graphCoordinates=[];
+let lastMarkerTransform=null,lastMarkerOpacity=null;
 if(trace){
  const total=trace.getTotalLength();
  graphCoordinates=Array.from({length:101},(_,i)=>{
@@ -66,6 +69,7 @@ if(trace){
 }
 // Four delicate paths physically connect the already existing Circle nodes.
 const links=[];
+const lastLinkOffsets=[];
 if(orbit){
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
  svg.classList.add('movva-circle-connections');
@@ -78,7 +82,7 @@ if(orbit){
   line.setAttribute('x1','51');line.setAttribute('y1','0');
   line.setAttribute('x2',String(x));line.setAttribute('y2',String(y));
   line.setAttribute('pathLength','1');
-  svg.appendChild(line);links.push(line);
+  svg.appendChild(line);links.push(line);lastLinkOffsets.push(null);
  }
  orbit.insertBefore(svg,orbit.firstChild);
 }
@@ -104,14 +108,14 @@ function render(p){
   const t=ramp(p,.456,.542);
   for(const [i,el] of rings.entries()){
    const value=(amounts[i]*ramp(t,.08*i,.72+.06*i)).toFixed(2)+'deg';
-   if(el.style.getPropertyValue('--value')!==value){
-    el.style.setProperty('--value',value);updates.dataWrites++;
+   if(lastRingValues[i]!==value){
+    el.style.setProperty('--value',value);lastRingValues[i]=value;updates.dataWrites++;
    }
   }
   if(nutrientMeter){
    const width=(meterFull*t).toFixed(2)+'%';
-   if(nutrientMeter.style.width!==width){
-    nutrientMeter.style.width=width;updates.dataWrites++;
+   if(lastMeterValue!==width){
+    nutrientMeter.style.width=width;lastMeterValue=width;updates.dataWrites++;
    }
   }
  }
@@ -121,19 +125,24 @@ function render(p){
   const x=(a.x+(b.x-a.x)*(v-low)).toFixed(2);
   const y=(a.y+(b.y-a.y)*(v-low)).toFixed(2);
   const transform='translate('+x+'px,'+y+'px)';
-  if(marker.style.transform!==transform){
-   marker.style.transform=transform;updates.dataWrites++;
+  if(lastMarkerTransform!==transform){
+   marker.style.transform=transform;lastMarkerTransform=transform;updates.dataWrites++;
   }
-  const opacity=ramp(p,.665,.695)*(1-ramp(p,.747,.777));
-  marker.style.opacity=opacity.toFixed(3);
+  const opacity=(ramp(p,.665,.695)*(1-ramp(p,.747,.777))).toFixed(3);
+  if(lastMarkerOpacity!==opacity){
+   marker.style.opacity=opacity;lastMarkerOpacity=opacity;updates.dataWrites++;
+  }
  }
  if(links.length){
   const t=ramp(p,.811,.875);
   for(const [i,line] of links.entries()){
    const strength=ramp(t,i*.085,.65+i*.08);
    const offset=(1-strength).toFixed(4);
-   if(line.style.strokeDashoffset!==offset){
-    line.style.strokeDashoffset=offset;updates.circleWrites++;
+   // CSSOM can normalize SVG dashoffset units on readback; compare the
+   // authored value instead of re-writing identical SVG styles every frame.
+   if(lastLinkOffsets[i]!==offset){
+    line.style.strokeDashoffset=offset;
+    lastLinkOffsets[i]=offset;updates.circleWrites++;
    }
   }
  }
@@ -147,10 +156,10 @@ function render(p){
 function reset(){
  lastProgress=null;
  for(const line of phrases)line.style.removeProperty('--movva-reveal');
- for(const [i,el] of rings.entries())el.style.setProperty('--value',amounts[i]+'deg');
- if(nutrientMeter)nutrientMeter.style.width=meterFull+'%';
- if(marker){marker.style.removeProperty('opacity');marker.style.removeProperty('transform');}
- for(const line of links)line.style.removeProperty('stroke-dashoffset');
+ for(const [i,el] of rings.entries()){el.style.setProperty('--value',amounts[i]+'deg');lastRingValues[i]=null;}
+ if(nutrientMeter){nutrientMeter.style.width=meterFull+'%';lastMeterValue=null;}
+ if(marker){marker.style.removeProperty('opacity');marker.style.removeProperty('transform');lastMarkerTransform=null;lastMarkerOpacity=null;}
+ for(const [i,line] of links.entries()){line.style.removeProperty('stroke-dashoffset');lastLinkOffsets[i]=null;}
  finale?.style.removeProperty('--movva-finale-progress');
 }
 window.MOVVA_CHAPTER_MOTION={render,reset,get metrics(){return {...updates}},get sections(){return chapters.map(c=>({id:c.id,lines:c.lines.length}))}};
