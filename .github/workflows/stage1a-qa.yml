@@ -1,7 +1,7 @@
 name: MOVVA Immersive Cinematic QA
 on:
   push:
-    branches: [prototype/3d-unibody-stage1a, refine/phone-stage1a2-corners-camera, refine/phone-18promax-hardware, refine/phone-safari-profile-qa, refine/movva-motion-composition-4a, refine/movva-cinema-4b, refine/movva-cinema-4c-continuous-stage, refine/movva-stage5a-runtime-performance, master]
+    branches: [prototype/3d-unibody-stage1a, refine/phone-stage1a2-corners-camera, refine/phone-18promax-hardware, refine/phone-safari-profile-qa, refine/movva-motion-composition-4a, refine/movva-cinema-4b, refine/movva-cinema-4c-continuous-stage, refine/movva-stage5a-runtime-performance, refine/movva-stage5b-card-legibility, master]
 permissions:
   contents: read
 jobs:
@@ -29,6 +29,7 @@ jobs:
           node --check qa/cinema-scrub-qa.cjs
           node --check qa/stage4c-camera-continuity.cjs
           node --check qa/stage5a-runtime-qa.cjs
+          node --check qa/stage5b-legibility-qa.cjs
           timeout 120s npm install --no-save --package-lock=false playwright@1.64.0
           timeout 180s npx playwright install --with-deps ${{ matrix.engine }}
       - name: Capture all shell angles and viewports
@@ -41,6 +42,7 @@ jobs:
           timeout 125s node qa/cinema-scrub-qa.cjs
           timeout 250s node qa/stage4c-camera-continuity.cjs
           timeout 150s node qa/stage5a-runtime-qa.cjs
+          timeout 150s node qa/stage5b-legibility-qa.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -51,4 +53,5 @@ jobs:
             qa-cinema/${{ matrix.engine }}/
             qa-stage4c/${{ matrix.engine }}/
             qa-stage5a/${{ matrix.engine }}/
+            qa-stage5b/${{ matrix.engine }}/
           retention-days: 8
