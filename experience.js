@@ -11,7 +11,9 @@ const lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>{t=clamp(t);return t*t*(3-2*t);};
 const range=(p,a,b)=>smooth((p-a)/(b-a));
 const windows=[[0,.13],[.125,.275],[.27,.435],[.43,.595],[.59,.775],[.77,.935],[.93,1.05]];
 const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CIRCLE','MOVVA'];
-const scenes=$$('.scene'),dots=$$('.chapter-dots a');
+const scenes=$('.scene'),dots=$('.chapter-dots a');
+const sceneCache=scenes.map(()=>({opacity:null,visibility:null,inert:null,transform:null}));
+let lastScene=-1,lastBackdrop=null;
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
 let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null;
 const launchParams=new URLSearchParams(location.search);
@@ -222,10 +224,26 @@ function render(p){
  const intro=window.MOVVA_INTRO;
  const w=intro?intro.weights(p,weights(p)):weights(p),bg=intro?intro.background(p,background(p)):background(p);
  const selected=w.indexOf(Math.max(...w)),active=intro?intro.active(p,selected):selected;
- stage.style.backgroundColor=`rgb(${bg})`;stage.classList.toggle('dark',active===2);$('.header').classList.toggle('dark',active===2);
- scenes.forEach((s,i)=>{const visible=w[i]>.002;s.style.opacity=w[i].toFixed(4);s.style.visibility=visible?'visible':'hidden';s.inert=i!==active;s.setAttribute('aria-hidden',String(i!==active));const cy=(1-w[i])*22;s.style.transform=`translateY(${cy}px)`;});
- dots.forEach((a,i)=>{if(i===active)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current')});
- $('#chapter-number').textContent=String(active+1).padStart(2,'0');$('#chapter-name').textContent=names[active];
+ const backdrop='rgb('+bg+')';
+ if(backdrop!==lastBackdrop){stage.style.backgroundColor=backdrop;lastBackdrop=backdrop;}
+ stage.classList.toggle('dark',active===2);$('.header').classList.toggle('dark',active===2);
+ scenes.forEach((el,i)=>{
+  const cache=sceneCache[i],opacity=w[i].toFixed(4);
+  const visible=w[i]>.002,visibility=visible?'visible':'hidden';
+  const inactive=i!==active,transform='translateY('+((1-w[i])*22)+'px)';
+  if(cache.opacity!==opacity){el.style.opacity=opacity;cache.opacity=opacity;}
+  if(cache.visibility!==visibility){el.style.visibility=visibility;cache.visibility=visibility;}
+  if(cache.inert!==inactive){
+   el.inert=inactive;el.setAttribute('aria-hidden',String(inactive));cache.inert=inactive;
+  }
+  if(cache.transform!==transform){el.style.transform=transform;cache.transform=transform;}
+ });
+ if(active!==lastScene){
+  dots.forEach((el,i)=>{if(i===active)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current')});
+  $('#chapter-number').textContent=String(active+1).padStart(2,'0');
+  $('#chapter-name').textContent=names[active];
+  lastScene=active;
+ }
  const ep=range(p,.626,.725),np=range(p,.47,.56);
  $('#score-number').textContent=Math.round(52*ep);$('#score-arc').style.strokeDashoffset=(289.026*(1-.52*ep)).toFixed(3);
  $('#water-number').textContent=(2*np).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});$('#water-fill').style.width=(np*74)+'%';
@@ -286,7 +304,7 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
-function clearScenes(){window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
+function clearScenes(){sceneCache.forEach(c=>{c.opacity=null;c.visibility=null;c.inert=null;c.transform=null;});lastScene=-1;lastBackdrop=null;window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
 function applyMode(){
  // Keep the phone and scroll-driven cards active at every viewport size.
  // WebGL failure is handled by the existing CSS3D renderer; static HTML remains
