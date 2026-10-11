@@ -3,6 +3,7 @@
 const stage=document.getElementById('stage'),rig=document.getElementById('css3d-device');
 if(!stage)return;
 const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
+const lerp=(a,b,t)=>a+(b-a)*t;
 const root=document.createElement('div');
 root.className='motion-studio';root.setAttribute('aria-hidden','true');
 root.innerHTML='<div class="motion-atmosphere"><i class="m-orbit"></i><i class="m-orbit"></i><i class="m-orbit"></i></div>';
@@ -79,6 +80,7 @@ function render(p,active,device){
  // Every fragment is evaluated from scroll progress alone; reversing scroll
  // retraces exactly the same 3D path, with no time-based drift or autoplay.
  const fragmentSide=mobile?Math.min(vw*.345,130):Math.min(vw*.145,205);
+ const phoneW=phoneH*(78/163.4);
  const leftGuard=mobile?(vw<=360?10:12):22;
  const stageRect=stage.getBoundingClientRect();
  const navRect=stage.querySelector('.chapter-bar')?.getBoundingClientRect();
@@ -97,6 +99,14 @@ function render(p,active,device){
   const factor=amplitude;
   if(!sceneVisible||factor<.003){c.el.style.opacity='0';c.el.style.visibility='hidden';continue;}
   c.el.style.visibility='visible';
+  // 6A: UI fragments originate from compact anchors inside the device
+  // silhouette, then lift and unfold into the editorial layout. The exit
+  // retraces the same path when scrolling upwards. The back-facing Connected
+  // scene releases from the rear-glass silhouette; front scenes use the display.
+  const release=smooth(factor);
+  const extraction=c.scene===0?1:smooth((factor-.065)/.855);
+  const anchorX=cx+c.side*phoneW*.13;
+  const anchorY=cy+phoneH*c.level*.15;
   const offX=c.side*fragmentSide*(mobile?1:1.0);
   const offY=phoneH*c.level*(mobile?.70:.85);
   const orbit=Math.sin((local+.07*c.index)*Math.PI*2);
@@ -109,11 +119,18 @@ function render(p,active,device){
   const lower=navY-(mobile?13:18);
   const elHeight=c.height||80;
   py=clamp(py,roomTop+elHeight*.5,Math.max(roomTop+elHeight*.5,lower-elHeight*.5));
-  const scale=mobile?.58+.42*factor:.53+.47*factor;
-  // Depth is physically legible in 3/4 views: fragments emerge slightly
-  // behind the screen plane and settle 110px towards the studio camera.
-  const release=smooth(factor),depth=-38+148*release;
+  const destinationScale=mobile?.58+.42*factor:.53+.47*factor;
+  const scale=c.scene===0?destinationScale:(.16+(destinationScale-.16)*extraction);
+  // Physical card depth follows the same strictly scroll-derived progress:
+  // screen plane -> lifted, slightly pitched glass. No autoplay.
+  const depth=-38+148*release;
   const perspectiveGain=1400/(1400-Math.max(0,depth));
+  // Blend from a stable point on the handset to the safe, copy-protected
+  // destination. This prevents cards materialising already detached in space.
+  if(c.scene!==0){
+   px=lerp(anchorX,px,extraction);
+   py=lerp(anchorY,py,extraction);
+  }
   if(!mobile){
    // Include perspective/rotation headroom; fixes overlaps at ~880px laptops.
    const projected=scale*perspectiveGain;
@@ -124,13 +141,16 @@ function render(p,active,device){
    if(Math.abs(protectedPos.x-px)>.5||Math.abs(protectedPos.y-py)>.5)protectedCards++;
    px=protectedPos.x;py=protectedPos.y;
   }
-  const tilt=c.side*(mobile?-5:-10)+(1-factor)*c.side*18+orbit*(mobile?1.2:2);
+  const tilt=c.side*(mobile?-5:-10)+(1-factor)*c.side*18+orbit*(mobile?1.2:2)+c.side*(1-extraction)*54;
   const pitch=(c.level<0?-1:1)*(1-factor)*6+1.2*Math.sin(local*Math.PI);
   const roll=c.side*1.8+orbit*1.15;
   const opacity=Math.min(.98,(c.scene===0?.94:.98)*smooth((factor-.04)/.86));
   c.el.style.left=px.toFixed(2)+'px';c.el.style.top=py.toFixed(2)+'px';
   c.el.style.opacity=String(opacity);
   c.el.style.setProperty('--movva-card-depth',depth.toFixed(2));
+  c.el.style.setProperty('--movva-extraction',extraction.toFixed(4));
+  c.el.style.setProperty('--movva-anchor-x',anchorX.toFixed(2)+'px');
+  c.el.style.setProperty('--movva-anchor-y',anchorY.toFixed(2)+'px');
   c.el.style.transform='translate(-50%,-50%) translateZ('+depth.toFixed(2)+'px) rotateY('+(tilt*(1-factor*.32)).toFixed(2)+'deg) rotateX('+pitch.toFixed(2)+'deg) rotateZ('+roll.toFixed(2)+'deg) scale('+scale.toFixed(4)+')';
   visible++;
  }
@@ -143,7 +163,7 @@ function render(p,active,device){
  const water=smooth((p-.466)/(.557-.466));
  updateText(dynamic.water,(2*water).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}));
  updateWidth(dynamic.waterMeter,(74*water)+'%');
- window.MOVVA_MOTION_QA={visible,protectedCards,active,progress:p,cards:items.length,phone:{x:cx,y:cy,h:phoneH},mobile,
+ window.MOVVA_MOTION_QA={visible,protectedCards,active,progress:p,cards:items.length,extractionEnabled:true,phone:{x:cx,y:cy,h:phoneH},mobile,
   layoutMeasurements:layout.measurements};
 }
 function reset(){root.style.display='none';}
