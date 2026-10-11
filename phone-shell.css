@@ -308,3 +308,13 @@
  pointer-events:none;
  will-change:transform;
 }
+
+/* On iOS, keep beautiful static reflections but do not re-rasterize three
+   independent 3D glass highlights during every scroll sample. */
+@media(max-width:760px){
+ .css3d-glint::after,.css3d-back::after,.css3d-camera-deck::after{
+  transform:none!important;
+  opacity:.13!important;
+  will-change:auto!important;
+ }
+}
