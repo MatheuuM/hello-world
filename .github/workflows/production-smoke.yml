@@ -1,0 +1,36 @@
+name: MOVVA Official Site Smoke
+on:
+  push:
+    branches: [ops/movva-live-smoke-20261011, master]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live-website:
+    name: Public domain / ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up browser and verify smoke script
+        run: |
+          node --check qa/live-production-smoke.cjs
+          npm install --no-save --package-lock=false playwright@1.64.0
+          npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Inspect actual movvawellness.com.br
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: node qa/live-production-smoke.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-public-smoke-${{ matrix.engine }}
+          path: qa-live/${{ matrix.engine }}/
+          retention-days: 7
