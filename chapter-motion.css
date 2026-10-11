@@ -1,0 +1,74 @@
+/* MOVVA 6B — Editorial chapter motion, driven by the existing scroll renderer.
+   Respect authored line breaks, typography and native layout. No autoplay. */
+.enhanced .movva-editorial-heading > .movva-editorial-line{
+ opacity:var(--movva-reveal,1);
+ transform:translate3d(0,calc((1 - var(--movva-reveal,1))* .24em),0);
+ will-change:transform,opacity;
+}
+.enhanced .movva-editorial-heading > .movva-editorial-text{
+ display:inline-block;
+ font:inherit;
+ font-style:inherit;
+ letter-spacing:inherit;
+ line-height:inherit;
+}
+.enhanced .movva-editorial-heading > em.movva-editorial-line{
+ display:inline-block;
+}
+.movva-graph-marker{
+ fill:#829b78;
+ stroke:#f8f7f0;
+ stroke-width:1.2;
+ opacity:0;
+ pointer-events:none;
+ vector-effect:non-scaling-stroke;
+}
+.movva-circle-connections{
+ position:absolute;
+ inset:0;
+ width:100%;
+ height:100%;
+ overflow:visible;
+ pointer-events:none;
+ z-index:0;
+}
+.movva-circle-connection{
+ fill:none;
+ stroke:#718565;
+ stroke-width:.8;
+ opacity:.44;
+ vector-effect:non-scaling-stroke;
+ stroke-dasharray:1;
+ stroke-dashoffset:1;
+ stroke-linecap:round;
+}
+.enhanced #rhythm h2.movva-finale-heading{position:relative}
+.enhanced #rhythm h2.movva-finale-heading::after{
+ content:"";
+ position:absolute;
+ width:min(150px,24vw);
+ height:1px;
+ bottom:-14px;
+ left:50%;
+ transform:translateX(-50%) scaleX(var(--movva-finale-progress,0));
+ transform-origin:center center;
+ background:linear-gradient(90deg,transparent,#84907b,transparent);
+ opacity:.7;
+ pointer-events:none;
+}
+@media(max-width:760px){
+ .enhanced .movva-editorial-heading > .movva-editorial-line{
+  transform:translate3d(0,calc((1 - var(--movva-reveal,1))* .17em),0);
+ }
+ .movva-circle-connection{opacity:.28;stroke-width:.65}
+ .enhanced #rhythm h2.movva-finale-heading::after{bottom:-10px;width:90px}
+}
+@media(prefers-reduced-motion:reduce){
+ /* Keep the mandatory immersive 3D, but skip additional editorial
+    typography motion for users who prefer fewer transitions. */
+ .enhanced .movva-editorial-heading > .movva-editorial-line{
+  opacity:1!important;
+  transform:none!important;
+  will-change:auto;
+ }
+}
