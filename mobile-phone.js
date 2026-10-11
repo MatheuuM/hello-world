@@ -180,5 +180,31 @@ function render(p,active,ix,blend){
  if(last.screen===selected&&rig.dataset.screen!==names[selected])rig.dataset.screen=names[selected]||'home';
  if(active!==last.chapter){rig.dataset.chapter=String(active);last.chapter=active;metrics.chapterWrites++;}
 }
-window.MOVVA_DOM_DEVICE={render,poseAt,get visualSize(){return{w:last.w,h:last.h,x:last.x,y:last.y}},get metrics(){return {...metrics}},get active(){return document.documentElement.classList.contains('dom-device')}};
+// Project a point in the screenshot (0-1 UV) through the actual CSS3D
+// camera pose. It is computed from the same transforms, with no per-frame
+// getBoundingClientRect on the hundreds of shell faces.
+function projectScreenPoint(u,v){
+ if(!last.pose||!Number.isFinite(last.x)||!Number.isFinite(last.h))return null;
+ const mobile=last.mode==='compact';
+ const width=mobile?BASE_WIDTH:last.w,height=mobile?BASE_HEIGHT:last.h;
+ const frameInset=width*(.0092+.021);
+ const x0=(u-.5)*(width-2*frameInset),y0=(v-.5)*(height-2*frameInset);
+ const z0=width*.056;
+ const [ry,rx,rz]=last.pose.map(angle=>angle*Math.PI/180);
+ const cy=Math.cos(ry),sy=Math.sin(ry);
+ const cx=Math.cos(rx),sx=Math.sin(rx);
+ const cz=Math.cos(rz),sz=Math.sin(rz);
+ const x1=x0*cz-y0*sz,y1=x0*sz+y0*cz;
+ const y2=y1*cx-z0*sx,z2=y1*sx+z0*cx;
+ const x3=x1*cy+z2*sy,z3=-x1*sy+z2*cy;
+ const zoom=last.dolly||1, perspective=1200/(1200-z3*zoom);
+ const outer=mobile?last.h/BASE_HEIGHT:1;
+ return {
+  x:last.x+outer*x3*zoom*perspective,
+  y:last.y+outer*y2*zoom*perspective,
+  normal:cy*cx,
+  u,v
+ };
+}
+window.MOVVA_DOM_DEVICE={render,poseAt,projectScreenPoint,get visualSize(){return{w:last.w,h:last.h,x:last.x,y:last.y}},get metrics(){return {...metrics}},get active(){return document.documentElement.classList.contains('dom-device')}};
 })();
