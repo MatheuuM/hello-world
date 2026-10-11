@@ -3,6 +3,9 @@
 'use strict';
 const stage=document.getElementById('stage'),rig=document.getElementById('css3d-device'),device=document.getElementById('css3d-object');
 const frames=[...rig.querySelectorAll('.css3d-screen')];
+const studioFront=rig.querySelector('.css3d-glint');
+const studioBack=rig.querySelector('.css3d-back');
+const studioDeck=rig.querySelector('.css3d-camera-deck');
 const scenes=[...document.querySelectorAll('.scene')],bar=stage.querySelector('.chapter-bar');
 const PRO_MAX_ASPECT=78/163.4;
 // On every scroll frame the hardware contains hundreds of CSS3D faces.
@@ -117,7 +120,29 @@ function render(p,active,ix,blend){
  }
  const [ry,rx,rz]=poseAt(p);
  const safeRy=mobile?clamp(ry,-398,-8):ry;
- device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg)';
+ // 6A: a restrained studio-camera dolly over the flagship rear module.
+ // Transform the assembled object, not the shell width; this preserves
+ // Stage 5A's inexpensive static CSS3D geometry and Stage 4C framing.
+ const rearShow=smooth((p-.112)/.055)*(1-smooth((p-.224)/.085));
+ const dolly=1+.044*rearShow;
+ device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg) scale('+dolly.toFixed(5)+')';
+ // Studio specular ribbons move in lockstep with the scroll in physical
+ // device coordinates. No time-based animations or full-screen blur.
+ const sheen=(p*160-80).toFixed(2)+'%';
+ const frontIntensity=(.16+.15*smooth((p-.29)/.075)).toFixed(3);
+ const cameraIntensity=(.22+.29*rearShow).toFixed(3);
+ if(studioFront){
+  studioFront.style.setProperty('--movva-sheen-x',sheen);
+  studioFront.style.setProperty('--movva-sheen-opacity',frontIntensity);
+ }
+ if(studioBack){
+  studioBack.style.setProperty('--movva-sheen-x',sheen);
+  studioBack.style.setProperty('--movva-sheen-opacity',cameraIntensity);
+ }
+ if(studioDeck){
+  studioDeck.style.setProperty('--movva-sheen-x',sheen);
+  studioDeck.style.setProperty('--movva-sheen-opacity',cameraIntensity);
+ }
  window.MOVVA_SHELL?.setPose(safeRy,rx,rz);
  const selected=Math.min(frames.length-1,ix+(blend>=.5?1:0));
  if(selected!==last.screen){
