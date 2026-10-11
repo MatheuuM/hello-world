@@ -16,16 +16,16 @@ try{
   page.on('pageerror',e=>result.errors.push(String(e)));
   page.on('response',r=>{if(r.url().startsWith('http://127.0.0.1:8077')&&r.status()>=400)result.errors.push(r.status()+' '+r.url())});
   await page.goto('http://127.0.0.1:8077/',{waitUntil:'load'});
-  await page.waitForFunction(()=>window.__MOVVA_QA__?.ready===true&&window.MOVVA_SHELL?.partCount>100,null,{timeout:25000});
+  await page.waitForFunction(()=>window.__MOVVA_QA__?.ready===true&&window.MOVVA_SHELL?.partCount>25,null,{timeout:25000});
   const initial=await page.evaluate(()=>({
    parts:MOVVA_SHELL.partCount,layers:MOVVA_SHELL.layerCount,edges:MOVVA_SHELL.edgeCount,
    obsolete:document.querySelectorAll('.css3d-rail,.css3d-top,.css3d-bottom').length,
    renderer:__MOVVA_QA__.engine,overflow:document.documentElement.scrollWidth-innerWidth,
    valid:[...document.querySelectorAll('.css3d-shell-face')].every(e=>getComputedStyle(e).transform!=='none')
   }));
-  assert.ok(initial.parts>110&&initial.parts<200,JSON.stringify(initial));
+  assert.ok(initial.parts>(w<=760?35:110)&&initial.parts<200,JSON.stringify(initial));
   assert.equal(initial.obsolete,0);assert.equal(initial.renderer,'CSS3D DOM');
-  assert.equal(initial.layers,3);assert.ok(initial.valid);assert.ok(Math.abs(initial.overflow)<=1);
+  assert.equal(initial.layers,w<=760?1:3);assert.ok(initial.valid);assert.ok(Math.abs(initial.overflow)<=1);
   const camera=await page.evaluate(()=>{
    const cam=document.querySelector('.css3d-camera-rig .css3d-camera');
    const rig=document.querySelector('#css3d-device');
@@ -51,7 +51,7 @@ try{
   assert.equal(camera.rig,1);
   assert.equal(camera.lenses,3);
   assert.equal(camera.clipped,false);
-  assert.ok(camera.walls>=45 && camera.walls<=90,JSON.stringify(camera));
+  assert.equal(camera.walls,w<=760?36:48,JSON.stringify(camera));
   assert.ok(camera.plateauWidth>.90 && camera.plateauWidth<.96);
   assert.ok(camera.microphone);
   assert.ok(camera.glassPanel!=='none');
@@ -59,7 +59,7 @@ try{
   assert.ok(Math.abs(camera.referenceRatio-78/163.4)<.0001);
   assert.notEqual(camera.cameraDepth,'none');
   assert.notEqual(camera.lensDepth,'none');
-  assert.ok(camera.segments>=14);
+  assert.ok(camera.segments>=(w<=760?10:14));
   assert.ok(camera.overlap<.1);
   report(size+' raised flagship plateau and three optical barrels',camera);
   report(size+' shared-shell geometry',initial);
@@ -96,7 +96,7 @@ try{
    assert.ok(state.body!=='none');assert.equal(state.controls,5);
    assert.ok(Math.abs(Number(state.body.slice(state.body.indexOf('(')+1).split(',')[0])-Math.cos(a*Math.PI/180))<.028,JSON.stringify({angle:a,transform:state.body}));
    if(engine==='webkit'&&[-85,-90,-265,-270].includes(a)){
-    assert.ok(state.edge.visible && state.edge.opacity>.92,JSON.stringify({a,edge:state.edge}));
+    assert.ok(state.edge.visible && state.edge.opacity>=(Math.abs(a)%90===0?.92:.65),JSON.stringify({a,edge:state.edge}));
     assert.equal(state.edge.side,a<=-180?'left':'right',JSON.stringify(state.edge));
     assert.equal(state.edge.buttons,a<=-180?3:2,JSON.stringify(state.edge));
     assert.ok(state.edge.cameraWidth>1,JSON.stringify(state.edge));

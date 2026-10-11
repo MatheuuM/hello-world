@@ -42,7 +42,7 @@ const dir=path.join('qa-perf-guard',engine);fs.mkdirSync(dir,{recursive:true});
    assert.equal(data.fitCalls,0,'Unexpected WebGL projection during CSS3D scroll');
    assert.equal(data.renderer,'CSS3D DOM');
    assert.ok(data.active);
-   assert.equal(data.cameraWallCount,48);
+   assert.equal(data.cameraWallCount,width<761?36:48);
    assert.equal(data.wallFilters,0,'Camera still incurs per-face CSS filter passes');
    if(width<761)assert.equal(data.cardBackdrop,'none','Mobile cards still blur behind translucent paper');
    assert.ok(Math.abs(data.errorPageOverflow)<=1);

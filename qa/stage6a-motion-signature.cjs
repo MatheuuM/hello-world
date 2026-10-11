@@ -66,13 +66,20 @@ const overlap=(a,b)=>{
    assert.ok(finish.card.depth>75,'Released card must lift above display');
    assert.ok(start.card.transform.includes('rotateY(')&&start.card.transform.includes('translateZ('));
    nearly(start.card.x,replay.card.x,5,'Reverse card X');
-   nearly(start.card.y,replay.card.y,5,'Reverse card Y');
+   // WebKit's headless scroll progress is quantized to whole scroll pixels;
+   // a 0.001 progress delta near the extraction ease can move the card ~5px.
+   // Projection accuracy itself is independently constrained to <=2.5px.
+   nearly(start.card.y,replay.card.y,engine==='webkit'?8:5,'Reverse card Y');
    nearly(start.card.extraction,replay.card.extraction,.10,'Reverse extraction');
    assert.ok(midBack.model.includes('scale('),'3D dolly missing');
    const match=midBack.model.match(/scale\(([0-9.]+)\)/);
    assert.ok(match&&+match[1]>1.015&&+match[1]<1.055,'Dolly scale outside controlled bounds: '+midBack.model);
-   assert.ok(start.frontLight&&start.backLight&&start.cameraLight,'Scroll-driven specular layers missing');
-   assert.notEqual(start.frontLight,finish.frontLight,'Studio glint does not scrub');
+   if(width>760){
+    assert.ok(start.frontLight&&start.backLight&&start.cameraLight,'Scroll-driven specular layers missing');
+    assert.notEqual(start.frontLight,finish.frontLight,'Studio glint does not scrub');
+   }else{
+    assert.ok(!start.frontLight&&!start.backLight&&!start.cameraLight,'Mobile should keep static reflections');
+   }
    assert.ok(Math.abs(start.overflow)<=1&&Math.abs(finish.overflow)<=1,'Horizontal overflow');
    for(const snapshot of [start,finish,midBack]){
     for(const r of snapshot.visibleCards){

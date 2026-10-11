@@ -138,3 +138,12 @@
 }
 
 @media(max-width:760px){.motion-fragment{backdrop-filter:none;-webkit-backdrop-filter:none}}
+
+/* Keep only the active pair of glass cards promoted to composite layers. */
+.motion-fragment{will-change:auto}
+.motion-fragment.is-active{will-change:transform,opacity}
+/* On narrow devices the subtle orbit costs a full-size translucent layer and
+   competes with Safari's expensive 3D hardware composite. */
+@media(max-width:760px){
+ .motion-atmosphere{display:none!important;will-change:auto}
+}

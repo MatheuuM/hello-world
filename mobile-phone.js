@@ -11,8 +11,9 @@ const PRO_MAX_ASPECT=78/163.4;
 // On every scroll frame the hardware contains hundreds of CSS3D faces.
 // Avoid invalidating the entire shell's calc()-driven geometry when its
 // width and height did not actually change.
-const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null};
-const metrics={renders:0,sizeWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
+const BASE_WIDTH=170,BASE_HEIGHT=BASE_WIDTH/PRO_MAX_ASPECT;
+const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null,mode:null,rigTransform:null,pose:null,dolly:1};
+const metrics={renders:0,sizeWrites:0,scaleWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -109,10 +110,27 @@ function render(p,active,ix,blend){
   desktopCamera(p,vw,vh);
  const w=h*PRO_MAX_ASPECT;
  metrics.renders++;
- if(Math.abs(w-last.w)>.001||Math.abs(h-last.h)>.001||!Number.isFinite(last.w)){
-  rig.style.width=w+'px';rig.style.height=h+'px';
-  window.MOVVA_SHELL?.setSize(w,h);
-  last.w=w;last.h=h;metrics.sizeWrites++;
+ if(mobile){
+  if(last.mode!=='compact'){
+   rig.style.width=BASE_WIDTH+'px';rig.style.height=BASE_HEIGHT+'px';
+   window.MOVVA_SHELL?.setSize(BASE_WIDTH,BASE_HEIGHT);
+   last.mode='compact';metrics.sizeWrites++;
+  }
+  const transform='translate(-50%,-50%) scale('+(h/BASE_HEIGHT).toFixed(6)+')';
+  if(transform!==last.rigTransform){
+   rig.style.transform=transform;last.rigTransform=transform;metrics.scaleWrites++;
+  }
+  last.w=w;last.h=h;
+ }else{
+  if(last.mode!=='desktop'){
+   rig.style.transform='translate(-50%,-50%)';last.rigTransform=null;
+   last.mode='desktop';last.w=NaN;last.h=NaN;
+  }
+  if(Math.abs(w-last.w)>.001||Math.abs(h-last.h)>.001||!Number.isFinite(last.w)){
+   rig.style.width=w+'px';rig.style.height=h+'px';
+   window.MOVVA_SHELL?.setSize(w,h);
+   last.w=w;last.h=h;metrics.sizeWrites++;
+  }
  }
  if(Math.abs(cx-last.x)>.001||Math.abs(cy-last.y)>.001||!Number.isFinite(last.x)){
   rig.style.left=cx+'px';rig.style.top=cy+'px';
@@ -125,12 +143,14 @@ function render(p,active,ix,blend){
  // Stage 5A's inexpensive static CSS3D geometry and Stage 4C framing.
  const rearShow=smooth((p-.112)/.055)*(1-smooth((p-.224)/.085));
  const dolly=1+.032*rearShow;
+ last.pose=[safeRy,rx,rz];last.dolly=dolly;
  device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg) scale('+dolly.toFixed(5)+')';
  // Studio specular ribbons move in lockstep with the scroll in physical
  // device coordinates. No time-based animations or full-screen blur.
  const sheen=(p*160-80).toFixed(2)+'%';
  const frontIntensity=(.16+.15*smooth((p-.29)/.075)).toFixed(3);
  const cameraIntensity=(.22+.29*rearShow).toFixed(3);
+ if(!mobile){
  if(studioFront){
   studioFront.style.setProperty('--movva-sheen-x',sheen);
   studioFront.style.setProperty('--movva-sheen-opacity',frontIntensity);
@@ -142,6 +162,7 @@ function render(p,active,ix,blend){
  if(studioDeck){
   studioDeck.style.setProperty('--movva-sheen-x',sheen);
   studioDeck.style.setProperty('--movva-sheen-opacity',cameraIntensity);
+ }
  }
  window.MOVVA_SHELL?.setPose(safeRy,rx,rz);
  const selected=Math.min(frames.length-1,ix+(blend>=.5?1:0));
@@ -161,5 +182,31 @@ function render(p,active,ix,blend){
  if(last.screen===selected&&rig.dataset.screen!==names[selected])rig.dataset.screen=names[selected]||'home';
  if(active!==last.chapter){rig.dataset.chapter=String(active);last.chapter=active;metrics.chapterWrites++;}
 }
-window.MOVVA_DOM_DEVICE={render,poseAt,get metrics(){return {...metrics}},get active(){return document.documentElement.classList.contains('dom-device')}};
+// Project a point in the screenshot (0-1 UV) through the actual CSS3D
+// camera pose. It is computed from the same transforms, with no per-frame
+// getBoundingClientRect on the hundreds of shell faces.
+function projectScreenPoint(u,v){
+ if(!last.pose||!Number.isFinite(last.x)||!Number.isFinite(last.h))return null;
+ const mobile=last.mode==='compact';
+ const width=mobile?BASE_WIDTH:last.w,height=mobile?BASE_HEIGHT:last.h;
+ const frameInset=width*(.0092+.021);
+ const x0=(u-.5)*(width-2*frameInset),y0=(v-.5)*(height-2*frameInset);
+ const z0=width*.056;
+ const [ry,rx,rz]=last.pose.map(angle=>angle*Math.PI/180);
+ const cy=Math.cos(ry),sy=Math.sin(ry);
+ const cx=Math.cos(rx),sx=Math.sin(rx);
+ const cz=Math.cos(rz),sz=Math.sin(rz);
+ const x1=x0*cz-y0*sz,y1=x0*sz+y0*cz;
+ const y2=y1*cx-z0*sx,z2=y1*sx+z0*cx;
+ const x3=x1*cy+z2*sy,z3=-x1*sy+z2*cy;
+ const zoom=last.dolly||1, perspective=1200/(1200-z3*zoom);
+ const outer=mobile?last.h/BASE_HEIGHT:1;
+ return {
+  x:last.x+outer*x3*zoom*perspective,
+  y:last.y+outer*y2*zoom*perspective,
+  normal:cy*cx,
+  u,v
+ };
+}
+window.MOVVA_DOM_DEVICE={render,poseAt,projectScreenPoint,get visualSize(){return{w:last.w,h:last.h,x:last.x,y:last.y}},get metrics(){return {...metrics}},get active(){return document.documentElement.classList.contains('dom-device')}};
 })();

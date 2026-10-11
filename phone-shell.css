@@ -308,3 +308,25 @@
  pointer-events:none;
  will-change:transform;
 }
+
+/* On iOS, keep beautiful static reflections but do not re-rasterize three
+   independent 3D glass highlights during every scroll sample. */
+@media(max-width:760px){
+ .css3d-glint::after,.css3d-back::after,.css3d-camera-deck::after{
+  transform:none!important;
+  opacity:.13!important;
+  will-change:auto!important;
+ }
+}
+
+/* Safari exact edge: the narrow metal silhouette replaces (rather than
+   doubles) the hardware facets, controls and lens barrels for ~few degrees. */
+.css3d-webkit-engine.css3d-profile-active .css3d-shell-face--wall,
+.css3d-webkit-engine.css3d-profile-active .css3d-control,
+.css3d-webkit-engine.css3d-profile-active .css3d-antenna,
+.css3d-webkit-engine.css3d-profile-active .css3d-camera-rig{
+ visibility:hidden;
+}
+.css3d-webkit-engine.css3d-profile-active .css3d-webkit-profile{
+ visibility:visible;
+}

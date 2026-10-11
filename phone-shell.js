@@ -8,7 +8,11 @@ const shell=device?.querySelector('.css3d-unibody');
 if(!rig||!device||!shell)return;
 // Apple 18 Pro Max physical ratio: 78 / 163.4 (MOVVA-exclusive finish).
 const PRO_MAX_RATIO=78/163.4;
-const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=14;
+// Safari and mobile browsers cannot afford hundreds of independent CSS3D
+// compositor layers. Use one continuous perimeter wall instead of three
+// overlapping bevel strips at compact widths. Front/back borders retain trim.
+const compact=matchMedia('(max-width:760px)').matches;
+const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=compact?10:14;
 // Each tangent is sized to the true contour; excessive strip overlap caused
 // visibly folded corners when CSS transformed the individual faces.
 const FACE=.056,WALL=.038,INSET=.0092;
@@ -29,11 +33,13 @@ for(let c=0;c<4;c++){
  if(c===2)pt(-W/2,-H/2+RY);
 }
 pt(-W/2+RX,-H/2);
-const layers=[
- {aZ:-FACE,bZ:-WALL,aInset:INSET,bInset:0,className:'rear'},
- {aZ:-WALL,bZ:WALL,aInset:0,bInset:0,className:'wall'},
- {aZ:WALL,bZ:FACE,aInset:0,bInset:INSET,className:'front'}
-];
+const layers=compact?
+ [{aZ:-FACE,bZ:FACE,aInset:0,bInset:0,className:'wall'}]:
+ [
+  {aZ:-FACE,bZ:-WALL,aInset:INSET,bInset:0,className:'rear'},
+  {aZ:-WALL,bZ:WALL,aInset:0,bInset:0,className:'wall'},
+  {aZ:WALL,bZ:FACE,aInset:0,bInset:INSET,className:'front'}
+ ];
 // A shared directional light is sampled per tangent (not per repeated CSS tile).
 // This keeps the highlight continuous as the phone turns past each corner.
 const palette={
@@ -105,7 +111,7 @@ for(const x of [-.499,.499]){
 const camera=device.querySelector('.css3d-camera-rig .css3d-camera');
 let cameraWallCount=0;
 if(camera){
- const pw=W*.939,ph=pw/1.88,pr=W*.105,steps=11;
+ const pw=W*.939,ph=pw/1.88,pr=W*.105,steps=compact?8:11;
  const profile=[],add=(x,y)=>profile.push({x,y});
  add(-pw/2+pr,-ph/2);add(pw/2-pr,-ph/2);
  const corners=[
@@ -160,20 +166,31 @@ function setPose(ry,rx,rz){
  if(!isWebKit)return;
  const a=ry*Math.PI/180,c=Math.abs(Math.cos(a)),sin=Math.sin(a);
  const side=sin<=0?'right':'left';
- const t=Math.max(0,Math.min(1,(.68-c)/.58)),fade=t*t*(3-2*t);
+ // The compositor safety edge must not draw a second visible rail throughout
+ // the ordinary three-quarter turn. Activate it only close to a true profile.
+ const t=Math.max(0,Math.min(1,(.33-c)/.27)),fade=t*t*(3-2*t);
  // In a -90° turn the right rail faces the viewer; +90° reveals the left.
  // The fallback hardware follows this side, not a generic two-button bar.
- profile.dataset.side=side;
+ if(profile.dataset.side!==side)profile.dataset.side=side;
+ if(fade<=.001){
+  if(profile.style.visibility!=='hidden')profile.style.visibility='hidden';
+  rig.classList.remove('css3d-profile-active');
+  return;
+ }
  const width=parseFloat(rig.style.getPropertyValue('--shell-w'))||W;
  const projected=width*c+width*FACE*2*Math.abs(sin);
  const sign=Math.sign(-sin*Math.cos(a))||1;
  const shift=sign*Math.max(0,(projected-width*FACE*2)*.5);
+ // Near a perfect side view Safari otherwise composites its real facets
+ // over the fallback rail: the doubled sidewall is the visible artifact.
+ // Switch compositor groups only near a fully dominant safety profile.
+ rig.classList.toggle('css3d-profile-active',fade>=.94);
  profile.style.opacity=fade.toFixed(4);
  profile.style.visibility=fade>.001?'visible':'hidden';
  profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
-window.MOVVA_SHELL={setSize,setPose,isWebKit,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
+window.MOVVA_SHELL={setSize,setPose,isWebKit,compact,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };
