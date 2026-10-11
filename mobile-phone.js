@@ -11,8 +11,9 @@ const PRO_MAX_ASPECT=78/163.4;
 // On every scroll frame the hardware contains hundreds of CSS3D faces.
 // Avoid invalidating the entire shell's calc()-driven geometry when its
 // width and height did not actually change.
-const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null};
-const metrics={renders:0,sizeWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
+const BASE_WIDTH=170,BASE_HEIGHT=BASE_WIDTH/PRO_MAX_ASPECT;
+const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null,mode:null,rigTransform:null};
+const metrics={renders:0,sizeWrites:0,scaleWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
