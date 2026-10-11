@@ -55,7 +55,7 @@ jobs:
             p=pathlib.Path('evidence')/('profile-'+e)/'report.json'
             r=json.loads(p.read_text())
             assert r['status']=='PASS' and r['sha']==os.environ['GITHUB_SHA'],(e,r.get('failure'))
-            assert len(r['screenshots'])==32 and len(r['checks'])==32
+            assert len(r['screenshots'])==32 and len(r['checks'])==34
             checks+=len(r['checks'])
           print('PASS:',checks,'profile continuity assertions on both engines')
           PY
