@@ -318,3 +318,15 @@
   will-change:auto!important;
  }
 }
+
+/* Safari exact edge: the narrow metal silhouette replaces (rather than
+   doubles) the hardware facets, controls and lens barrels for ~few degrees. */
+.css3d-webkit-engine.css3d-profile-active .css3d-shell-face--wall,
+.css3d-webkit-engine.css3d-profile-active .css3d-control,
+.css3d-webkit-engine.css3d-profile-active .css3d-antenna,
+.css3d-webkit-engine.css3d-profile-active .css3d-camera-rig{
+ visibility:hidden;
+}
+.css3d-webkit-engine.css3d-profile-active .css3d-webkit-profile{
+ visibility:visible;
+}
