@@ -237,6 +237,8 @@ function render(p){
  if(window.MOVVA_HERO)[nx,ny,scale,rx,ry,rz]=window.MOVVA_HERO.fit(p,[nx,ny,scale,rx,ry,rz],compose,halfW,halfH);
  if(intro)[nx,ny,scale,rx,ry,rz]=intro.fit(p,[nx,ny,scale,rx,ry,rz],compose,halfW,halfH);
  intro?.visual(p);
+ // 6B: reuse this render clock; do not schedule a competing animation loop.
+ window.MOVVA_CHAPTER_MOTION?.render(p,active);
  // A slightly larger, more cinematic product keeps the phone central to the story.
  if(!mobile){const emphasis=active===0?1:active===6?.4:.72;scale*=1+.085*emphasis;}
  const model=compose(nx*halfW,ny*halfH,0,rx+pointer[1]*.025,ry+pointer[0]*.065,rz,scale);
@@ -272,7 +274,7 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
-function clearScenes(){window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
+function clearScenes(){window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
 function applyMode(){
  // Keep the phone and scroll-driven cards active at every viewport size.
  // WebGL failure is handled by the existing CSS3D renderer; static HTML remains
