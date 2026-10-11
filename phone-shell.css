@@ -346,3 +346,13 @@
 .enhanced .css3d-device.css3d-profile-capable.css3d-profile-active .css3d-webkit-profile{
  visibility:visible;
 }
+
+/* WebKit: the edge silhouette needs its own compositing layer. Without
+   z-order isolation it can intermittently disappear when the wall is culled. */
+.css3d-webkit-engine .css3d-webkit-profile{
+ z-index:12;
+ -webkit-backface-visibility:visible;
+ backface-visibility:visible;
+ transform-style:flat;
+ -webkit-transform-style:flat;
+}
