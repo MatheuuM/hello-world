@@ -2,6 +2,8 @@ name: MOVVA Official Site Smoke
 on:
   push:
     branches: [ops/movva-live-smoke-20261011, master]
+  pull_request:
+    branches: [master]
   workflow_dispatch:
 permissions:
   contents: read
