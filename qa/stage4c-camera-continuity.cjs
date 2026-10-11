@@ -37,7 +37,7 @@ const fail=(name,val,limit)=>assert.ok(val<=limit,name+': measured '+val+', limi
      return{
       p:value,chapter:Number(rig.dataset.chapter),
       frame:{x:parseFloat(rig.style.left),y:parseFloat(rig.style.top),
-       width:parseFloat(rig.style.width),height:parseFloat(rig.style.height)},
+       width:MOVVA_DOM_DEVICE.visualSize.w,height:MOVVA_DOM_DEVICE.visualSize.h},
       engine:state.engine,enabled:state.active,
       overflow:document.documentElement.scrollWidth-innerWidth
      };
