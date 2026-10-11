@@ -71,8 +71,12 @@ const overlap=(a,b)=>{
    assert.ok(midBack.model.includes('scale('),'3D dolly missing');
    const match=midBack.model.match(/scale\(([0-9.]+)\)/);
    assert.ok(match&&+match[1]>1.015&&+match[1]<1.055,'Dolly scale outside controlled bounds: '+midBack.model);
-   assert.ok(start.frontLight&&start.backLight&&start.cameraLight,'Scroll-driven specular layers missing');
-   assert.notEqual(start.frontLight,finish.frontLight,'Studio glint does not scrub');
+   if(width>760){
+    assert.ok(start.frontLight&&start.backLight&&start.cameraLight,'Scroll-driven specular layers missing');
+    assert.notEqual(start.frontLight,finish.frontLight,'Studio glint does not scrub');
+   }else{
+    assert.ok(!start.frontLight&&!start.backLight&&!start.cameraLight,'Mobile should keep static reflections');
+   }
    assert.ok(Math.abs(start.overflow)<=1&&Math.abs(finish.overflow)<=1,'Horizontal overflow');
    for(const snapshot of [start,finish,midBack]){
     for(const r of snapshot.visibleCards){
