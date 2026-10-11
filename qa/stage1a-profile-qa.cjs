@@ -59,8 +59,32 @@ try{
     assert.equal(v.wall.visibility,'visible',JSON.stringify(v));
    }
    const filename=width+'-angle-'+String(angle).padStart(3,'0')+'.png';
-   await page.screenshot({path:path.join(dir,filename)});
+   const png=await page.screenshot({path:path.join(dir,filename)});
    report.screenshots.push(filename);
+   if(width===1440&&(angle===90||angle===270)){
+    // A DOM/CSS pass is insufficient: an earlier WebKit regression made the
+    // physical phone disappear despite computed visibility=visible.
+    // Sample only the dark Training backdrop around the expected product.
+    const fraction=await page.evaluate(async b64=>{
+     const img=new Image();
+     img.src='data:image/png;base64,'+b64;
+     await img.decode();
+     const canvas=document.createElement('canvas');
+     canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+     const ctx=canvas.getContext('2d',{willReadFrequently:true});
+     ctx.drawImage(img,0,0);
+     const w=80,h=630,p=ctx.getImageData(360,170,w,h).data;
+     let bright=0,samples=0;
+     for(let y=0;y<h;y+=4)for(let x=0;x<w;x+=4){
+      const i=(y*w+x)*4;
+      if((p[i]+p[i+1]+p[i+2])/3>95)bright++;
+      samples++;
+     }
+     return bright/samples;
+    },png.toString('base64'));
+    assert.ok(fraction>.12,JSON.stringify({angle,engine,brightPixelFraction:fraction}));
+    check('Visible product silhouette '+engine+' '+angle+'deg',fraction);
+   }
    check(width+'px '+angle+'deg', {active:v.classActive,opacity:v.profile.opacity,side:v.side});
   }
   await page.evaluate(()=>document.documentElement.style.removeProperty('--qa-angle'));
