@@ -26,7 +26,7 @@ const overlap=(a,b)=>{
    await page.waitForFunction(()=>window.__MOVVA_QA__?.ready&&window.MOVVA_MOTION_QA?.extractionEnabled,null,{timeout:30000});
    async function at(p){
     await page.evaluate(value=>__MOVVA_QA__.setProgress(value),p);
-    await page.waitForFunction(value=>Math.abs(__MOVVA_QA__.progress-value)<.001,value=p,{timeout:24000});
+    await page.waitForFunction(value=>Math.abs(__MOVVA_QA__.progress-value)<.001,p,{timeout:24000});
     await page.waitForTimeout(75);
     return page.evaluate(()=>{
      const card=document.querySelector('.motion-fragment[data-scene="2"][data-kind="training"]');
