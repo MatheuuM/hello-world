@@ -150,6 +150,7 @@ function render(p,active,ix,blend){
  const sheen=(p*160-80).toFixed(2)+'%';
  const frontIntensity=(.16+.15*smooth((p-.29)/.075)).toFixed(3);
  const cameraIntensity=(.22+.29*rearShow).toFixed(3);
+ if(!mobile){
  if(studioFront){
   studioFront.style.setProperty('--movva-sheen-x',sheen);
   studioFront.style.setProperty('--movva-sheen-opacity',frontIntensity);
@@ -161,6 +162,7 @@ function render(p,active,ix,blend){
  if(studioDeck){
   studioDeck.style.setProperty('--movva-sheen-x',sheen);
   studioDeck.style.setProperty('--movva-sheen-opacity',cameraIntensity);
+ }
  }
  window.MOVVA_SHELL?.setPose(safeRy,rx,rz);
  const selected=Math.min(frames.length-1,ix+(blend>=.5?1:0));
