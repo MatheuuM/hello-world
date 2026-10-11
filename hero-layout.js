@@ -18,10 +18,16 @@ function measure(){
  layout={x:r.left-s.left,y:r.top-s.top,width:r.width,height:r.height,viewportWidth:s.width,viewportHeight:s.height};
  if(layout.width>0&&layout.height>0)stage.style.setProperty('--hero-ground',((layout.y+layout.height+12)/s.height*100).toFixed(2));
 }
-function fit(p,pose,compose,halfW,halfH){
+let lastWeight=null;
+function visual(p){
  const weight=1-ease((p-.085)/.045);
  stage.classList.toggle('hero-active',p<.13);
- stage.style.setProperty('--hero-intensity',weight.toFixed(5));
+ const value=weight.toFixed(5);
+ if(value!==lastWeight){stage.style.setProperty('--hero-intensity',value);lastWeight=value;}
+ return weight;
+}
+function fit(p,pose,compose,halfW,halfH){
+ const weight=visual(p);
  if(!weight||!layout||layout.width<=0||layout.height<=0)return pose;
  const {x,y,width:w,height:h,viewportWidth:vw,viewportHeight:vh}=layout;
  const tall=vw<=760;
@@ -45,7 +51,7 @@ function fit(p,pose,compose,halfW,halfH){
  const opening=[nx,ny,scale,rx,ry,rz];
  return pose.map((v,i)=>v+(opening[i]-v)*weight);
 }
-window.MOVVA_HERO={measure,fit,get layout(){return layout?{...layout}:null}};
+window.MOVVA_HERO={measure,fit,visual,get layout(){return layout?{...layout}:null}};
 // Font loading can change the text block's height, especially on an iPhone.
 const observer=new ResizeObserver(()=>{measure();window.dispatchEvent(new Event('movva:hero-layout'));});
 observer.observe(copy);

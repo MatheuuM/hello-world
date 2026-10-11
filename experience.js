@@ -12,6 +12,8 @@ const range=(p,a,b)=>smooth((p-a)/(b-a));
 const windows=[[0,.13],[.125,.275],[.27,.435],[.43,.595],[.59,.775],[.77,.935],[.93,1.05]];
 const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CIRCLE','MOVVA'];
 const scenes=$$('.scene'),dots=$$('.chapter-dots a');
+const sceneCache=scenes.map(()=>({opacity:null,visibility:null,inert:null,transform:null}));
+let lastScene=-1,lastBackdrop=null;
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
 let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null;
 const launchParams=new URLSearchParams(location.search);
@@ -222,14 +224,42 @@ function render(p){
  const intro=window.MOVVA_INTRO;
  const w=intro?intro.weights(p,weights(p)):weights(p),bg=intro?intro.background(p,background(p)):background(p);
  const selected=w.indexOf(Math.max(...w)),active=intro?intro.active(p,selected):selected;
- stage.style.backgroundColor=`rgb(${bg})`;stage.classList.toggle('dark',active===2);$('.header').classList.toggle('dark',active===2);
- scenes.forEach((s,i)=>{const visible=w[i]>.002;s.style.opacity=w[i].toFixed(4);s.style.visibility=visible?'visible':'hidden';s.inert=i!==active;s.setAttribute('aria-hidden',String(i!==active));const cy=(1-w[i])*22;s.style.transform=`translateY(${cy}px)`;});
- dots.forEach((a,i)=>{if(i===active)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current')});
- $('#chapter-number').textContent=String(active+1).padStart(2,'0');$('#chapter-name').textContent=names[active];
+ const backdrop='rgb('+bg+')';
+ if(backdrop!==lastBackdrop){stage.style.backgroundColor=backdrop;lastBackdrop=backdrop;}
+ stage.classList.toggle('dark',active===2);$('.header').classList.toggle('dark',active===2);
+ scenes.forEach((el,i)=>{
+  const cache=sceneCache[i],opacity=w[i].toFixed(4);
+  const visible=w[i]>.002,visibility=visible?'visible':'hidden';
+  const inactive=i!==active,transform='translateY('+((1-w[i])*22)+'px)';
+  if(cache.opacity!==opacity){el.style.opacity=opacity;cache.opacity=opacity;}
+  if(cache.visibility!==visibility){el.style.visibility=visibility;cache.visibility=visibility;}
+  if(cache.inert!==inactive){
+   el.inert=inactive;el.setAttribute('aria-hidden',String(inactive));cache.inert=inactive;
+  }
+  if(cache.transform!==transform){el.style.transform=transform;cache.transform=transform;}
+ });
+ if(active!==lastScene){
+  dots.forEach((el,i)=>{if(i===active)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current')});
+  $('#chapter-number').textContent=String(active+1).padStart(2,'0');
+  $('#chapter-name').textContent=names[active];
+  lastScene=active;
+ }
  const ep=range(p,.626,.725),np=range(p,.47,.56);
  $('#score-number').textContent=Math.round(52*ep);$('#score-arc').style.strokeDashoffset=(289.026*(1-.52*ep)).toFixed(3);
  $('#water-number').textContent=(2*np).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});$('#water-fill').style.width=(np*74)+'%';
  $$('.activity-bar').forEach((bar,i)=>{const value=+bar.dataset.minutes,t=range(p,.64+i*.006,.728+i*.002);bar.setAttribute('height',(value/168*78*t).toFixed(2));bar.setAttribute('y',(88-value/168*78*t).toFixed(2));});$('#activity-minutes').textContent=Math.round(425*ep);
+ if(domDevice){
+  // CSS3D is the production renderer: skip the unused WebGL matrix fit.
+  let ix=0,blend=0,transitions=[[.253,.275],[.421,.443],[.578,.60],[.753,.775]];
+  for(let k=0;k<transitions.length;k++){const[a,b]=transitions[k];if(p>=b)ix=k+1;else if(p>a){ix=k;blend=range(p,a,b);break;}}
+  const change=intro?.screen(p);if(change){ix=change.ix;blend=change.blend;}
+  window.MOVVA_HERO?.visual(p);
+  intro?.visual(p);
+  window.MOVVA_CHAPTER_MOTION?.render(p,active);
+  window.MOVVA_DOM_DEVICE?.render(p,active,ix,blend);
+  window.MOVVA_MOTION?.render(p,active,null);
+  drawCalls=0;frameCount++;return;
+ }
  let[nx,ny,scale,rx,ry,rz]=poseAt(p);
  if(mobile){nx=active===6?0:lerp(.1,-.08,range(p,.3,.7));ny=active===6?-.43:lerp(-.43,-.55,Math.max(w[3],w[4]));scale*=active===6?.95:.61;rx*=.6;rz*=.8;}
  const halfH=14*Math.tan(32*Math.PI/360),halfW=halfH*width/height;
@@ -237,6 +267,8 @@ function render(p){
  if(window.MOVVA_HERO)[nx,ny,scale,rx,ry,rz]=window.MOVVA_HERO.fit(p,[nx,ny,scale,rx,ry,rz],compose,halfW,halfH);
  if(intro)[nx,ny,scale,rx,ry,rz]=intro.fit(p,[nx,ny,scale,rx,ry,rz],compose,halfW,halfH);
  intro?.visual(p);
+ // 6B: reuse this render clock; do not schedule a competing animation loop.
+ window.MOVVA_CHAPTER_MOTION?.render(p,active);
  // A slightly larger, more cinematic product keeps the phone central to the story.
  if(!mobile){const emphasis=active===0?1:active===6?.4:.72;scale*=1+.085*emphasis;}
  const model=compose(nx*halfW,ny*halfH,0,rx+pointer[1]*.025,ry+pointer[0]*.065,rz,scale);
@@ -272,7 +304,7 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
-function clearScenes(){window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
+function clearScenes(){sceneCache.forEach(c=>{c.opacity=null;c.visibility=null;c.inert=null;c.transform=null;});lastScene=-1;lastBackdrop=null;window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
 function applyMode(){
  // Keep the phone and scroll-driven cards active at every viewport size.
  // WebGL failure is handled by the existing CSS3D renderer; static HTML remains
