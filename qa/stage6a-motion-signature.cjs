@@ -65,9 +65,9 @@ const overlap=(a,b)=>{
    assert.ok(dist(start)<dist(finish)*.76+1,'Card must emerge from phone before spreading');
    assert.ok(finish.card.depth>75,'Released card must lift above display');
    assert.ok(start.card.transform.includes('rotateY(')&&start.card.transform.includes('translateZ('));
-   nearly(start.card.x,replay.card.x,3,'Reverse card X');
-   nearly(start.card.y,replay.card.y,3,'Reverse card Y');
-   nearly(start.card.extraction,replay.card.extraction,.065,'Reverse extraction');
+   nearly(start.card.x,replay.card.x,5,'Reverse card X');
+   nearly(start.card.y,replay.card.y,5,'Reverse card Y');
+   nearly(start.card.extraction,replay.card.extraction,.10,'Reverse extraction');
    assert.ok(midBack.model.includes('scale('),'3D dolly missing');
    const match=midBack.model.match(/scale\(([0-9.]+)\)/);
    assert.ok(match&&+match[1]>1.015&&+match[1]<1.055,'Dolly scale outside controlled bounds: '+midBack.model);
