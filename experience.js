@@ -230,6 +230,18 @@ function render(p){
  $('#score-number').textContent=Math.round(52*ep);$('#score-arc').style.strokeDashoffset=(289.026*(1-.52*ep)).toFixed(3);
  $('#water-number').textContent=(2*np).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});$('#water-fill').style.width=(np*74)+'%';
  $$('.activity-bar').forEach((bar,i)=>{const value=+bar.dataset.minutes,t=range(p,.64+i*.006,.728+i*.002);bar.setAttribute('height',(value/168*78*t).toFixed(2));bar.setAttribute('y',(88-value/168*78*t).toFixed(2));});$('#activity-minutes').textContent=Math.round(425*ep);
+ if(domDevice){
+  // CSS3D is the production renderer: skip the unused WebGL matrix fit.
+  let ix=0,blend=0,transitions=[[.253,.275],[.421,.443],[.578,.60],[.753,.775]];
+  for(let k=0;k<transitions.length;k++){const[a,b]=transitions[k];if(p>=b)ix=k+1;else if(p>a){ix=k;blend=range(p,a,b);break;}}
+  const change=intro?.screen(p);if(change){ix=change.ix;blend=change.blend;}
+  window.MOVVA_HERO?.visual(p);
+  intro?.visual(p);
+  window.MOVVA_CHAPTER_MOTION?.render(p,active);
+  window.MOVVA_DOM_DEVICE?.render(p,active,ix,blend);
+  window.MOVVA_MOTION?.render(p,active,null);
+  drawCalls=0;frameCount++;return;
+ }
  let[nx,ny,scale,rx,ry,rz]=poseAt(p);
  if(mobile){nx=active===6?0:lerp(.1,-.08,range(p,.3,.7));ny=active===6?-.43:lerp(-.43,-.55,Math.max(w[3],w[4]));scale*=active===6?.95:.61;rx*=.6;rz*=.8;}
  const halfH=14*Math.tan(32*Math.PI/360),halfW=halfH*width/height;
