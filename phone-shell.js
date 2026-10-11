@@ -131,7 +131,7 @@ if(camera){
   wall.style.height='calc(var(--shell-w) * .021 + .10px)';
   wall.style.transform='translate3d(calc(var(--shell-w) * '+((a.x+b.x)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * '+((a.y+b.y)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * .0145)) translate(-50%,-50%) rotateZ('+(Math.atan2(dy,dx)*180/Math.PI).toFixed(4)+'deg) rotateX(90deg)';
   const n=dx/(len||1),light=.84+.17*n;
-  wall.style.filter='brightness('+light.toFixed(3)+')';
+  wall.style.background='linear-gradient(180deg,'+tone([202,215,198],light)+' 0%,'+tone([156,174,159],light)+' 30%,'+tone([90,105,92],light)+' 90%)';
   camera.insertBefore(wall,camera.querySelector('.css3d-camera-deck'));
   cameraWallCount++;
  }
