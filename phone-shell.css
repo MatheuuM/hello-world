@@ -357,14 +357,9 @@
  -webkit-transform-style:flat;
 }
 
-/* Stage 1A final: exact-profile occlusion must hide the glass and rear planes
-   together with the shell facets. Otherwise a white sliver escapes the metal
-   silhouette at 85–95° on WebKit. Only applies inside the narrow edge window. */
-.enhanced .css3d-device.css3d-profile-active .css3d-front,
-.enhanced .css3d-device.css3d-profile-active .css3d-back{
- visibility:hidden!important;
-}
-
+/* Exact-profile safety occludes generated facets, controls and camera rig.
+   Keep the front/rear layers compositor-managed: forcibly hiding them triggers
+   a bright rear-plane rasterization artifact in WebKit around 95 degrees. */
 /* The raised camera plateau joins the chassis instead of reading as an
    unrelated vertical tube in profile. Geometry-only: cameras untouched. */
 .css3d-webkit-profile .profile-camera-ledge{
