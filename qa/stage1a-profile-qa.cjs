@@ -35,7 +35,7 @@ try{
     const stat=e=>({opacity:getComputedStyle(e).opacity,visibility:getComputedStyle(e).visibility,display:getComputedStyle(e).display});
     return{
      angle,profile:stat(profile),wall:stat(main),control:stat(controls),camera:stat(camera),
-     classActive:rig.classList.contains('css3d-profile-active'),
+     classActive:rig.classList.contains('css3d-profile-active'),frontFace:stat(rig.querySelector('.css3d-front')),rearFace:stat(rig.querySelector('.css3d-back')),
      classCapable:rig.classList.contains('css3d-profile-capable'),
      side:profile.dataset.side,
      profileRect:{width:p.width,height:p.height},phoneRect:{width:b.width,height:b.height},
@@ -53,6 +53,8 @@ try{
     assert.equal(v.wall.visibility,'hidden',JSON.stringify(v));
     assert.equal(v.control.visibility,'hidden',JSON.stringify(v));
     assert.equal(v.camera.visibility,'hidden',JSON.stringify(v));
+    assert.equal(v.frontFace.visibility,'hidden',JSON.stringify(v));
+    assert.equal(v.rearFace.visibility,'hidden',JSON.stringify(v));
     assert.ok(Number(v.profile.opacity)>.94,JSON.stringify(v));
    }else{
     assert.equal(v.classActive,false,JSON.stringify(v));
