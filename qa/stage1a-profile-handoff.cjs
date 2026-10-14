@@ -21,7 +21,13 @@ try{
   const kit=await page.evaluate(()=>MOVVA_SHELL.isWebKit);
   assert.equal(kit,engine==='webkit');
   pass(name+' compatible hardware ready',{webkit:kit});
-  const sample=()=>page.evaluate(()=>{
+  const sample=(forceAngle=null)=>page.evaluate((forceAngle)=>{
+   // Apply the forced angle and inspect its compositor state in one task.
+   // The scroll renderer must not be allowed to swap it between two awaits.
+   if(Number.isFinite(forceAngle)){
+    document.documentElement.style.setProperty('--stage1a-angle',forceAngle+'deg');
+    window.MOVVA_SHELL.setPose(forceAngle,0,0);
+   }
    const rig=document.querySelector('#css3d-device');
    const profile=rig.querySelector('.css3d-webkit-profile');
    const assembly=rig.querySelector('#css3d-object');
@@ -31,7 +37,7 @@ try{
    return {profileActive:rig.classList.contains('css3d-profile-active'),profileVisible:cs.visibility,profileDisplay:cs.display,profileOpacity:parseFloat(cs.opacity),profileWidth:parseFloat(profile.style.width)||0,bodyVisible:ds.visibility,
     w:width,profileBounds:{left:bounds.left,right:bounds.right,center:(bounds.left+bounds.right)/2},deviceBounds:{left:body.left,right:body.right,center:(body.left+body.right)/2},
     overflow:document.documentElement.scrollWidth-innerWidth,chapter:document.querySelector('#chapter-name')?.textContent};
-  });
+  },forceAngle);
   // Verify real scroll pose that previously exhibited displaced rails and a
   // compressed screenshot beside the Safari profile.
   for(const [label,p] of [['true-edge',.135],['three-quarter',.19],['training',.35]]){
@@ -56,12 +62,7 @@ try{
   // the same shell setPose() logic receives deterministic angles.
   await page.addStyleTag({content:'#css3d-object{transform:rotateY(var(--stage1a-angle,-90deg)) rotateX(0deg) rotateZ(0deg)!important}.motion-studio{visibility:hidden!important}'});
   for(const angle of [-60,-72,-76,-77.9,-78,-80,-85,-90,-95,-105,-118,-145]){
-   await page.evaluate(angle=>{
-    document.documentElement.style.setProperty('--stage1a-angle',angle+'deg');
-    MOVVA_SHELL.setPose(angle,0,0);
-   },angle);
-   await page.waitForTimeout(35);
-   const got=await sample(), c=Math.abs(Math.cos(angle*Math.PI/180));
+   const got=await sample(angle), c=Math.abs(Math.cos(angle*Math.PI/180));
    const active=engine==='webkit'&&c<=.21;
    assert.equal(got.profileActive,active,JSON.stringify({angle,got}));
    if(engine==='webkit')assert.equal(got.profileVisible,active?'visible':'hidden');else assert.equal(got.profileDisplay,'none');
