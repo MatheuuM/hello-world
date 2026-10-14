@@ -1,7 +1,7 @@
 name: MOVVA Stage1A Edge Continuity QA
 on:
   push:
-    branches: [refine/stage1a-profile-continuity-20261011, refine/stage1a-edge-final-20261013]
+    branches: [refine/stage1a-profile-continuity-20261011, refine/stage1a-edge-final-20261013, refine/stage1a-chrome-edge-experiment]
 permissions:
   contents: read
 jobs:
