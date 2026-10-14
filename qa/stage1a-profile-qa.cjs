@@ -53,8 +53,8 @@ try{
     assert.equal(v.wall.visibility,'hidden',JSON.stringify(v));
     assert.equal(v.control.visibility,'hidden',JSON.stringify(v));
     assert.equal(v.camera.visibility,'hidden',JSON.stringify(v));
-    assert.equal(v.frontFace.visibility,'hidden',JSON.stringify(v));
-    assert.equal(v.rearFace.visibility,'hidden',JSON.stringify(v));
+    // Browser compositors may keep front/rear layers alive for continuity.
+    // The physically visible shell silhouette is checked by screenshot pixels.
     assert.ok(Number(v.profile.opacity)>.94,JSON.stringify(v));
    }else{
     assert.equal(v.classActive,false,JSON.stringify(v));
@@ -86,6 +86,25 @@ try{
     },png.toString('base64'));
     assert.ok(fraction>.12,JSON.stringify({angle,engine,brightPixelFraction:fraction}));
     check('Visible product silhouette '+engine+' '+angle+'deg',fraction);
+   }
+
+   if(width===1440&&engine==='webkit'&&angle===95){
+    // Regression: forcibly hiding front and rear made a white full-height
+    // blade appear at 95deg. Detect unusually bright wide rear-plane regions.
+    const patch=await page.evaluate(async b64=>{
+     const img=new Image();img.src='data:image/png;base64,'+b64;await img.decode();
+     const cv=document.createElement('canvas');cv.width=img.naturalWidth;cv.height=img.naturalHeight;
+     const c=cv.getContext('2d',{willReadFrequently:true});c.drawImage(img,0,0);
+     const data=c.getImageData(355,330,75,400).data;
+     let white=0,total=0;
+     for(let i=0;i<data.length;i+=16){
+      if(data[i]>180&&data[i+1]>180&&data[i+2]>170)white++;
+      total++;
+     }
+     return white/total;
+    },png.toString('base64'));
+    assert.ok(patch<.16,JSON.stringify({angle,engine,whiteBladeFraction:patch}));
+    check('No white blade at WebKit 95deg',patch);
    }
    check(width+'px '+angle+'deg', {active:v.classActive,opacity:v.profile.opacity,side:v.side});
   }
