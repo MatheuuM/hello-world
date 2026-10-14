@@ -356,3 +356,27 @@
  transform-style:flat;
  -webkit-transform-style:flat;
 }
+
+/* Stage 1A final: exact-profile occlusion must hide the glass and rear planes
+   together with the shell facets. Otherwise a white sliver escapes the metal
+   silhouette at 85–95° on WebKit. Only applies inside the narrow edge window. */
+.enhanced .css3d-device.css3d-profile-active .css3d-front,
+.enhanced .css3d-device.css3d-profile-active .css3d-back{
+ visibility:hidden!important;
+}
+
+/* The raised camera plateau joins the chassis instead of reading as an
+   unrelated vertical tube in profile. Geometry-only: cameras untouched. */
+.css3d-webkit-profile .profile-camera-ledge{
+ top:3.7%;
+ height:20.5%;
+ width:calc(var(--shell-w) * .038);
+ right:calc(var(--shell-w) * -.029);
+ border-radius:calc(var(--shell-w) * .011);
+ background:linear-gradient(90deg,#526355 0%,#859888 23%,#c0cbb9 56%,#667969 100%);
+ box-shadow:inset 1px 0 rgba(243,248,233,.38),inset -1px 0 rgba(49,63,50,.32),0 1px 1.5px rgba(38,49,39,.16);
+}
+.css3d-webkit-profile[data-side="left"] .profile-camera-ledge{
+ right:auto;left:calc(var(--shell-w) * -.029);
+ transform:scaleX(-1);
+}
