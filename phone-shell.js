@@ -175,7 +175,7 @@ function setPose(ry,rx,rz){
  // the ordinary three-quarter turn. Activate it only close to a true profile.
  // Safari keeps its existing profile treatment. Only Chromium receives a
  // tightly scoped faceting correction very close to 90/270 degrees.
- const start=isWebKit?.33:.070,window=isWebKit?.27:.058;
+ const start=isWebKit?.33:.172,window=isWebKit?.27:.078;
  const t=Math.max(0,Math.min(1,(start-c)/window)),fade=t*t*(3-2*t);
  // In a -90° turn the right rail faces the viewer; +90° reveals the left.
  // The fallback hardware follows this side, not a generic two-button bar.
