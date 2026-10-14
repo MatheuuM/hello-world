@@ -45,7 +45,7 @@ try{
    assert.equal(v.classCapable,engine==='chromium',JSON.stringify(v));
    assert.ok(Math.abs(v.overflow)<=1,JSON.stringify(v));
    assert.ok(v.phoneRect.height>100,JSON.stringify(v));
-   const exact=(engine==='chromium'?[90,270]:[85,90,95,265,270,275]).includes(angle);
+   const exact=(engine==='chromium'?[85,90,95,265,270,275]:[85,90,95,265,270,275]).includes(angle);
    if(exact){
     assert.equal(v.classActive,true,JSON.stringify(v));
     assert.equal(v.profile.visibility,'visible',JSON.stringify(v));
