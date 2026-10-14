@@ -12,7 +12,7 @@ const PRO_MAX_RATIO=78/163.4;
 // compositor layers. Use one continuous perimeter wall instead of three
 // overlapping bevel strips at compact widths. Front/back borders retain trim.
 const compact=matchMedia('(max-width:760px)').matches;
-const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=compact?10:14;
+const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=compact?10:24;
 // Each tangent is sized to the true contour; excessive strip overlap caused
 // visibly folded corners when CSS transformed the individual faces.
 const FACE=.056,WALL=.038,INSET=.0092;
