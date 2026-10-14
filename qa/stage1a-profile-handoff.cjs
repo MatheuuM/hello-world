@@ -28,7 +28,7 @@ try{
    const bounds=profile.getBoundingClientRect(),body=assembly.getBoundingClientRect();
    const cs=getComputedStyle(profile),ds=getComputedStyle(assembly);
    const width=parseFloat(rig.style.getPropertyValue('--shell-w'))||170;
-   return {profileActive:rig.classList.contains('css3d-profile-active'),profileVisible:cs.visibility,profileOpacity:parseFloat(cs.opacity),profileWidth:parseFloat(profile.style.width)||0,bodyVisible:ds.visibility,
+   return {profileActive:rig.classList.contains('css3d-profile-active'),profileVisible:cs.visibility,profileDisplay:cs.display,profileOpacity:parseFloat(cs.opacity),profileWidth:parseFloat(profile.style.width)||0,bodyVisible:ds.visibility,
     w:width,profileBounds:{left:bounds.left,right:bounds.right,center:(bounds.left+bounds.right)/2},deviceBounds:{left:body.left,right:body.right,center:(body.left+body.right)/2},
     overflow:document.documentElement.scrollWidth-innerWidth,chapter:document.querySelector('#chapter-name')?.textContent};
   });
@@ -64,7 +64,7 @@ try{
    const got=await sample(), c=Math.abs(Math.cos(angle*Math.PI/180));
    const active=engine==='webkit'&&c<=.21;
    assert.equal(got.profileActive,active,JSON.stringify({angle,got}));
-   assert.equal(got.profileVisible,active?'visible':'hidden');
+   if(engine==='webkit')assert.equal(got.profileVisible,active?'visible':'hidden');else assert.equal(got.profileDisplay,'none');
    if(active){
     assert.equal(got.bodyVisible,'hidden',JSON.stringify({angle,got}));
     const expected=got.w*(c+.112*Math.abs(Math.sin(angle*Math.PI/180)));
