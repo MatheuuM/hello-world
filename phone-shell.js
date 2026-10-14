@@ -164,30 +164,28 @@ rig.appendChild(profile);
 if(isWebKit)rig.classList.add('css3d-webkit-engine');
 function setPose(ry,rx,rz){
  if(!isWebKit)return;
- const a=ry*Math.PI/180,c=Math.abs(Math.cos(a)),sin=Math.sin(a);
+ const radians=ry*Math.PI/180;
+ const facing=Math.abs(Math.cos(radians)),sin=Math.sin(radians);
  const side=sin<=0?'right':'left';
- // The compositor safety edge must not draw a second visible rail throughout
- // the ordinary three-quarter turn. Activate it only close to a true profile.
- const t=Math.max(0,Math.min(1,(.33-c)/.27)),fade=t*t*(3-2*t);
- // In a -90° turn the right rail faces the viewer; +90° reveals the left.
- // The fallback hardware follows this side, not a generic two-button bar.
+ // Safari clips some nested CSS 3D faces at edge-on angles. Avoid a double
+ // silhouette: render real geometry until the near-profile crossover, then
+ // replace the WHOLE device with a physically sized metallic edge view.
+ // The handoff is deterministic from scroll progress; no autoplay or timers.
+ const useProfile=facing<=.21;
  if(profile.dataset.side!==side)profile.dataset.side=side;
- if(fade<=.001){
+ rig.classList.toggle('css3d-profile-active',useProfile);
+ if(!useProfile){
   if(profile.style.visibility!=='hidden')profile.style.visibility='hidden';
-  rig.classList.remove('css3d-profile-active');
   return;
  }
  const width=parseFloat(rig.style.getPropertyValue('--shell-w'))||W;
- const projected=width*c+width*FACE*2*Math.abs(sin);
- const sign=Math.sign(-sin*Math.cos(a))||1;
- const shift=sign*Math.max(0,(projected-width*FACE*2)*.5);
- // Near a perfect side view Safari otherwise composites its real facets
- // over the fallback rail: the doubled sidewall is the visible artifact.
- // Switch compositor groups only near a fully dominant safety profile.
- rig.classList.toggle('css3d-profile-active',fade>=.94);
- profile.style.opacity=fade.toFixed(4);
- profile.style.visibility=fade>.001?'visible':'hidden';
- profile.style.transform='translateX(calc(-50% + '+shift.toFixed(3)+'px)) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
+ const projected=width*(facing+FACE*2*Math.abs(sin));
+ // Match the current projected device silhouette. No translation from the
+ // center: the previous side shift detached the safety rail from the handset.
+ profile.style.width=projected.toFixed(3)+'px';
+ profile.style.opacity='1';
+ profile.style.visibility='visible';
+ profile.style.transform='translateX(-50%) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
 window.MOVVA_SHELL={setSize,setPose,isWebKit,compact,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
