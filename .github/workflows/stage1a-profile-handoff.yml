@@ -1,0 +1,62 @@
+name: MOVVA Stage 1A Safari Profile Handoff
+on:
+  push:
+    branches: [fix/stage1a-safari-profile-unibody]
+permissions:
+  contents: read
+jobs:
+  browser:
+    name: Side / ${{ matrix.engine }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium,webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate code and install engine
+        run: |
+          node --check phone-shell.js
+          node --check mobile-phone.js
+          node --check qa/stage1a-profile-handoff.cjs
+          timeout 105s npm install --no-save --package-lock=false playwright@1.64.0
+          timeout 185s npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Check true-scroll and side-view handoff
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: |
+          python3 -m http.server 8077 >/tmp/movva-stage1a-handoff.log 2>&1 &
+          timeout 220s node qa/stage1a-profile-handoff.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: side-handoff-${{ matrix.engine }}
+          path: qa-stage1a-handoff/${{ matrix.engine }}/
+          retention-days: 7
+  gate:
+    name: Verify both browser engines
+    if: always()
+    needs: browser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: side-handoff-*
+          path: evidence
+      - name: Validate tested commit and complete evidence
+        run: |
+          python3 - <<'PY'
+          import os,pathlib,json
+          checks=0
+          for engine in ('webkit','chromium'):
+            f=pathlib.Path('evidence')/('side-handoff-'+engine)/'report.json'
+            r=json.loads(f.read_text())
+            assert r['status']=='PASS' and r['sha']==os.environ['GITHUB_SHA'],(engine,r.get('failure'))
+            assert len(r['checks'])>=40 and len(r['shots'])>=20,engine
+            checks+=len(r['checks'])
+          print('PASS:',checks,'checks across Chromium and WebKit')
+          PY
