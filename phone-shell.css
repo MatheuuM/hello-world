@@ -330,3 +330,18 @@
 .css3d-webkit-engine.css3d-profile-active .css3d-webkit-profile{
  visibility:visible;
 }
+
+/* Stage 1A final edge compositor guard. The entire assembled object is
+   replaced at profile to prevent WebKit drawing a compressed screen and a
+   displaced camera rail beside the safety silhouette. */
+.css3d-webkit-engine.css3d-profile-active .css3d-object{
+ visibility:hidden!important;
+}
+.css3d-webkit-profile .profile-camera-ledge{
+ right:calc(var(--shell-w) * -.012);
+ width:calc(var(--shell-w) * .052);
+}
+.css3d-webkit-profile[data-side="left"] .profile-camera-ledge{
+ right:auto;
+ left:calc(var(--shell-w) * -.012);
+}
