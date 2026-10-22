@@ -56,7 +56,7 @@ try{
   assert.equal(camera.lenses,3);
   assert.equal(camera.clipped,false);
   assert.equal(camera.walls,w<=760?36:48,JSON.stringify(camera));
-  assert.ok(camera.plateauWidth>.90 && camera.plateauWidth<.96);
+  assert.ok(camera.plateauWidth>.90 && camera.plateauWidth<.96,'Camera plateau ratio: '+JSON.stringify(camera));
   assert.ok(camera.microphone);
   assert.ok(camera.glassPanel!=='none');
   assert.ok(Math.abs(camera.ratio-78/163.4)<.002);
