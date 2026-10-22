@@ -50,7 +50,13 @@ async function scrub(page,seconds){
     page.on('response',r=>{if(r.url().startsWith('http://127.0.0.1:807')&&r.status()>=400)report.errors.push(mode+'/'+view+' HTTP '+r.status()+' '+r.url())});
     await page.goto('http://127.0.0.1:'+(mode==='baseline'?'8078':'8077')+'/',{waitUntil:'load',timeout:35000});
     await page.waitForFunction(()=>window.__MOVVA_QA__?.ready===true&&window.MOVVA_SHELL?.partCount>30,null,{timeout:35000});
-    await page.evaluate(()=>document.fonts.ready);
+    await page.evaluate(async()=>{
+      await document.fonts.ready;
+      // Compare *compositor* cost, not the CSS smooth-scroll animation
+      // accidentally triggered by programmatic scrollTo on old production.
+      // Actual finger scrolling is independent of CSS scroll-behavior.
+      document.documentElement.style.scrollBehavior='auto';
+    });
     await page.waitForTimeout(220);
     const count=await page.evaluate(()=>({
      renderedFaces:[...document.querySelectorAll('.css3d-shell-face,.css3d-camera-wall-face')].filter(x=>getComputedStyle(x).display!=='none').length,
