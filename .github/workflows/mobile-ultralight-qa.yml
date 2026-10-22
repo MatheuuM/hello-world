@@ -1,9 +1,11 @@
 name: MOVVA Mobile Ultra-Light 3D QA
 on:
-  push:
-    branches: [perf/mobile-ultralight-20261022]
   pull_request:
     branches: [master]
+  workflow_dispatch:
+concurrency:
+  group: movva-ultralight-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
