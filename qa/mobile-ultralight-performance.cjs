@@ -4,7 +4,7 @@
 const { chromium, webkit } = require('playwright');
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const engine=process.env.QA_ENGINE||'chromium';
-const report={engine,head:process.env.GITHUB_SHA,baselineSha:'309278fbcf1939ea2363c636a712fd51dd608513',views:[],errors:[],status:'START'};
+const report={engine,head:process.env.GITHUB_SHA,baselineSha:'309278fbcf1939ea2363c636a712fd51dd608513',views:[],errors:[],warnings:[],status:'START'};
 const out=path.join('qa-ultralight',engine);fs.mkdirSync(out,{recursive:true});
 const percent=(a,p)=>a.length?+a[Math.min(a.length-1,Math.floor(a.length*p))].toFixed(2):null;
 function summarize(frames){
@@ -45,6 +45,7 @@ async function scrub(page,seconds){
    for(const mode of ['baseline','candidate']){
     const context=await browser.newContext({viewport:{width:w,height:h},isMobile:true,hasTouch:true,deviceScaleFactor:2});
     const page=await context.newPage();
+    page.on('console',m=>{if(m.type()==='warning'||m.type()==='error')report.warnings.push(mode+'/'+view+': '+m.text().slice(0,500));});
     page.on('pageerror',e=>report.errors.push(mode+'/'+view+': '+e.message));
     page.on('response',r=>{if(r.url().startsWith('http://127.0.0.1:807')&&r.status()>=400)report.errors.push(mode+'/'+view+' HTTP '+r.status()+' '+r.url())});
     await page.goto('http://127.0.0.1:'+(mode==='baseline'?'8078':'8077')+'/',{waitUntil:'load',timeout:35000});
@@ -64,16 +65,16 @@ async function scrub(page,seconds){
       overflow:Math.max(0,document.documentElement.scrollWidth-innerWidth),
       progress:__MOVVA_QA__.progress,ready:__MOVVA_QA__.ready,
       count:document.querySelectorAll('.motion-fragment').length,
-      scrollY:window.scrollY
+      scrollY:window.scrollY,status:MOVVA_3D_STATUS(),frameCount:__MOVVA_QA__.frameCount,htmlClass:document.documentElement.className
     }));
-    const stats={geometry:count,forward:summarize(samples[0]),backward:summarize(samples[1]),layoutReads:(end.metrics.layoutReads??null),startLayoutReads:start.layoutReads??null,metrics:end.metrics,overflow:end.overflow,progress:end.progress,cardCount:end.count,ready:end.ready};
+    const stats={geometry:count,forward:summarize(samples[0]),backward:summarize(samples[1]),layoutReads:(end.metrics.layoutReads??null),startLayoutReads:start.layoutReads??null,metrics:end.metrics,overflow:end.overflow,progress:end.progress,cardCount:end.count,ready:end.ready,status:end.status,frameCount:end.frameCount,htmlClass:end.htmlClass};
     assert.ok(end.ready && end.count===12 && Math.abs(end.overflow)<=1,JSON.stringify(stats));
     assert.equal(count.engine,'CSS3D DOM');
     assert.ok(stats.forward.frames>4 && stats.backward.frames>4,'rendering nearly stalled '+mode+'/'+view);
     results[mode]=stats;
     try{await page.screenshot({path:path.join(out,view+'-'+mode+'.png'),timeout:8000});}catch(e){report.errors.push('Optional screenshot: '+e.message.slice(0,100));}
     await context.close();
-    console.log('SAMPLE',engine,view,mode,JSON.stringify({geometry:count,forward:stats.forward,backward:stats.backward,layoutReads:stats.layoutReads,overflow:stats.overflow}));
+    console.log('SAMPLE',engine,view,mode,JSON.stringify({geometry:count,forward:stats.forward,backward:stats.backward,layoutReads:stats.layoutReads,overflow:stats.overflow,status:stats.status,frameCount:stats.frameCount}));
    }
    assert.equal(results.candidate.geometry.litePlanes,4,'fast geometry not active');
    assert.equal(results.candidate.geometry.renderedFaces,0,'legacy facets still composited');
