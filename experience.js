@@ -343,20 +343,32 @@ function jump(p,animated=true){
  if(!enabled)return;
  const top=scrollStart+p*scrollTravel;
  scrollTo({top,behavior:animated?'smooth':'auto'});
- target=p;
- // Navigation jumps (chapter dots, rewind and test scrubs) are atomic:
- // update the visible scene immediately instead of waiting on a delayed
- // WebKit scroll event. Ordinary finger/wheel scroll still uses native RAF.
  if(!animated){
-  position=p;lastTime=0;
-  render(p);
- }
+  // Safari's asynchronous scrollTo can show the requested frame but later
+  // snap the phone back to a stale scroll position. Update the real root
+  // scroller synchronously and derive the pose from that actual position.
+  // This also guarantees chapter navigation/replay is not a "fake" frame.
+  const scroller=document.scrollingElement;
+  if(scroller&&Math.abs(scrollY-top)>1)scroller.scrollTop=top;
+  target=position=measure();lastTime=0;
+  render(position);
+ }else target=p;
  requestTick();
 }
 $$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));
 addEventListener('scroll',()=>{if(enabled){$('.header').style.position=scrollY>experience.offsetHeight-100?'absolute':'fixed';requestTick();}},{passive:true});
 addEventListener('movva:hero-layout',requestTick);
-let resizeId;addEventListener('resize',()=>{clearTimeout(resizeId);resizeId=setTimeout(()=>{applyMode();resize();},100);},{passive:true});
+let resizeId;addEventListener('resize',()=>{
+ clearTimeout(resizeId);
+ resizeId=setTimeout(()=>{
+  const breakpointChanged=(stage.clientWidth<=760)!==mobile;
+  resize();
+  // Safari may dispatch a viewport resize while scrolling. Re-applying
+  // enhanced mode would reset scroll progress mid-gesture. Only rebuild
+  // mode when the actual phone/desktop breakpoint changes.
+  if(breakpointChanged)applyMode();
+ },100);
+},{passive:true});
 addEventListener('pointermove',e=>{if(!enabled||mobile||e.pointerType==='touch')return;pointerTarget=[clamp((e.clientX/innerWidth-.5)*2,-1,1),clamp((e.clientY/innerHeight-.5)*2,-1,1)];requestTick();},{passive:true});
 addEventListener('pointerout',e=>{if(!e.relatedTarget){pointerTarget=[0,0];requestTick();}},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;}else{lastTime=0;requestTick();}});
