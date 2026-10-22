@@ -13,7 +13,27 @@ const PRO_MAX_ASPECT=78/163.4;
 // width and height did not actually change.
 const BASE_WIDTH=170,BASE_HEIGHT=BASE_WIDTH/PRO_MAX_ASPECT;
 const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null,mode:null,rigTransform:null,pose:null,dolly:1};
-const metrics={renders:0,sizeWrites:0,scaleWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
+const metrics={renders:0,sizeWrites:0,scaleWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0,layoutReads:0};
+// Mobile scroll must not force layout after mutating the 3D transform.
+// Copy boxes are static across a chapter and can be measured on resize.
+const layout={width:0,height:0,viewportW:0,viewportH:0,barTop:0,sceneBottom:[],dirty:true};
+function stageLayout(){
+ if(!layout.dirty&&layout.viewportW===innerWidth&&layout.viewportH===innerHeight)return layout;
+ const rect=stage.getBoundingClientRect();
+ layout.width=stage.clientWidth;layout.height=stage.clientHeight;
+ layout.viewportW=innerWidth;layout.viewportH=innerHeight;
+ layout.barTop=bar?bar.getBoundingClientRect().top-rect.top:layout.height-45;
+ layout.sceneBottom=scenes.map(scene=>{
+  const box=scene.querySelector('.copy')?.getBoundingClientRect();
+  // Avoid following decorative translateY during chapter crossfades.
+  const shift=Number(scene.style.transform.match(/translateY\(([-\d.]+)px\)/)?.[1]||0);
+  return (box?.bottom??layout.height*.47)-rect.top-shift;
+ });
+ layout.dirty=false;metrics.layoutReads++;
+ return layout;
+}
+addEventListener('resize',()=>{layout.dirty=true;},{passive:true});
+document.fonts?.ready?.then(()=>{layout.dirty=true;});
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -64,10 +84,8 @@ function desktopX(p){
 }
 const sceneCuts=[.129,.280,.433,.593,.773,.939];
 const cutHalfWidths=[.028,.038,.028,.037,.031,.043];
-function mobileFrame(sceneIndex,stageR,vw,vh,barTop){
- const copy=scenes[sceneIndex]?.querySelector('.copy');
- const rect=copy?.getBoundingClientRect();
- const contentBottom=clamp((rect?.bottom||vh*.47)-stageR.top+14,135,vh*.82);
+function mobileFrame(sceneIndex,vw,vh,barTop){
+ const contentBottom=clamp((layout.sceneBottom[sceneIndex]??vh*.47)+14,135,vh*.82);
  const freeEnd=clamp(barTop-15,250,vh-43),available=Math.max(80,freeEnd-contentBottom);
  let h=Math.max(100,Math.min(vw<=355?385:460,available*.994));
  let cy=contentBottom+available*.48;
@@ -78,20 +96,20 @@ function mobileFrame(sceneIndex,stageR,vw,vh,barTop){
  if(h*PRO_MAX_ASPECT>vw*.54)h=vw*.54/PRO_MAX_ASPECT;
  return{cx:vw*.5,cy,h};
 }
-function mobileCamera(p,stageR,vw,vh,barTop){
+function mobileCamera(p,vw,vh,barTop){
  let index=0;
  for(let i=0;i<sceneCuts.length;i++){
   const a=sceneCuts[i]-cutHalfWidths[i],b=sceneCuts[i]+cutHalfWidths[i];
   if(p<a)break;
   if(p<=b){
-   const from=mobileFrame(i,stageR,vw,vh,barTop);
-   const to=mobileFrame(i+1,stageR,vw,vh,barTop);
+   const from=mobileFrame(i,vw,vh,barTop);
+   const to=mobileFrame(i+1,vw,vh,barTop);
    const t=smooth((p-a)/(b-a));
    return{cx:lerp(from.cx,to.cx,t),cy:lerp(from.cy,to.cy,t),h:lerp(from.h,to.h,t)};
   }
   index=i+1;
  }
- return mobileFrame(index,stageR,vw,vh,barTop);
+ return mobileFrame(index,vw,vh,barTop);
 }
 function desktopCamera(p,vw,vh){
  const close=smooth((p-.906)/(.983-.906));
@@ -102,11 +120,10 @@ function desktopCamera(p,vw,vh){
  };
 }
 function render(p,active,ix,blend){
- const stageR=stage.getBoundingClientRect(),vw=stage.clientWidth,vh=stage.clientHeight;
- const mobile=vw<=760;
- const barTop=bar?.getBoundingClientRect().top-stageR.top;
+const cached=stageLayout(),vw=cached.width,vh=cached.height;
+ const mobile=vw<=760,barTop=cached.barTop;
  const {cx,cy,h}=mobile?
-  mobileCamera(p,stageR,vw,vh,barTop):
+   mobileCamera(p,vw,vh,barTop):
   desktopCamera(p,vw,vh);
  const w=h*PRO_MAX_ASPECT;
  metrics.renders++;
@@ -208,5 +225,5 @@ function projectScreenPoint(u,v){
   u,v
  };
 }
-window.MOVVA_DOM_DEVICE={render,poseAt,projectScreenPoint,get visualSize(){return{w:last.w,h:last.h,x:last.x,y:last.y}},get metrics(){return {...metrics}},get active(){return document.documentElement.classList.contains('dom-device')}};
+window.MOVVA_DOM_DEVICE={render,poseAt,projectScreenPoint,get visualSize(){return{w:last.w,h:last.h,x:last.x,y:last.y}},get metrics(){return {...metrics}},get layout(){return stageLayout()},get active(){return document.documentElement.classList.contains('dom-device')}};
 })();

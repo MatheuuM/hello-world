@@ -16,7 +16,7 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
   const page=await b.newPage({viewport:{width,height},isMobile:width<=760,hasTouch:width<=760});
   page.on('pageerror',e=>report.errors.push(label+': '+e.message));
   await page.goto('http://127.0.0.1:8077/',{waitUntil:'load'});
-  await page.waitForFunction(()=>window.__MOVVA_QA__?.ready && window.MOVVA_SHELL?.partCount && window.MOVVA_MOTION?.origins && window.MOVVA_DOM_DEVICE?.projectScreenPoint,null,{timeout:26000});
+  await page.waitForFunction(()=>window.MOVVA_3D_STATUS?.().active && window.MOVVA_DOM_DEVICE?.metrics?.renders>0 && window.MOVVA_SHELL?.partCount && window.MOVVA_MOTION?.origins && window.MOVVA_DOM_DEVICE?.projectScreenPoint,null,{timeout:26000});
   // The marker is a zero-impact QA probe inside the real transformed screenshot.
   // It is never inserted by the production animation.
   const measure=await page.evaluate(()=>{
@@ -35,7 +35,12 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
      const error=Math.hypot(actual.x+actual.width*.5-parent.x-projected.x,
       actual.y+actual.height*.5-parent.y-projected.y);
      marker.remove();
-     examples.push({p,key:source.scene+':'+source.kind,error});
+     examples.push({p,key:source.scene+':'+source.kind,error,
+      actual:[+(actual.x-parent.x).toFixed(2),+(actual.y-parent.y).toFixed(2)],
+      projected:[+projected.x.toFixed(2),+projected.y.toFixed(2)],
+      stage:[+parent.x.toFixed(2),+parent.y.toFixed(2)],
+      phone:[document.querySelector('#css3d-device').style.left,document.querySelector('#css3d-device').style.top],
+      layout:MOVVA_DOM_DEVICE.layout&&[MOVVA_DOM_DEVICE.layout.width,MOVVA_DOM_DEVICE.layout.height]});
     }
    }
    return {
@@ -61,7 +66,19 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
   const start=await page.evaluate(()=>MOVVA_DOM_DEVICE.metrics);
   for(const p of [.04,.085,.135,.178,.225,.305,.335,.512,.67,.842,.96,.335,.04]){
    await page.evaluate(v=>__MOVVA_QA__.setProgress(v),p);
-   await page.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.0025,p,{timeout:28000});
+   try{
+    await page.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.0025,p,{timeout:10000});
+   }catch(e){
+    const detail=await page.evaluate(wanted=>{
+     const exp=document.getElementById('experience'),stage=document.getElementById('stage'),scrollRoot=document.scrollingElement;
+     return {wanted,actual:__MOVVA_QA__.progress,scrollY,scrollTop:scrollRoot?.scrollTop,
+      documentScrollHeight:scrollRoot?.scrollHeight,viewport:innerHeight,stageHeight:stage.clientHeight,
+      expOffset:exp.offsetTop,expHeight:exp.offsetHeight,expectedY:exp.offsetTop+wanted*(exp.offsetHeight-stage.clientHeight),
+      renderer:MOVVA_3D_STATUS(),lastTransform:document.getElementById('css3d-object').style.transform,
+      metrics:MOVVA_DOM_DEVICE.metrics};
+    },p);
+    throw new Error('DIRECT JUMP MISSED '+JSON.stringify(detail)+' :: '+String(e.message));
+   }
   }
   const end=await page.evaluate(()=>({
    metrics:MOVVA_DOM_DEVICE.metrics,

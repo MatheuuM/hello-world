@@ -80,7 +80,9 @@ function protectCopy(x,y,w,h,copyRect,stageRect,limits){
 function render(p,active,device){
  if(!document.documentElement.classList.contains('enhanced')){root.style.display='none';return;}
  root.style.display='';
- const vw=stage.clientWidth,vh=stage.clientHeight,mobile=vw<=760;
+ // This layout snapshot was measured before the 3D frame mutated transforms.
+  const cached=window.MOVVA_DOM_DEVICE?.layout;
+  const vw=cached?.width||stage.clientWidth,vh=cached?.height||stage.clientHeight,mobile=vw<=760;
  measureCards(vw,vh);
  let cx=vw*.5,cy=vh*.5,phoneH=430;
  if(rig&&document.documentElement.classList.contains('dom-device')){
@@ -101,11 +103,11 @@ function render(p,active,device){
  const fragmentSide=mobile?Math.min(vw*.345,130):Math.min(vw*.145,205);
  const phoneW=phoneH*(78/163.4);
  const leftGuard=mobile?(vw<=360?10:12):22;
- const stageRect=stage.getBoundingClientRect();
- const navRect=stage.querySelector('.chapter-bar')?.getBoundingClientRect();
- const navY=navRect?navRect.top-stageRect.top:vh-48;
- const copyRect=stage.querySelector('.scene[aria-hidden="false"] .copy')?.getBoundingClientRect();
- const copyBottom=copyRect?.bottom-stageRect.top||0;
+ const stageRect=mobile?null:stage.getBoundingClientRect();
+ const navRect=mobile?null:stage.querySelector('.chapter-bar')?.getBoundingClientRect();
+ const navY=mobile?(cached?.barTop??vh-48):(navRect?navRect.top-stageRect.top:vh-48);
+ const copyRect=mobile?null:stage.querySelector('.scene[aria-hidden="false"] .copy')?.getBoundingClientRect();
+ const copyBottom=mobile?(cached?.sceneBottom?.[active]??0):(copyRect?.bottom-stageRect.top||0);
  let visible=0,protectedCards=0;
  for(const c of items){
   const [start,end]=phases[c.scene],time=(p-start)/(end-start),delay=c.delay;
