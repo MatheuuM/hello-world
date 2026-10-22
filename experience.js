@@ -339,7 +339,20 @@ function applyMode(){
  if(enabled){resize();position=target=measure();requestTick();}
  else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}
 }
-function jump(p,animated=true){if(!enabled)return;const top=scrollStart+p*scrollTravel;scrollTo({top,behavior:animated?'smooth':'auto'});target=p;requestTick();}
+function jump(p,animated=true){
+ if(!enabled)return;
+ const top=scrollStart+p*scrollTravel;
+ scrollTo({top,behavior:animated?'smooth':'auto'});
+ target=p;
+ // Navigation jumps (chapter dots, rewind and test scrubs) are atomic:
+ // update the visible scene immediately instead of waiting on a delayed
+ // WebKit scroll event. Ordinary finger/wheel scroll still uses native RAF.
+ if(!animated){
+  position=p;lastTime=0;
+  render(p);
+ }
+ requestTick();
+}
 $$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));
 addEventListener('scroll',()=>{if(enabled){$('.header').style.position=scrollY>experience.offsetHeight-100?'absolute':'fixed';requestTick();}},{passive:true});
 addEventListener('movva:hero-layout',requestTick);
