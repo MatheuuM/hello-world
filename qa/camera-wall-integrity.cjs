@@ -26,6 +26,10 @@ fs.mkdirSync(root,{recursive:true});
     };
     const camera=document.querySelector('.css3d-camera-rig .css3d-camera');
     const walls=[...camera.querySelectorAll('.css3d-camera-wall-face')];
+    const lite=MOVVA_SHELL.compact&&!MOVVA_SHELL.legacyGeometry;
+    const fastEdges=[...document.querySelectorAll('.css3d-fast-edge')];
+    const renderedCameraWalls=walls.filter(w=>getComputedStyle(w).display!=='none').length;
+    const renderedFastEdges=fastEdges.filter(w=>getComputedStyle(w).display!=='none').length;
     const controls=[...document.querySelectorAll('.css3d-control')];
     const antennas=[...document.querySelectorAll('.css3d-antenna')];
     const isCentered=wall=>{
@@ -42,7 +46,7 @@ fs.mkdirSync(root,{recursive:true});
      MOVVA_DOM_DEVICE.render(p,p>=.28?2:1,0,0);
      const cam=bounds(camera),shell=bounds(document.querySelector('#css3d-device'));
      let maxOutside=0,worstWall=-1;
-     walls.forEach((wall,i)=>{
+     if(!lite)walls.forEach((wall,i)=>{
       const r=bounds(wall);
       const d=Math.max(0,cam.left-r.left,r.right-cam.right,cam.top-r.top,r.bottom-cam.bottom);
       if(d>maxOutside){maxOutside=d;worstWall=i;}
@@ -52,9 +56,13 @@ fs.mkdirSync(root,{recursive:true});
       return Math.max(0,shell.left-b.left,b.right-shell.right,shell.top-b.top,b.bottom-shell.bottom);
      };
      const maxAccessoryOvershoot=Math.max(0,...[...controls,...antennas].map(shellOvershoot));
-     results.push({p,maxOutside:+maxOutside.toFixed(3),worstWall,maxAccessoryOvershoot:+maxAccessoryOvershoot.toFixed(3)});
+     const maxFastEdgeOvershoot=lite?Math.max(0,...fastEdges.map(shellOvershoot)):0;
+     results.push({p,maxOutside:+maxOutside.toFixed(3),worstWall,
+      maxFastEdgeOvershoot:+maxFastEdgeOvershoot.toFixed(3),
+      maxAccessoryOvershoot:+maxAccessoryOvershoot.toFixed(3)});
     }
     return{cameraWallCount:walls.length,shellWallCount:document.querySelectorAll('.css3d-shell-face').length,
+     lite,renderedCameraWalls,renderedFastEdges,fastEdgeCount:fastEdges.length,
      controlCount:controls.length,antennaCount:antennas.length,allWallTransformsCentered:walls.every(isCentered),results};
    },poses);
    assert.equal(check.cameraWallCount,w<=760?36:48);
@@ -62,9 +70,19 @@ fs.mkdirSync(root,{recursive:true});
    assert.equal(check.controlCount,5);
    assert.equal(check.antennaCount,4);
    assert.ok(check.allWallTransformsCentered,'Camera-wall segment centered in rotated local coordinates');
+   if(check.lite){
+    assert.equal(check.renderedCameraWalls,0,'Expensive camera walls must not composite on mobile');
+    assert.equal(check.renderedFastEdges,4,'Four physical fast 3D edge planes required');
+    assert.equal(check.fastEdgeCount,4);
+   }else assert.ok(check.renderedCameraWalls>0,'Full hardware must be visible on desktop');
    for(const item of check.results){
-    assert.ok(item.maxOutside<=9.5,
-     name+' '+item.p+': detached camera-wall face index '+item.worstWall+' exceeds platform by '+item.maxOutside+'px');
+    if(check.lite){
+     assert.ok(item.maxFastEdgeOvershoot<=Math.max(26,w*.09),
+      name+' '+item.p+': simplified metal extrusion extends beyond device by '+item.maxFastEdgeOvershoot+'px');
+    }else{
+     assert.ok(item.maxOutside<=9.5,
+      name+' '+item.p+': detached camera-wall face index '+item.worstWall+' exceeds platform by '+item.maxOutside+'px');
+    }
     assert.ok(item.maxAccessoryOvershoot<=15,
      name+' '+item.p+': detached frame control/antenna: '+item.maxAccessoryOvershoot+'px');
    }
