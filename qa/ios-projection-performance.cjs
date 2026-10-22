@@ -66,7 +66,19 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
   const start=await page.evaluate(()=>MOVVA_DOM_DEVICE.metrics);
   for(const p of [.04,.085,.135,.178,.225,.305,.335,.512,.67,.842,.96,.335,.04]){
    await page.evaluate(v=>__MOVVA_QA__.setProgress(v),p);
-   await page.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.0025,p,{timeout:28000});
+   try{
+    await page.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.0025,p,{timeout:10000});
+   }catch(e){
+    const detail=await page.evaluate(wanted=>{
+     const exp=document.getElementById('experience'),stage=document.getElementById('stage'),scrollRoot=document.scrollingElement;
+     return {wanted,actual:__MOVVA_QA__.progress,scrollY,scrollTop:scrollRoot?.scrollTop,
+      documentScrollHeight:scrollRoot?.scrollHeight,viewport:innerHeight,stageHeight:stage.clientHeight,
+      expOffset:exp.offsetTop,expHeight:exp.offsetHeight,expectedY:exp.offsetTop+wanted*(exp.offsetHeight-stage.clientHeight),
+      renderer:MOVVA_3D_STATUS(),lastTransform:document.getElementById('css3d-object').style.transform,
+      metrics:MOVVA_DOM_DEVICE.metrics};
+    },p);
+    throw new Error('DIRECT JUMP MISSED '+JSON.stringify(detail)+' :: '+String(e.message));
+   }
   }
   const end=await page.evaluate(()=>({
    metrics:MOVVA_DOM_DEVICE.metrics,
