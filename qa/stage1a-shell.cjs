@@ -21,11 +21,15 @@ try{
    parts:MOVVA_SHELL.partCount,layers:MOVVA_SHELL.layerCount,edges:MOVVA_SHELL.edgeCount,
    obsolete:document.querySelectorAll('.css3d-rail,.css3d-top,.css3d-bottom').length,
    renderer:__MOVVA_QA__.engine,overflow:document.documentElement.scrollWidth-innerWidth,
-   valid:[...document.querySelectorAll('.css3d-shell-face')].every(e=>getComputedStyle(e).transform!=='none')
+   valid:[...document.querySelectorAll('.css3d-shell-face')].every(e=>getComputedStyle(e).display==='none'||getComputedStyle(e).transform!=='none'),
+    activeShellFaces:[...document.querySelectorAll('.css3d-shell-face')].filter(e=>getComputedStyle(e).display!=='none').length,
+    activeFastEdges:[...document.querySelectorAll('.css3d-fast-edge')].filter(e=>getComputedStyle(e).display!=='none').length
   }));
   assert.ok(initial.parts>(w<=760?35:110)&&initial.parts<200,JSON.stringify(initial));
   assert.equal(initial.obsolete,0);assert.equal(initial.renderer,'CSS3D DOM');
   assert.equal(initial.layers,w<=760?1:3);assert.ok(initial.valid);assert.ok(Math.abs(initial.overflow)<=1);
+   if(w<=760){assert.equal(initial.activeShellFaces,0);assert.equal(initial.activeFastEdges,4)}
+   else {assert.ok(initial.activeShellFaces>100);assert.equal(initial.activeFastEdges,0)}
   const camera=await page.evaluate(()=>{
    const cam=document.querySelector('.css3d-camera-rig .css3d-camera');
    const rig=document.querySelector('#css3d-device');
