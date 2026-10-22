@@ -20,7 +20,7 @@ let scrollStart=0,scrollTravel=1;
 const elements={
  score:$('#score-number'),arc:$('#score-arc'),water:$('#water-number'),
  waterFill:$('#water-fill'),minutes:$('#activity-minutes'),
- bars:$('.activity-bar')
+ bars:[...document.querySelectorAll('.activity-bar')]
 };
 const lastData={score:null,arc:null,water:null,waterFill:null,minutes:null,bars:[]};
 const launchParams=new URLSearchParams(location.search);
