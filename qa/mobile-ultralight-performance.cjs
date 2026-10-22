@@ -69,6 +69,11 @@ async function scrub(page,seconds){
     }));
     const stats={geometry:count,forward:summarize(samples[0]),backward:summarize(samples[1]),layoutReads:(end.metrics.layoutReads??null),startLayoutReads:start.layoutReads??null,metrics:end.metrics,overflow:end.overflow,progress:end.progress,cardCount:end.count,ready:end.ready,status:end.status,frameCount:end.frameCount,htmlClass:end.htmlClass};
     assert.ok(end.ready && end.count===12 && Math.abs(end.overflow)<=1,JSON.stringify(stats));
+    // __MOVVA_QA__.ready is a static bootstrap flag; insist that the real
+    // interactive runtime stayed active and actually rendered throughout.
+    assert.ok(end.status.ready&&end.status.active&&end.frameCount>5&&
+      end.metrics.renders>start.renders+5,
+      'STATIC FALLBACK INVALIDATES BENCHMARK '+JSON.stringify({mode,view,stats,warnings:report.warnings}));
     assert.equal(count.engine,'CSS3D DOM');
     assert.ok(stats.forward.frames>4 && stats.backward.frames>4,'rendering nearly stalled '+mode+'/'+view);
     results[mode]=stats;
