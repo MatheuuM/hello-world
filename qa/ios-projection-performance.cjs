@@ -35,7 +35,12 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
      const error=Math.hypot(actual.x+actual.width*.5-parent.x-projected.x,
       actual.y+actual.height*.5-parent.y-projected.y);
      marker.remove();
-     examples.push({p,key:source.scene+':'+source.kind,error});
+     examples.push({p,key:source.scene+':'+source.kind,error,
+      actual:[+(actual.x-parent.x).toFixed(2),+(actual.y-parent.y).toFixed(2)],
+      projected:[+projected.x.toFixed(2),+projected.y.toFixed(2)],
+      stage:[+parent.x.toFixed(2),+parent.y.toFixed(2)],
+      phone:[document.querySelector('#css3d-device').style.left,document.querySelector('#css3d-device').style.top],
+      layout:MOVVA_DOM_DEVICE.layout&&[MOVVA_DOM_DEVICE.layout.width,MOVVA_DOM_DEVICE.layout.height]});
     }
    }
    return {
