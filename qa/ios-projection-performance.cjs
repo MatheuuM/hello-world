@@ -16,7 +16,7 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
   const page=await b.newPage({viewport:{width,height},isMobile:width<=760,hasTouch:width<=760});
   page.on('pageerror',e=>report.errors.push(label+': '+e.message));
   await page.goto('http://127.0.0.1:8077/',{waitUntil:'load'});
-  await page.waitForFunction(()=>window.__MOVVA_QA__?.ready && window.MOVVA_SHELL?.partCount && window.MOVVA_MOTION?.origins && window.MOVVA_DOM_DEVICE?.projectScreenPoint,null,{timeout:26000});
+  await page.waitForFunction(()=>window.MOVVA_3D_STATUS?.().active && window.MOVVA_DOM_DEVICE?.metrics?.renders>0 && window.MOVVA_SHELL?.partCount && window.MOVVA_MOTION?.origins && window.MOVVA_DOM_DEVICE?.projectScreenPoint,null,{timeout:26000});
   // The marker is a zero-impact QA probe inside the real transformed screenshot.
   // It is never inserted by the production animation.
   const measure=await page.evaluate(()=>{
