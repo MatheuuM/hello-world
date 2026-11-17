@@ -345,3 +345,49 @@
  right:auto;
  left:calc(var(--shell-w) * -.012);
 }
+
+
+/* MOVVA mobile fast extrusion — 4 real CSS3D planes instead of 80
+   individually composited wall segments. The original high-detail hardware
+   is retained behind ?quality=legacy for QA and safe comparison.
+   Rounded front/back, optical lenses, buttons and scroll-driven rotation stay. */
+.css3d-fast-edge{display:none}
+@media(max-width:760px){
+ .css3d-device:not(.movva-legacy-geometry) .css3d-shell-face,
+ .css3d-device:not(.movva-legacy-geometry) .css3d-camera-wall-face{
+   display:none!important;
+ }
+ .css3d-device:not(.movva-legacy-geometry) .css3d-fast-edge{
+   display:block;position:absolute;left:50%;top:50%;pointer-events:none;
+   backface-visibility:visible;-webkit-backface-visibility:visible;
+   transform-origin:center center;
+ }
+ .css3d-fast-edge--left,.css3d-fast-edge--right{
+   width:calc(var(--shell-w) * .112);
+   height:calc(var(--shell-h) * .981);
+   border-radius:calc(var(--shell-w) * .042);
+   background:linear-gradient(90deg,#4b564d 0%,#819182 19%,#c0cbb9 49%,#748476 79%,#465047 100%);
+ }
+ .css3d-fast-edge--left{
+   transform:translate(-50%,-50%) translateX(calc(var(--shell-w) * -.490)) rotateY(90deg);
+ }
+ .css3d-fast-edge--right{
+   transform:translate(-50%,-50%) translateX(calc(var(--shell-w) * .490)) rotateY(90deg);
+ }
+ .css3d-fast-edge--top,.css3d-fast-edge--bottom{
+   width:calc(var(--shell-w) * .80);
+   height:calc(var(--shell-w) * .112);
+   border-radius:calc(var(--shell-w) * .015);
+   background:linear-gradient(180deg,#445148 0%,#9dac9c 40%,#c5cdbe 53%,#465448 100%);
+ }
+ .css3d-fast-edge--top{
+   transform:translate(-50%,-50%) translateY(calc(var(--shell-h) * -.490)) rotateX(90deg);
+ }
+ .css3d-fast-edge--bottom{
+   transform:translate(-50%,-50%) translateY(calc(var(--shell-h) * .490)) rotateX(90deg);
+ }
+ .css3d-device:not(.movva-legacy-geometry) .css3d-shadow{
+   filter:none!important;
+   background:radial-gradient(ellipse,rgba(76,73,57,.27),transparent 72%);
+ }
+}

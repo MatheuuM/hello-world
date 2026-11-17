@@ -21,3 +21,9 @@
 @media(max-height:620px){
  .enhanced .stage{min-height:0;height:100svh}
 }
+
+/* The cinematic controller owns intentional smooth navigation. Global
+   CSS smooth scroll turns WebKit's {behavior:'auto'} and scrollTop setter
+   into deferred animations, causing chapter jumps to appear stalled and
+   throwing position-driven 3D animation out of sync with real scroll. */
+html.enhanced{scroll-behavior:auto}

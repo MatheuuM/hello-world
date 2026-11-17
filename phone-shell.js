@@ -12,6 +12,10 @@ const PRO_MAX_RATIO=78/163.4;
 // compositor layers. Use one continuous perimeter wall instead of three
 // overlapping bevel strips at compact widths. Front/back borders retain trim.
 const compact=matchMedia('(max-width:760px)').matches;
+// Explicit diagnostic escape hatch for same-build before/after comparison.
+// Default on phones is visually dimensional, low-compositor-cost geometry.
+const legacyGeometry=new URLSearchParams(location.search).get('quality')==='legacy';
+rig.classList.toggle('movva-legacy-geometry',compact&&legacyGeometry);
 const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=compact?10:14;
 // Each tangent is sized to the true contour; excessive strip overlap caused
 // visibly folded corners when CSS transformed the individual faces.
@@ -71,6 +75,18 @@ for(let i=0;i<contour.length-1;i++){
   piece.style.background='linear-gradient(180deg,'+tone(colors[0],light)+' 0%,'+tone(colors[1],light)+' 48%,'+tone(colors[2],light)+' 100%)';
   piece.style.transform='translate3d(calc(var(--shell-w) * '+(x/W).toFixed(9)+'),calc(var(--shell-h) * '+(y/H).toFixed(9)+'),calc(var(--shell-w) * '+z.toFixed(9)+')) rotateZ('+tangent.toFixed(5)+'deg) rotateX('+angle.toFixed(5)+'deg) translate(-50%,-50%)';
   shell.appendChild(piece);count++;
+ }
+}
+// Four planar extruded metal edges preserve physical XYZ depth while keeping
+// the phone's curved front/rear and actual camera/lenses. Mobile normally
+// paints these 4 planes instead of 44 tiny shell layers + 36 camera walls.
+// The full geometry remains accessible via ?quality=legacy for QA and rollback.
+if(compact){
+ for(const side of ['left','right','top','bottom']){
+  const edge=document.createElement('i');
+  edge.className='css3d-fast-edge css3d-fast-edge--'+side;
+  edge.setAttribute('aria-hidden','true');
+  shell.appendChild(edge);
  }
 }
 // Five independent mechanical controls: action, volume up/down, lock, camera.
@@ -188,7 +204,7 @@ function setPose(ry,rx,rz){
  profile.style.transform='translateX(-50%) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
-window.MOVVA_SHELL={setSize,setPose,isWebKit,compact,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
+window.MOVVA_SHELL={setSize,setPose,isWebKit,compact,legacyGeometry,fastEdgeCount:compact?4:0,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };
