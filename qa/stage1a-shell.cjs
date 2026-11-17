@@ -44,7 +44,7 @@ try{
     lensDepth:getComputedStyle(lens).transform,
     ratio:MOVVA_SHELL.width/MOVVA_SHELL.height,
     referenceRatio:MOVVA_SHELL.referenceAspectRatio,
-    plateauWidth:parseFloat(getComputedStyle(cam).width)/MOVVA_SHELL.width,
+    plateauWidth:parseFloat(getComputedStyle(cam).width)/parseFloat(getComputedStyle(cam.parentElement).width),
     segments:MOVVA_SHELL.cornerSegments,
     overlap:MOVVA_SHELL.curveOverlapPx,
     glassPanel:getComputedStyle(document.querySelector('.css3d-back'),'::before').content,
