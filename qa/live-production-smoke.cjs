@@ -20,19 +20,22 @@ async function waitForPublicAssets(request) {
   let last = '';
   for (let attempt = 1; attempt <= 12; attempt++) {
     try {
-      const [phone, motion, shell] = await Promise.all([
+      const [phone, motion, shell, shellCss] = await Promise.all([
         request.get(SITE + '/mobile-phone.js', { timeout: 20000 }),
         request.get(SITE + '/motion-studio.js', { timeout: 20000 }),
-        request.get(SITE + '/phone-shell.js', { timeout: 20000 })
+        request.get(SITE + '/phone-shell.js', { timeout: 20000 }),
+        request.get(SITE + '/phone-shell.css', { timeout: 20000 })
       ]);
-      const [a, b, c] = await Promise.all([phone.text(), motion.text(), shell.text()]);
-      if (phone.ok() && motion.ok() && shell.ok() &&
+      const [a, b, c, d] = await Promise.all([phone.text(), motion.text(), shell.text(), shellCss.text()]);
+      if (phone.ok() && motion.ok() && shell.ok() && shellCss.ok() &&
           a.includes('projectScreenPoint') && a.includes('BASE_WIDTH=170') &&
-          b.includes('screenOrigins') && c.includes('const compact=matchMedia')) {
-        return { attempts: attempt, assets: { mobilePhone: a.length, motion: b.length, shell: c.length } };
+          b.includes('screenOrigins') && c.includes('const compact=matchMedia') &&
+          c.includes('fastEdgeCount') && c.includes('legacyGeometry') &&
+          d.includes('css3d-fast-edge') && d.includes('movva-legacy-geometry')) {
+        return { attempts: attempt, assets: { mobilePhone: a.length, motion: b.length, shell: c.length, shellCss: d.length }, verified: 'ultralight mobile CSS3D' };
       }
-      last = 'HTTP ' + phone.status() + '/' + motion.status() + '/' + shell.status() +
-        ' expected feature markers not all present';
+      last = 'HTTP ' + [phone, motion, shell, shellCss].map(r => r.status()).join('/') +
+        ' expected ultralight release markers not all present';
     } catch (error) {
       last = String(error);
     }
@@ -79,6 +82,9 @@ async function main() {
           renderer: MOVVA_3D_STATUS().engine,
           compact: MOVVA_SHELL.compact, shellFaces: MOVVA_SHELL.partCount,
           cameraFaces: MOVVA_SHELL.cameraWallCount,
+          renderedFaces: [...document.querySelectorAll('.css3d-shell-face,.css3d-camera-wall-face')].filter(el => getComputedStyle(el).display !== 'none').length,
+          fastPlanes: [...document.querySelectorAll('.css3d-fast-edge')].filter(el => getComputedStyle(el).display !== 'none').length,
+          legacyGeometry: Boolean(MOVVA_SHELL.legacyGeometry),
           origins: MOVVA_MOTION.origins.length
         })));
       }
@@ -87,9 +93,13 @@ async function main() {
       assert.ok(scenes.every(s => Math.abs(s.overflow) <= 1));
       assert.ok(scenes.every(s => s.cardCount >= 1));
       if (width <= 760) {
-        assert.ok(scenes.every(s => s.compact && s.shellFaces === 44 && s.cameraFaces === 36));
+        assert.ok(scenes.every(s => s.compact && s.shellFaces === 44 && s.cameraFaces === 36 &&
+          s.renderedFaces === 0 && s.fastPlanes === 4 && !s.legacyGeometry),
+          'Official domain must render only four fast 3D planes on mobile, not legacy facets');
       } else {
-        assert.ok(scenes.every(s => !s.compact && s.shellFaces === 180 && s.cameraFaces === 48));
+        assert.ok(scenes.every(s => !s.compact && s.shellFaces === 180 && s.cameraFaces === 48 &&
+          s.renderedFaces === 228 && s.fastPlanes === 0),
+          'Desktop 3D geometry must remain unchanged');
       }
       assert.deepEqual(report.errors, [], 'Browser JavaScript exceptions');
       const image = view + '.png';
