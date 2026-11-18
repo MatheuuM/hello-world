@@ -8,19 +8,21 @@ const shell=device?.querySelector('.css3d-unibody');
 if(!rig||!device||!shell)return;
 // Apple 18 Pro Max physical ratio: 78 / 163.4 (MOVVA-exclusive finish).
 const PRO_MAX_RATIO=78/163.4;
-// Safari and mobile browsers cannot afford hundreds of independent CSS3D
-// compositor layers. Use one continuous perimeter wall instead of three
-// overlapping bevel strips at compact widths. Front/back borders retain trim.
+// Rounded mobile hybrid: four straight spans and four softly tessellated
+// corners form one closed metal extrusion. Front and rear panels cap it.
+// The legacy 44-face contour remains available for diagnostic comparison.
 const compact=matchMedia('(max-width:760px)').matches;
 // Explicit diagnostic escape hatch for same-build before/after comparison.
-// Default on phones is visually dimensional, low-compositor-cost geometry.
+// Default on phones is the rounded hybrid; ?quality=legacy selects the previous 44-face contour.
 const legacyGeometry=new URLSearchParams(location.search).get('quality')==='legacy';
 rig.classList.toggle('movva-legacy-geometry',compact&&legacyGeometry);
-const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=compact?10:14;
+const mobileHybrid=compact&&!legacyGeometry;
+const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=compact?(legacyGeometry?10:5):14;
 // Each tangent is sized to the true contour; excessive strip overlap caused
 // visibly folded corners when CSS transformed the individual faces.
 const FACE=.056,WALL=.038,INSET=.0092;
-const STRAIGHT_OVERLAP=.16,CURVE_OVERLAP=.055,DEPTH_OVERLAP=.02;
+// Small tangent overlaps close fractional-pixel seams at high-DPI mobile scales.
+const STRAIGHT_OVERLAP=mobileHybrid ? .24 : .16,CURVE_OVERLAP=mobileHybrid ? .18 : .055,DEPTH_OVERLAP=.02;
 const contour=[],pt=(x,y)=>contour.push({x,y});
 pt(-W/2+RX,-H/2);pt(W/2-RX,-H/2);
 const corners=[
@@ -77,18 +79,9 @@ for(let i=0;i<contour.length-1;i++){
   shell.appendChild(piece);count++;
  }
 }
-// Four planar extruded metal edges preserve physical XYZ depth while keeping
-// the phone's curved front/rear and actual camera/lenses. Mobile normally
-// paints these 4 planes instead of 44 tiny shell layers + 36 camera walls.
-// The full geometry remains accessible via ?quality=legacy for QA and rollback.
-if(compact){
- for(const side of ['left','right','top','bottom']){
-  const edge=document.createElement('i');
-  edge.className='css3d-fast-edge css3d-fast-edge--'+side;
-  edge.setAttribute('aria-hidden','true');
-  shell.appendChild(edge);
- }
-}
+// Mobile hybrid uses the same continuous contour as desktop, with five
+// tangents per rounded corner (24 connected wall faces, not four loose planes).
+// The raised rear plateau retains its own curved perimeter extrusion.
 // Five independent mechanical controls: action, volume up/down, lock, camera.
 for(const b of [
  {x:-.504,y:-.312,h:.047,kind:'action'},
@@ -127,7 +120,7 @@ for(const x of [-.499,.499]){
 const camera=device.querySelector('.css3d-camera-rig .css3d-camera');
 let cameraWallCount=0;
 if(camera){
- const pw=W*.939,ph=pw/1.88,pr=W*.105,steps=compact?8:11;
+ const pw=W*.939,ph=pw/1.88,pr=W*.105,steps=compact?(legacyGeometry?8:4):11;
  const profile=[],add=(x,y)=>profile.push({x,y});
  add(-pw/2+pr,-ph/2);add(pw/2-pr,-ph/2);
  const corners=[
@@ -204,7 +197,9 @@ function setPose(ry,rx,rz){
  profile.style.transform='translateX(-50%) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
-window.MOVVA_SHELL={setSize,setPose,isWebKit,compact,legacyGeometry,fastEdgeCount:compact?4:0,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
+const first=contour[0],lastPoint=contour[contour.length-1];
+const perimeterClosed=Math.hypot(first.x-lastPoint.x,first.y-lastPoint.y)<.001;
+window.MOVVA_SHELL={setSize,setPose,isWebKit,compact,legacyGeometry,mobileHybrid,geometryQuality:mobileHybrid?'hybrid':(compact?'legacy':'desktop'),perimeterClosed,perimeterSegments:contour.length-1,fastEdgeCount:0,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };
