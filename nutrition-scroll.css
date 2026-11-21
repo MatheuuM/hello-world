@@ -23,41 +23,56 @@
  width:min(55vw,790px);height:85%;border-radius:50%;
  opacity:var(--nutrition-presence,0);
  transform:translate(-50%,-50%) rotate(calc(-12deg + 18deg*var(--nutrition-orbit,0)));
- background:radial-gradient(ellipse at 42% 44%,#98552baf 0%,#503238a6 42%,transparent 72%);
+ background:radial-gradient(ellipse at 42% 44%,#8e794888 0%,#395940a6 42%,transparent 72%);
 }
 .enhanced .nutrition-surface:after{
- content:'';position:absolute;inset:12% -2%;border:1px solid #d7825526;
+ content:'';position:absolute;inset:12% -2%;border:1px solid #b6d18826;
  border-radius:50%;transform:rotate(-20deg);
 }
 .enhanced .nutrition-active .halo,.enhanced .nutrition-active .ghost-word{opacity:0}
 .enhanced .nutrition-active .nutrition-food-gallery{
- display:block;position:absolute;left:0;right:0;z-index:2;pointer-events:none;
+ display:block;position:absolute;left:0;right:0;pointer-events:none;
 }
 .nutrition-food{
  position:absolute;left:var(--food-x);top:var(--food-y);width:var(--food-width);height:auto;
- opacity:0;filter:drop-shadow(0 12px 13px #160a08a6);
+ z-index:2;opacity:0;filter:drop-shadow(0 12px 13px #070f0aa6);
  transform:translate(-50%,-50%)
    translate(calc(var(--food-offset-x) * (1 - var(--food-progress,0))),calc(var(--food-offset-y) * (1 - var(--food-progress,0))))
    rotate(calc(var(--food-turn) - 22deg * (1 - var(--food-progress,0))))
    scale(calc(.35 + .65 * var(--food-progress,0)));
 }
 .nutrition-food-oats{
- --food-x:41%;--food-y:31%;--food-width:min(10.5vw,165px);
+ --food-x:42.5%;--food-y:30%;--food-width:min(12vw,183px);
  --food-offset-x:-11vw;--food-offset-y:42%;--food-turn:12deg;
 }
 .nutrition-food-salad{
- --food-x:11%;--food-y:66%;--food-width:min(12vw,175px);
+ --food-x:11%;--food-y:66%;--food-width:min(13vw,190px);
  --food-offset-x:13vw;--food-offset-y:-34%;--food-turn:-19deg;
 }
 .nutrition-food-berries{
- --food-x:39%;--food-y:91%;--food-width:min(8.5vw,128px);
+ --food-x:42%;--food-y:90%;--food-width:min(9.5vw,145px);
  --food-offset-x:-10vw;--food-offset-y:-54%;--food-turn:21deg;
 }
-.enhanced .stage.dark #nutrition :is(.eyebrow,h2 em){color:#f4bea2}
-.enhanced .stage.dark #nutrition :is(.nutrition-chapters,.hydration-title,.hydration-value>span,.hydration-caption,.micro-note){color:#e4c7bd}
-.enhanced .stage.dark #nutrition .nutrition-readout{border-top-color:#e2b6a73d}
-.enhanced .stage.dark #nutrition .water-track{background:#d3b3ad38}
-.enhanced .stage.dark #nutrition .water-track i{background:#deb99f}
+.nutrition-food-blueberries{
+ --food-x:10%;--food-y:18%;--food-width:min(5.5vw,80px);
+ --food-offset-x:17vw;--food-offset-y:75%;--food-turn:-31deg;
+ filter:drop-shadow(0 7px 8px #090e0a9c);
+}
+.nutrition-food-avocado{
+ --food-x:43%;--food-y:49%;--food-width:min(6vw,84px);
+ --food-offset-x:-14vw;--food-offset-y:35%;--food-turn:-15deg;
+ filter:drop-shadow(0 9px 12px #090e0aae);
+}
+.nutrition-food-raspberry{
+ --food-x:8%;--food-y:91%;--food-width:min(6vw,92px);
+ --food-offset-x:15vw;--food-offset-y:-84%;--food-turn:40deg;
+ z-index:6;filter:blur(3px) drop-shadow(0 13px 16px #060c08a6);
+}
+.enhanced .stage.dark #nutrition :is(.eyebrow,h2 em){color:#d8e7a6}
+.enhanced .stage.dark #nutrition :is(.nutrition-chapters,.hydration-title,.hydration-value>span,.hydration-caption,.micro-note){color:#d1dfc8}
+.enhanced .stage.dark #nutrition .nutrition-readout{border-top-color:#b6c8a83d}
+.enhanced .stage.dark #nutrition .water-track{background:#bacaa838}
+.enhanced .stage.dark #nutrition .water-track i{background:#c1d79a}
 @media (prefers-reduced-motion:reduce){
  .nutrition-food{transform:translate(-50%,-50%) rotate(var(--food-turn))}
 }
@@ -86,6 +101,15 @@
  .nutrition-food-berries{
   --food-x:86%;--food-y:90%;--food-width:min(16vw,90px);--food-offset-x:-24vw;
  }
+ .nutrition-food-blueberries{
+  --food-x:14%;--food-y:14%;--food-width:min(11vw,56px);--food-offset-x:25vw;
+ }
+ .nutrition-food-avocado{
+  --food-x:85%;--food-y:50%;--food-width:min(12vw,60px);--food-offset-x:-26vw;
+ }
+ .nutrition-food-raspberry{
+  --food-x:13%;--food-y:87%;--food-width:min(10vw,60px);--food-offset-x:25vw;
+ }
 }
 @media(max-width:760px) and (max-height:760px){
  .enhanced #nutrition{padding-top:92px}#nutrition h2{font-size:39px}#nutrition .description{font-size:11px;line-height:1.55;margin-top:13px}
@@ -94,11 +118,15 @@
 }
 
 @media(max-width:760px) and (max-height:700px){
- .nutrition-food-berries{display:none}
+ .nutrition-food-berries,.nutrition-food-raspberry{display:none}
  .nutrition-food-salad{--food-x:14%;--food-y:87%;--food-width:19vw}
+ .nutrition-food-blueberries{--food-x:15%;--food-y:10%;--food-width:9vw}
+ .nutrition-food-avocado{display:none}
 }
 @media(min-width:761px) and (max-height:540px){
  .nutrition-food-oats{--food-x:40%;--food-y:19%;--food-width:min(8.8vw,104px)}
  .nutrition-food-salad{--food-x:11%;--food-y:77%;--food-width:min(10.5vw,124px)}
- .nutrition-food-berries{display:none}
+ .nutrition-food-blueberries{--food-x:8%;--food-y:11%;--food-width:4vw}
+ .nutrition-food-avocado{--food-x:44%;--food-y:37%;--food-width:5vw}
+ .nutrition-food-berries,.nutrition-food-raspberry{display:none}
 }

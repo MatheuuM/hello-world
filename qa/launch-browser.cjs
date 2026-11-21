@@ -28,14 +28,25 @@ async function settled(page, target) {
 async function verifyBench(page, label, capture) {
   const demo = page.locator('.bench-demo');
   const frames = [];
+  const fingerprints = [];
   for (const progress of [.348, .375, .404, .375]) {
     await page.evaluate(value => window.__MOVVA_QA__.setProgress(value), progress);
     await settled(page, progress);
     await page.waitForFunction(() => document.querySelector('.bench-demo').classList.contains('bench-frames-ready'));
-    frames.push(Number(await demo.locator('canvas').getAttribute('data-frame')));
+    const sample = await demo.locator('canvas').evaluate(canvas => {
+      const {width, height} = canvas;
+      const pixels = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+      let hash = 0;
+      for (let i = 0; i < pixels.length; i += 13) hash = Math.imul(hash ^ pixels[i], 16777619);
+      return {frame: Number(canvas.dataset.frame), hash};
+    });
+    frames.push(sample.frame);
+    fingerprints.push(sample.hash);
   }
   assert.ok(frames[0] < frames[1] && frames[1] < frames[2], 'Supino não avançou com a rolagem');
   assert.equal(frames[1], frames[3], 'Voltar a rolagem deve revelar o mesmo quadro');
+  assert.equal(new Set(fingerprints.slice(0, 3)).size, 3, 'O supino deve mudar os pixels do canvas');
+  assert.equal(fingerprints[1], fingerprints[3], 'Retroceder precisa devolver a mesma imagem');
 
   const picture = await demo.locator('.bench-visual').boundingBox();
   const caption = await demo.locator('figcaption').boundingBox();
@@ -44,6 +55,19 @@ async function verifyBench(page, label, capture) {
   assert.ok(picture.height >= 110 && picture.y >= header.y + header.height - 1, 'Enquadramento do supino');
   assert.ok(caption.y + caption.height <= chapters.y, 'Legenda do supino invade a navegação');
   await capture('supino-' + label);
+  if (label === 'desktop') {
+    const scrollOrigin = await page.evaluate(() => scrollY);
+    await page.mouse.move(650, 480);
+    await page.mouse.wheel(0, 106);
+    await page.waitForFunction(({y, frame}) =>
+      scrollY > y + 70 && Number(document.querySelector('.bench-demo canvas').dataset.frame) > frame + 4,
+    {y: scrollOrigin, frame: frames[1]});
+    await page.mouse.wheel(0, -106);
+    await page.waitForFunction(({y, frame}) =>
+      Math.abs(scrollY - y) < 2 &&
+      Number(document.querySelector('.bench-demo canvas').dataset.frame) === frame,
+    {y: scrollOrigin, frame: frames[1]});
+  }
 }
 
 async function test(browser, engine, [label, viewport]) {
@@ -84,6 +108,11 @@ async function test(browser, engine, [label, viewport]) {
     await page.locator('.chapter-dots a[href="#training"]').click();
     await settled(page, .33);
     assert.equal(new URL(page.url()).hash, '#training');
+    const pause = page.getByRole('button', { name: 'Pausar supino' });
+    await pause.waitFor();
+    await page.waitForFunction(() => Number(document.querySelector('.bench-demo canvas').dataset.frame) >= 8);
+    await pause.click();
+    await page.getByRole('button', { name: 'Reproduzir supino' }).waitFor();
     await page.goBack();
     await settled(page, .18);
     await page.goForward();
@@ -144,6 +173,9 @@ async function test(browser, engine, [label, viewport]) {
       await page.evaluate(() => window.__MOVVA_QA__.setProgress(.375));
       await settled(page, .375);
       assert.equal(await page.locator('.bench-frames-ready').count(), 0);
+      await page.getByRole('button', { name: 'Reproduzir supino' }).click();
+      await page.getByRole('button', { name: 'Pausar supino' }).waitFor();
+      assert.equal(await page.locator('.bench-frames-ready').count(), 1);
       await page.goto(origin + '/?visual=estatico#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('html.enhanced').count(), 0);
       assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);

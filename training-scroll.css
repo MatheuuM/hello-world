@@ -16,9 +16,9 @@
 .bench-visual {
   position: relative;
   overflow: hidden;
-  border: 1px solid #e8dbc578;
-  border-radius: clamp(14px, 1.7vw, 27px);
-  background: #cbc5b2;
+  background:
+    radial-gradient(ellipse 38% 8% at 49% 91%, #07130bae, transparent 100%),
+    radial-gradient(ellipse 52% 58% at 51% 52%, #7f9b604f, transparent 100%);
 }
 
 .bench-visual canvas,
@@ -26,6 +26,19 @@
   display: block;
   width: 100%;
   height: auto;
+}
+
+.bench-play {
+  position: absolute;
+  inset: auto 8px 8px auto;
+  min-height: 44px;
+  padding-inline: 12px;
+  border: 1px solid #e8eddf66;
+  border-radius: 999px;
+  background: #101b15;
+  color: #faf4e8;
+  font-size: 11px;
+  pointer-events: auto;
 }
 
 .bench-visual canvas {
@@ -36,6 +49,10 @@
 
 .bench-frames-ready .bench-visual canvas {
   opacity: 1;
+}
+
+.bench-frames-ready .bench-visual img {
+  visibility: hidden;
 }
 
 .bench-demo figcaption {
@@ -57,10 +74,6 @@
   transform: translateY(-50%) scale(var(--bench-scale, .72));
   transform-origin: 55% 50%;
   pointer-events: none;
-}
-
-.enhanced .bench-visual {
-  box-shadow: 0 22px 76px #080d0b95, 0 0 45px #b1c58b22;
 }
 
 .enhanced .bench-progress {

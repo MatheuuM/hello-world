@@ -24,7 +24,7 @@ surface.className='nutrition-surface';
 surface.setAttribute('aria-hidden','true');
 stage.insertBefore(surface,world);
 
-// Three dishes from the sanitized MOVVA meal-plan capture. Each entrance
+// Dishes and ingredients from the original MOVVA meal-plan photographs. Each entrance
 // derives from the same scroll progress as the phone and unwinds on rewind.
 const gallery=document.createElement('div');
 gallery.className='nutrition-food-gallery';
@@ -34,6 +34,9 @@ const foodTiming=[
  ['oats',.458,.494],
  ['salad',.483,.525],
  ['berries',.499,.539],
+ ['blueberries',.467,.510],
+ ['avocado',.485,.529],
+ ['raspberry',.495,.539],
 ];
 const foods=foodTiming.map(([name,start,end])=>{
  const image=document.createElement('img');
@@ -103,7 +106,7 @@ function fit(p,base,compose,hw,hh){
 function background(p,base){
  const previous=original.background(p,base);if(!inside(p))return previous;
  const t=ramp(p,.435,.462)*(1-ramp(p,.569,.595));
- return mix(previous,[43,26,30],t).map(Math.round);
+ return mix(previous,[19,34,27],t).map(Math.round);
 }
 function panel(p,chapter,base){
  const previous=original.panel(p,chapter,base);
