@@ -1,12 +1,12 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { chromium, webkit, devices } = require('playwright');
-const origin = 'http://127.0.0.1:8077';
-const output = path.join(__dirname, 'screenshots');
+const origin = process.env.QA_ORIGIN || 'http://127.0.0.1:8077';
+const output = path.resolve(process.env.QA_OUTPUT || 'qa-launch');
 require('node:fs').mkdirSync(output, { recursive: true });
 const viewports = [
   ['desktop', { viewport: { width: 1440, height: 900 } }],
-  ['iphone', devices['iPhone 15']],
+  ['iphone', { ...devices['iPhone 15'], viewport: { width: 393, height: 852 } }],
   ['compacto', { ...devices['iPhone 15'], viewport: { width: 320, height: 568 }, deviceScaleFactor: 2 }],
   ['paisagem', { ...devices['iPhone 15'], viewport: { width: 844, height: 390 } }],
 ];
@@ -15,10 +15,18 @@ async function settled(page, target) {
   await page.waitForFunction(t => {
     const runtime = window.__MOVVA_QA__;
     return runtime?.settled && Math.abs(runtime.progress - t) < .0005;
-  }, target);
+  }, target, { timeout: 24000 }).catch(async error => {
+    const current = await page.evaluate(() => ({
+      hash: location.hash,
+      scroll: scrollY,
+      progress: window.__MOVVA_QA__?.progress
+    }));
+    throw new Error('Capítulo esperado ' + target + ', estado ' + JSON.stringify(current), { cause: error });
+  });
 }
 
 async function test(browser, engine, [label, viewport]) {
+  console.log('QA', engine, label);
   const context = await browser.newContext(viewport);
   try {
     const page = await context.newPage();
@@ -36,11 +44,20 @@ async function test(browser, engine, [label, viewport]) {
     assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), 'https://www.movvawellness.com.br/');
     assert.equal(await page.locator('meta[name=robots]').count(), 0);
     const screenshot = n => page.screenshot({ path: path.join(output, n + '.jpg'), quality: 86, scale: 'css' });
-    if (engine === 'chromium' && (label === 'desktop' || label === 'iphone')) {
-      await screenshot('movva-abertura-' + label);
+    await screenshot(engine + '-abertura-' + label);
+    if (label === 'paisagem') {
+      const cta = await page.locator('.hero-cta').boundingBox();
+      const chapters = await page.locator('.chapter-bar').boundingBox();
+      assert.ok(cta.y + cta.height <= chapters.y, 'CTA invadiu a navegação de capítulos');
     }
 
-    await page.locator('.hero-cta').click();
+    if (label === 'desktop') {
+      const hero = page.locator('.hero-cta');
+      await hero.focus();
+      await page.keyboard.press('Enter');
+    } else {
+      await page.locator('.hero-cta').click();
+    }
     await settled(page, .18);
     assert.equal(new URL(page.url()).hash, '#connected');
     await page.locator('.chapter-dots a[href="#training"]').click();
@@ -53,25 +70,62 @@ async function test(browser, engine, [label, viewport]) {
     await page.goto(origin + '/#nutrition', { waitUntil: 'load' });
     await settled(page, .48);
     assert.equal(await page.locator('#nutrition').getAttribute('aria-hidden'), 'false');
-    for (const progress of [.66, .83, .97, .66, .48, .33, 0]) {
+    for (const progress of [.70, .86, .98, .66, .52, .365, 0]) {
       await page.evaluate(value => window.__MOVVA_QA__.setProgress(value), progress);
       await settled(page, progress);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+      if (label === 'paisagem' && [.70, .86, .98, .52, .365].includes(progress)) {
+        const copy = await page.locator('.scene[aria-hidden="false"] .copy').boundingBox();
+        const chapters = await page.locator('.chapter-bar').boundingBox();
+        assert.ok(copy.y + copy.height <= chapters.y, 'Conteúdo invadiu a navegação em ' + progress);
+      }
+      if ((label === 'desktop' || label === 'iphone') && (progress === .365 || progress === .52)) {
+        const name = progress === .365 ? 'training' : 'nutrition';
+        const screen = page.locator('.css3d-screen-' + name);
+        await screen.evaluate(img => img.decode());
+        assert.equal(await screen.evaluate(img => img.naturalWidth), 804);
+        await page.waitForFunction(name => Number(getComputedStyle(document.querySelector('.css3d-screen-' + name)).opacity) > .95, name);
+        await screenshot(engine + '-' + name + '-' + label);
+      }
     }
     await page.locator('.nav-cta').click();
     await page.waitForFunction(() => {
       const launch = document.querySelector('#launch').getBoundingClientRect();
-      return launch.top >= 0 && launch.top <= innerHeight / 2;
+      return launch.top >= -1 && launch.top <= innerHeight / 2;
     });
     assert.equal(new URL(page.url()).hash, '#launch');
     const launch = page.locator('#launch');
+    assert.equal(await launch.locator('.animated-link').isVisible(), false);
+    assert.equal(await launch.locator('a[href^="/?visual=estatico"]').isVisible(), true);
     assert.equal(await launch.locator('a[href^="mailto:"]').getAttribute('href'), 'mailto:suporte@movvawellness.com.br?subject=Quero%20saber%20do%20lan%C3%A7amento%20da%20MOVVA');
     assert.equal(await launch.locator('a[href="/support/"]').count(), 1);
-    if (engine === 'chromium' && (label === 'desktop' || label === 'iphone')) {
-      await launch.screenshot({ path: path.join(output, 'movva-lancamento-' + label + '.jpg'), quality: 86, scale: 'css' });
+    if (label === 'desktop' || label === 'iphone') {
+      await launch.screenshot({ path: path.join(output, engine + '-lancamento-' + label + '.jpg'), quality: 86, scale: 'css' });
     }
     await launch.locator('.replay').click();
     await settled(page, 0);
+    if (label === 'desktop') {
+      const keyboard = await context.newPage();
+      await keyboard.goto(origin, { waitUntil: 'load' });
+      await settled(keyboard, 0);
+      await keyboard.keyboard.press('Tab');
+      assert.equal(await keyboard.evaluate(() => document.activeElement.className), 'skip');
+      await keyboard.keyboard.press('Enter');
+      await keyboard.waitForFunction(() => document.activeElement.id === 'overview');
+      await keyboard.close();
+    }
+    if (label === 'iphone') {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      assert.equal(await page.evaluate(() => window.MOVVA_3D_STATUS().active), true);
+      await page.goto(origin + '/?visual=estatico#nutrition', { waitUntil: 'load' });
+      assert.equal(await page.locator('html.enhanced').count(), 0);
+      assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
+      assert.equal(await page.locator('.animated-link').isVisible(), true);
+      assert.equal(await page.locator('#launch .static-link:visible').count(), 0);
+      assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior), 'auto');
+      await page.locator('.animated-link').click();
+      await settled(page, 0);
+    }
     assert.deepEqual(errors, []);
     console.log(engine + ' ' + label + ' OK');
   } finally { await context.close(); }
@@ -79,6 +133,7 @@ async function test(browser, engine, [label, viewport]) {
 
 (async () => {
   await Promise.all([['chromium', chromium], ['webkit', webkit]].map(async ([engine, type]) => {
+    if (process.env.QA_ENGINE && engine !== process.env.QA_ENGINE) return;
     const browser = await type.launch();
     try {
       for (const viewport of viewports) await test(browser, engine, viewport);

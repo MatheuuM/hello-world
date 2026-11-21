@@ -3,6 +3,11 @@
  */
 (() => {
 'use strict';
+const launchParams=new URLSearchParams(location.search);
+if(launchParams.get('visual')==='estatico'){
+ document.documentElement.classList.add('static-experience');
+ return;
+}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const root=document.documentElement,canvas=$('#world'),stage=$('#stage'),experience=$('#experience');
 const media=matchMedia('(prefers-reduced-motion: reduce)');
@@ -10,7 +15,7 @@ const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>{t=clamp(t);return t*t*(3-2*t);};
 const range=(p,a,b)=>smooth((p-a)/(b-a));
 const windows=[[0,.13],[.125,.275],[.27,.435],[.43,.595],[.59,.775],[.77,.935],[.93,1.05]];
-const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CIRCLE','MOVVA'];
+const names=['SEU RITMO','TUDO CONECTADO','TREINOS','NUTRIÇÃO','EVOLUÇÃO','CIRCLE','MOVVA'];
 const scenes=$$('.scene'),dots=$$('.chapter-dots a');
 const chapterProgress=new Map(dots.map(link=>[link.hash,Number(link.dataset.jump)]));
 const header=$('.header');
@@ -21,7 +26,6 @@ const sceneCache=scenes.map(()=>({opacity:null,visibility:null,inert:null,transf
 let lastScene=-1,lastBackdrop=null;
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
 let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null;
-const launchParams=new URLSearchParams(location.search);
  const PRO_MAX_REFERENCE_ASPECT=78/163.4;
  const PRO_MAX_MODEL_Y=(2.8/6)/PRO_MAX_REFERENCE_ASPECT;
 // The immersive presentation is on by default; old per-tab settings no longer disable it.
@@ -196,8 +200,8 @@ async function build(){
  for(const x of [-.98,-.87,-.76,-.65,-.54,.54,.65,.76,.87,.98])object(cylinder(.023,.012,20),[.015,.019,.017],[x,-3.005,0],.1,80,[Math.PI/2,0,0]);
  try{const image=await loadImage('/assets/movva.svg');const c=document.createElement('canvas');c.width=512;c.height=160;const ctx=c.getContext('2d');ctx.drawImage(image,40,58,432,59);backLogo=texture(c);const logo=object(face(1.2,.38,.01),[.59,.63,.577],[0,-.47,-.229],0,60,[0,Math.PI,0]);logo.mode=2;logo.fixedTexture=backLogo;}catch(_){}
  panels=[
-  {geom:face(2.15,1.04,.12),base:box(2.18,1.07,.048,.13,.006),tex:'training',rect:[.025,.554,.945,.188],chapter:2,x:1.05,y:.42,z:.90,rz:-.12},
-  {geom:face(2.03,.95,.12),base:box(2.06,.98,.048,.13,.006),tex:'nutrition',rect:[.035,.09,.93,.154],chapter:3,x:1.19,y:-.73,z:1.12,rz:.09},
+  {geom:face(2.15,1.04,.12),base:box(2.18,1.07,.048,.13,.006),tex:'training',rect:[.025,.495,.945,.193],chapter:2,x:1.05,y:.42,z:.90,rz:-.12},
+  {geom:face(2.03,.95,.12),base:box(2.06,.98,.048,.13,.006),tex:'nutrition',rect:[.035,.196,.93,.2],chapter:3,x:1.19,y:-.73,z:1.12,rz:.09},
   {geom:face(2.14,1.32,.12),base:box(2.17,1.35,.048,.13,.006),tex:'evolution',rect:[.040,.39,.93,.292],chapter:4,x:-1.25,y:-.27,z:1.07,rz:-.08}
  ];
  ready=true;applyMode();
@@ -321,7 +325,7 @@ function render(p){
 function resize(){window.MOVVA_HERO?.measure();window.MOVVA_INTRO?.measure();width=stage.clientWidth;height=stage.clientHeight;mobile=width<=760;if(gl&&width&&height){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);viewProjection=mm(mat.perspective(32*Math.PI/180,width/height,.1,60),mat.translation(0,0,-14));}requestTick();}
 function measure(){const travel=experience.offsetHeight-stage.clientHeight;return travel>0?clamp((scrollY-experience.offsetTop)/travel):0;}
 function requestTick(){if(enabled&&!raf&&!disposed&&!document.hidden)raf=requestAnimationFrame(tick);}
-function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,t-(lastTime||t-16));lastTime=t;target=measure();const k=1-Math.exp(-dt/85);position=lerp(position,target,k);pointer=pointer.map((v,i)=>lerp(v,pointerTarget[i],k));if(Math.abs(position-target)<.000006)position=target;
+function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=t-(lastTime||t-16);lastTime=t;target=measure();const k=1-Math.exp(-dt/85);position=lerp(position,target,k);pointer=pointer.map((v,i)=>lerp(v,pointerTarget[i],k));if(Math.abs(position-target)<.000006)position=target;
  try{render(position)}
  catch(err){
   console.warn('MOVVA 3D frame failed; activating compatible renderer.',err);

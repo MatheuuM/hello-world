@@ -45,7 +45,8 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
     worst:examples.sort((a,b)=>b.error-a.error).slice(0,3)
    };
   });
-  assert.equal(measure.origins.length,12);
+  assert.equal(measure.origins.length,11);
+  assert.ok(!measure.origins.some(source=>source.kind==='water'));
   assert.ok(measure.origins.every(c=>Number.isFinite(c.u)&&Number.isFinite(c.v)&&c.u>0&&c.u<1&&c.v>0&&c.v<1&&c.screen),'Missing semantic UI anchors');
   assert.equal(measure.allScreens,5);
   assert.ok(measure.maxError<=2.5,'3D projection missed real screenshot UI: '+JSON.stringify(measure.worst));

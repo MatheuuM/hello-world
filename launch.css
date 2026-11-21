@@ -194,7 +194,7 @@
   border-top: 1px solid #e1e7d750;
 }
 
-.home-page .launch-footnotes a {
+#launch .launch-footnotes a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -252,5 +252,129 @@
 
   .home-page .overview-grid p {
     font-size: 13px;
+  }
+}
+
+#launch .launch-footnotes .animated-link,
+.static-experience #launch .static-link,
+.static-experience .home-page > .static-link {
+  display: none;
+}
+
+.static-experience {
+  scroll-behavior: auto;
+}
+
+.static-experience #launch .launch-footnotes .animated-link {
+  display: inline-flex;
+}
+
+.home-page .static-shot {
+  height: auto;
+}
+
+@media (max-width: 760px) {
+  .static-experience .home-page .static-shot {
+    width: min(100%, 340px);
+  }
+}
+
+@media (min-width: 761px) and (max-height: 540px) and (orientation: landscape) {
+  .enhanced .home-page .scene {
+    padding-block: 70px 55px;
+  }
+
+  .enhanced .home-page #stage .chapter-bar {
+    bottom: 12px;
+  }
+
+  .enhanced .home-page .scene .copy,
+  .enhanced :is(#nutrition, #evolution, #circle) .copy {
+    padding-top: 0;
+  }
+
+  .enhanced .home-page .scene :is(h1, h2),
+  .enhanced :is(#nutrition, #evolution, #circle, #rhythm) h2 {
+    font-size: clamp(33px, 10vh, 52px);
+  }
+
+  .enhanced .home-page .scene .eyebrow,
+  .enhanced :is(#nutrition, #evolution, #circle, #rhythm) .eyebrow {
+    margin-bottom: 10px;
+  }
+
+  .enhanced .home-page .scene .description,
+  .enhanced :is(#nutrition, #evolution, #circle) .description {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .enhanced .hero-actions,
+  .enhanced .scene :is(.pillars, .modality-list, .nutrition-chapters) {
+    margin-top: 12px;
+  }
+
+  .enhanced :is(#nutrition .nutrition-readout, #evolution .evo-metrics, #circle .circle-bond) {
+    margin-top: 12px;
+    padding-top: 8px;
+  }
+
+  .enhanced :is(#nutrition, #evolution) h2 {
+    font-size: clamp(28px, 8vh, 44px);
+  }
+
+  .enhanced #nutrition .nutrition-chapters,
+  .enhanced #evolution .evo-status {
+    display: none;
+  }
+
+  .enhanced #nutrition .nutrition-readout .hydration-title {
+    margin-bottom: 4px;
+  }
+
+  .enhanced #nutrition .nutrition-readout strong {
+    font-size: 26px;
+  }
+
+  .enhanced #nutrition .water-track,
+  .enhanced #nutrition .hydration-caption,
+  .enhanced #circle .circle-values {
+    margin-top: 6px;
+  }
+
+  .enhanced #evolution .score-readout {
+    height: auto;
+  }
+
+  .enhanced #evolution .score-ring {
+    width: 42px;
+    height: 42px;
+  }
+
+  .enhanced #evolution .score-caption {
+    margin-top: 4px;
+  }
+
+  .enhanced #evolution .score-ring > div {
+    padding-top: 10px;
+  }
+
+  .enhanced #evolution .score-ring strong {
+    font-size: 20px;
+  }
+
+  .enhanced #evolution .activity-story svg {
+    height: 38px;
+    margin-top: 4px;
+  }
+
+  .enhanced #rhythm {
+    display: flex;
+    padding-block: 58px 82px;
+  }
+
+  .enhanced #rhythm .copy {
+    top: auto;
   }
 }
