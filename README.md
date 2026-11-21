@@ -18,4 +18,4 @@ All chapters exist as semantic normal-flow HTML. WebGL enhancement activates onl
 
 The `studio-3d` branch runs `qa/browser-check.cjs` on GitHub Actions. Browser screenshots and a JSON report are published as a workflow artifact. A successful bootstrap run without the test file is not full QA.
 
-Legal pages are expressly provisional and not the final app policy. This preview is noindex. Do not repoint official domains or modify the FERA app infrastructure.
+The homepage sitemap lists the canonical production domain. Vercel serves an `X-Robots-Tag: noindex` header on standard Preview Deployments. The site includes the published bilingual Privacy Policy and Terms of Use, plus the support page.

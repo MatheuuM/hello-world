@@ -12,6 +12,11 @@ const range=(p,a,b)=>smooth((p-a)/(b-a));
 const windows=[[0,.13],[.125,.275],[.27,.435],[.43,.595],[.59,.775],[.77,.935],[.93,1.05]];
 const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CIRCLE','MOVVA'];
 const scenes=$$('.scene'),dots=$$('.chapter-dots a');
+const chapterProgress=new Map(dots.map(link=>[link.hash,Number(link.dataset.jump)]));
+const header=$('.header');
+const scoreNumber=$('#score-number'),scoreArc=$('#score-arc'),waterNumber=$('#water-number'),waterFill=$('#water-fill'),activityMinutes=$('#activity-minutes');
+const activityBars=$$('.activity-bar').map(element=>({element,height:Number(element.dataset.minutes)/168*78}));
+const formatWater=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const sceneCache=scenes.map(()=>({opacity:null,visibility:null,inert:null,transform:null}));
 let lastScene=-1,lastBackdrop=null;
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
@@ -219,6 +224,33 @@ function draw(o,model,texA,texB,mix=0){gl.bindBuffer(gl.ARRAY_BUFFER,o.geom.buff
  if(o.mode){const a=o.fixedTexture||texA,b=o.fixedTexture||texB||a;bindTexture(a,0);bindTexture(b,1);}
  gl.drawArrays(gl.TRIANGLES,0,o.geom.count);drawCalls++;
 }
+function setText(element,value){
+ const text=String(value);
+ if(element.textContent!==text)element.textContent=text;
+}
+function setActivityBar(element,height){
+ const value=height.toFixed(2),y=(88-height).toFixed(2);
+ if(element.getAttribute('height')!==value)element.setAttribute('height',value);
+ if(element.getAttribute('y')!==y)element.setAttribute('y',y);
+}
+function includesProgress(scope,p){
+ return scope&&p>scope[0]&&p<scope[1];
+}
+function renderCounters(p){
+ // Chapter modules own the data animation while their chapter is in view.
+ if(!includesProgress(window.MOVVA_NUTRITION?.scope,p)){
+  const progress=range(p,.47,.56),width=Number((progress*74).toFixed(2));
+  setText(waterNumber,formatWater.format(2*progress));
+  if(parseFloat(waterFill.style.width)!==width)waterFill.style.width=width+'%';
+ }
+ if(!includesProgress(window.MOVVA_EVOLUTION?.scope,p)){
+  const progress=range(p,.626,.725),offset=Number((289.026*(1-.52*progress)).toFixed(3));
+  setText(scoreNumber,Math.round(52*progress));
+  setText(activityMinutes,Math.round(425*progress));
+  if(parseFloat(scoreArc.style.strokeDashoffset)!==offset)scoreArc.style.strokeDashoffset=String(offset);
+  activityBars.forEach(({element,height},i)=>setActivityBar(element,height*range(p,.64+i*.006,.728+i*.002)));
+ }
+}
 function render(p){
  if(!domDevice&&(!gl||gl.isContextLost()))return;
  const intro=window.MOVVA_INTRO;
@@ -226,7 +258,7 @@ function render(p){
  const selected=w.indexOf(Math.max(...w)),active=intro?intro.active(p,selected):selected;
  const backdrop='rgb('+bg+')';
  if(backdrop!==lastBackdrop){stage.style.backgroundColor=backdrop;lastBackdrop=backdrop;}
- stage.classList.toggle('dark',active===2);$('.header').classList.toggle('dark',active===2);
+ stage.classList.toggle('dark',active===2);header.classList.toggle('dark',active===2);
  scenes.forEach((el,i)=>{
   const cache=sceneCache[i],opacity=w[i].toFixed(4);
   const visible=w[i]>.002,visibility=visible?'visible':'hidden';
@@ -244,10 +276,7 @@ function render(p){
   $('#chapter-name').textContent=names[active];
   lastScene=active;
  }
- const ep=range(p,.626,.725),np=range(p,.47,.56);
- $('#score-number').textContent=Math.round(52*ep);$('#score-arc').style.strokeDashoffset=(289.026*(1-.52*ep)).toFixed(3);
- $('#water-number').textContent=(2*np).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});$('#water-fill').style.width=(np*74)+'%';
- $$('.activity-bar').forEach((bar,i)=>{const value=+bar.dataset.minutes,t=range(p,.64+i*.006,.728+i*.002);bar.setAttribute('height',(value/168*78*t).toFixed(2));bar.setAttribute('y',(88-value/168*78*t).toFixed(2));});$('#activity-minutes').textContent=Math.round(425*ep);
+ renderCounters(p);
  if(domDevice){
   // CSS3D is the production renderer: skip the unused WebGL matrix fit.
   let ix=0,blend=0,transitions=[[.253,.275],[.421,.443],[.578,.60],[.753,.775]];
@@ -309,22 +338,47 @@ function applyMode(){
  // Keep the phone and scroll-driven cards active at every viewport size.
  // WebGL failure is handled by the existing CSS3D renderer; static HTML remains
  // the last-resort fallback if JavaScript or both rendering paths are unavailable.
+ const wasEnabled=enabled;
  enabled=ready;
  root.classList.toggle('enhanced',enabled);
  root.classList.toggle('dom-device',enabled&&domDevice);
  // Ensure the Motion Studio is visible even under OS-level reduced-motion settings.
  root.classList.toggle('motion-override',enabled&&media.matches);
  root.style.scrollBehavior=enabled?'auto':'';
- if(enabled){resize();position=target=measure();requestTick();}
+ if(enabled){
+  resize();
+  if(!wasEnabled)syncChapterHash();
+  position=target=measure();
+  updateHeader();
+  requestTick();
+ }
  else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}
 }
 function jump(p,animated=true){if(!enabled)return;const top=experience.offsetTop+p*(experience.offsetHeight-stage.clientHeight);scrollTo({top,behavior:animated?'smooth':'auto'});target=p;requestTick();}
-$$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));
-addEventListener('scroll',()=>{if(enabled){$('.header').style.position=scrollY>experience.offsetHeight-100?'absolute':'fixed';requestTick();}},{passive:true});
+function syncChapterHash(){
+ const progress=chapterProgress.get(location.hash);
+ if(enabled&&progress!==undefined)jump(progress,false);
+}
+document.addEventListener('click',event=>{
+ if(!enabled||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+ const link=event.target.closest?.('a[href^="#"]');
+ const progress=chapterProgress.get(link?.hash);
+ if(progress===undefined||link.target||link.hasAttribute('download'))return;
+ event.preventDefault();
+ if(location.hash!==link.hash)history.pushState(null,'',link.hash);
+ jump(progress,!media.matches);
+});
+addEventListener('hashchange',()=>requestAnimationFrame(syncChapterHash));
+addEventListener('load',syncChapterHash,{once:true});
+function updateHeader(){
+ const position=scrollY>experience.offsetHeight-100?'absolute':'fixed';
+ if(header.style.position!==position)header.style.position=position;
+}
+addEventListener('scroll',()=>{if(enabled){updateHeader();requestTick();}},{passive:true});
 addEventListener('movva:hero-layout',requestTick);
-let resizeId;addEventListener('resize',()=>{clearTimeout(resizeId);resizeId=setTimeout(()=>{applyMode();resize();},100);},{passive:true});
-addEventListener('pointermove',e=>{if(!enabled||mobile||e.pointerType==='touch')return;pointerTarget=[clamp((e.clientX/innerWidth-.5)*2,-1,1),clamp((e.clientY/innerHeight-.5)*2,-1,1)];requestTick();},{passive:true});
-addEventListener('pointerout',e=>{if(!e.relatedTarget){pointerTarget=[0,0];requestTick();}},{passive:true});
+let resizeId;addEventListener('resize',()=>{clearTimeout(resizeId);resizeId=setTimeout(applyMode,100);},{passive:true});
+addEventListener('pointermove',e=>{if(!enabled||domDevice||mobile||e.pointerType==='touch')return;pointerTarget=[clamp((e.clientX/innerWidth-.5)*2,-1,1),clamp((e.clientY/innerHeight-.5)*2,-1,1)];requestTick();},{passive:true});
+addEventListener('pointerout',e=>{if(!domDevice&&!e.relatedTarget){pointerTarget=[0,0];requestTick();}},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;}else{lastTime=0;requestTick();}});
 media.addEventListener?.('change',applyMode);
 canvas.addEventListener('webglcontextlost',e=>{

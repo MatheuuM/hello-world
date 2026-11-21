@@ -45,7 +45,11 @@ async function run(){
   await page.locator('.chapter-dots [data-jump="0.83"]').click();await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.83)<.0002);assert.equal((await state()).chapter,'CIRCLE');check('Navigation reaches Circle');
   await page.locator('.chapter-dots [data-jump="0.97"]').click();await page.waitForFunction(()=>Math.abs(__MOVVA_QA__.progress-.97)<.0002);assert.equal((await state()).chapter,'MOVVA');check('Navigation reaches closing');
   await page.locator('#rhythm .text-link').click();await page.waitForFunction(()=>document.querySelector('#launch').getBoundingClientRect().top<160);check('Final CTA reaches launch section');
-  assert.equal(await page.locator('#launch .dark-button').getAttribute('href'),'mailto:suporte@movvawellness.com.br');assert.equal(await page.locator('form').count(),0);assert.equal(await page.locator('a[href="#"]').count(),0);check('Honest preparation status and no fake purchase or contact form');
+  const launchContact=new URL(await page.locator('#launch .dark-button').getAttribute('href'));
+  assert.equal(launchContact.protocol,'mailto:');
+  assert.equal(launchContact.pathname,'suporte@movvawellness.com.br');
+  assert.equal(launchContact.searchParams.get('subject'),'Quero saber do lançamento da MOVVA');
+  assert.equal(await page.locator('form').count(),0);assert.equal(await page.locator('a[href="#"]').count(),0);check('Honest preparation status and no fake purchase or contact form');
   for(const route of ['/support/','/privacy/','/terms/'])assert.equal((await page.request.get(base+route)).status(),200);check('Support, privacy and terms remain accessible');
   await page.locator('#launch .replay').click();await page.waitForFunction(()=>__MOVVA_QA__.progress<.0002);check('Replay returns to beginning');
   await move(.875);await page.locator('#motion').click();assert.equal(await page.evaluate(()=>__MOVVA_QA__.enabled),false);assert.equal(await page.locator('.scene[aria-hidden="true"]').count(),0);assert.equal(await page.evaluate(()=>document.querySelector('#stage').classList.contains('circle-active')),false);check('Movement switch restores all chapters and clears decorations');

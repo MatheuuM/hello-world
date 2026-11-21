@@ -60,7 +60,10 @@ try{
    }
    assert.ok(await page.locator('.hero-cta svg').count()>0);check('No emoji-style arrow controls');
  }
- assert.equal(await page.locator('#launch .dark-button').getAttribute('href'),'mailto:suporte@movvawellness.com.br');
+ const launchContact=new URL(await page.locator('#launch .dark-button').getAttribute('href'));
+ assert.equal(launchContact.protocol,'mailto:');
+ assert.equal(launchContact.pathname,'suporte@movvawellness.com.br');
+ assert.equal(launchContact.searchParams.get('subject'),'Quero saber do lançamento da MOVVA');
  check('Support link is real');
  await page.locator('#motion').click();assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('enhanced')),false);
  check('Reduced motion toggle restores all content');

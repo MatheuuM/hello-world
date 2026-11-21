@@ -95,13 +95,14 @@ function visual(p){
  stage.style.setProperty('--intro-quiet',String(1-ramp(p,.40,.435)));
  pillars.forEach((el,i)=>{const t=ramp(p,.159+i*.009,.186+i*.009);el.style.opacity=String(.42+.58*t);el.style.transform=`translateY(${(1-t)*7}px)`;});
  modes.forEach((el,i)=>{const t=ramp(p,.313+i*.008,.337+i*.008);el.style.opacity=String(t);el.style.transform=`translateY(${(1-t)*8}px)`;});
- detail.style.opacity=String(ramp(p,.348,.375));
+ if(detail)detail.style.opacity=String(ramp(p,.348,.375));
 }
 function reset(){
  stage.classList.remove('intro-active');
  if(!touched)return;touched=false;
  stage.style.removeProperty('--intro-quiet');
- [...pillars,...modes,detail].forEach(el=>{el.style.removeProperty('opacity');el.style.removeProperty('transform');});
+ [...pillars,...modes].forEach(el=>{el.style.removeProperty('opacity');el.style.removeProperty('transform');});
+ detail?.style.removeProperty('opacity');
 }
 window.MOVVA_INTRO={measure,fit,weights,active,background,screen,panel,visual,reset,get layout(){return layout;}};
 const observer=new ResizeObserver(()=>{measure();window.dispatchEvent(new Event('movva:hero-layout'));});

@@ -65,11 +65,22 @@ function panel(p,chapter,base){
 }
 function animateValues(p){
  let sum=0;
- bars.forEach((bar,i)=>{const v=minutes[i]*ramp(p,.626+i*.004,.651+i*.004),h=v/maxMinutes*78;sum+=v;bar.setAttribute('height',h.toFixed(4));bar.setAttribute('y',(88-h).toFixed(4));});
- total.textContent=String(Math.round(sum));
- const sp=ramp(p,.678,.728);score.textContent=String(Math.round(52*sp));arc.style.strokeDashoffset=(289.026*(1-.52*sp)).toFixed(5);
+ bars.forEach((bar,i)=>{
+  const duration=minutes[i]*ramp(p,.626+i*.004,.651+i*.004);
+  const height=duration/maxMinutes*78,heightValue=height.toFixed(2),y=(88-height).toFixed(2);
+  sum+=duration;
+  if(bar.getAttribute('height')!==heightValue)bar.setAttribute('height',heightValue);
+  if(bar.getAttribute('y')!==y)bar.setAttribute('y',y);
+ });
+ const totalValue=String(Math.round(sum));
+ if(total.textContent!==totalValue)total.textContent=totalValue;
+ const sp=ramp(p,.678,.728),scoreValue=String(Math.round(52*sp));
+ const offset=Number((289.026*(1-.52*sp)).toFixed(3));
+ if(score.textContent!==scoreValue)score.textContent=scoreValue;
+ if(parseFloat(arc.style.strokeDashoffset)!==offset)arc.style.strokeDashoffset=String(offset);
  // Decorative phases are hidden from assistive tech; source values remain readable.
- status.textContent=p<.678?'01 / SUA SEMANA, DIA A DIA':'02 / UMA VISÃO INTEGRADA';
+ const statusValue=p<.678?'01 / SUA SEMANA, DIA A DIA':'02 / UMA VISÃO INTEGRADA';
+ if(status.textContent!==statusValue)status.textContent=statusValue;
  stage.style.setProperty('--evo-score-phase',sp.toFixed(5));
 }
 function reset(){

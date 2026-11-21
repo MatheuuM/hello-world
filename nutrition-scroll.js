@@ -10,6 +10,7 @@ if(!stage||!scene||!original)return;
 const copy=scene.querySelector('.copy'), steps=[...scene.querySelectorAll('.nutrition-chapters span')];
 const readout=scene.querySelector('.nutrition-readout'), note=scene.querySelector('.micro-note');
 const number=document.querySelector('#water-number'), fill=document.querySelector('#water-fill');
+const formatWater=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const clamp=x=>Math.max(0,Math.min(1,x));
 const ease=x=>{x=clamp(x);return x*x*x*(x*(x*6-15)+10);};
 const ramp=(p,a,b)=>ease((p-a)/(b-a));
@@ -77,8 +78,9 @@ function visual(p){
  steps.forEach((el,i)=>{const t=ramp(p,.463+i*.009,.487+i*.009);el.style.opacity=String(.45+.55*t);el.style.transform=`translateY(${(1-t)*5}px)`;});
  const reveal=ramp(p,.474,.494);readout.style.opacity=String(reveal);readout.style.transform=`translateY(${(1-reveal)*8}px)`;
  const progress=ramp(p,.491,.549);
- number.textContent=(2*progress).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
- fill.style.width=(progress*100*2/2.7)+'%';
+ const value=formatWater.format(2*progress),width=Math.round(progress*20000/2.7)/100;
+ if(number.textContent!==value)number.textContent=value;
+ if(parseFloat(fill.style.width)!==width)fill.style.width=width+'%';
  note.style.opacity=String(ramp(p,.507,.528));
 }
 window.MOVVA_NUTRITION={measure,fit,background,panel,visual,reset,get layout(){return slot?{...slot}:null},scope:[.435,.595]};
