@@ -26,7 +26,7 @@ const overlap=(a,b)=>{
    await page.waitForFunction(()=>window.__MOVVA_QA__?.ready&&window.MOVVA_MOTION_QA?.extractionEnabled,null,{timeout:30000});
    async function at(p){
     await page.evaluate(value=>__MOVVA_QA__.setProgress(value),p);
-    await page.waitForFunction(value=>Math.abs(__MOVVA_QA__.progress-value)<.001,p,{timeout:24000});
+    await page.waitForFunction(value=>__MOVVA_QA__.settled&&Math.abs(__MOVVA_QA__.progress-value)<.001,p,{timeout:24000});
     await page.waitForTimeout(75);
     return page.evaluate(()=>{
      const card=document.querySelector('.motion-fragment[data-scene="2"][data-kind="training"]');
@@ -66,9 +66,8 @@ const overlap=(a,b)=>{
    assert.ok(finish.card.depth>75,'Released card must lift above display');
    assert.ok(start.card.transform.includes('rotateY(')&&start.card.transform.includes('translateZ('));
    nearly(start.card.x,replay.card.x,5,'Reverse card X');
-   // WebKit's headless scroll progress is quantized to whole scroll pixels;
-   // a 0.001 progress delta near the extraction ease can move the card ~5px.
-   // Projection accuracy itself is independently constrained to <=2.5px.
+   // WebKit quantizes scroll to whole pixels. Allow a small positional
+   // difference while keeping the independent projection limit at 2.5px.
    nearly(start.card.y,replay.card.y,engine==='webkit'?8:5,'Reverse card Y');
    nearly(start.card.extraction,replay.card.extraction,.10,'Reverse extraction');
    assert.ok(midBack.model.includes('scale('),'3D dolly missing');
