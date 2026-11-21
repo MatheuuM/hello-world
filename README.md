@@ -1,6 +1,6 @@
 # MOVVA Wellness
 
-Site institucional estático em português. A rolagem nativa conduz sete capítulos com um celular em CSS 3D, capturas do app e dados ilustrativos. O WebGL experimental fica disponível em desktop via `?renderer=webgl`, com CSS 3D como alternativa.
+Site institucional estático em português. A rolagem nativa conduz sete capítulos com um celular em CSS 3D, capturas do app e dados ilustrativos. O supino reto usa quadros do vídeo de demonstração oficial da MOVVA, selecionados pela posição da rolagem. A Nutrição revela recortes de fotos de refeições da tela do app. O WebGL experimental fica disponível em desktop via `?renderer=webgl`, com CSS 3D como alternativa.
 
 ## Acessibilidade
 

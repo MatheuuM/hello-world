@@ -188,7 +188,7 @@ function render(p,active,device){
  updateText(dynamic.score,String(Math.round(52*evoE)));
  updateText(dynamic.minutes,String(Math.round(425*smooth((p-.623)/(.662-.623)))));
  updateWidth(dynamic.scoreMeter,(52*evoE)+'%');
- const water=smooth((p-.466)/(.557-.466));
+ const water=window.MOVVA_NUTRITION?.hydrationProgress(p)??smooth((p-.466)/(.557-.466));
  updateText(dynamic.water,(2*water).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}));
  updateWidth(dynamic.waterMeter,(74*water)+'%');
  window.MOVVA_MOTION_QA={visible,protectedCards,active,progress:p,cards:items.length,extractionEnabled:true,phone:{x:cx,y:cy,h:phoneH},mobile,

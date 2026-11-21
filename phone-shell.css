@@ -144,8 +144,11 @@
 .css3d-front,.css3d-back{border-radius:13.5% / 6.44%}
 .css3d-front{
  border-width:calc(var(--shell-w) * .021);
- border-color:#3d4640;
- box-shadow:inset 0 0 0 .65px rgba(236,242,234,.33);
+ border-color:#333e37;
+ box-shadow:
+   inset 0 0 0 .7px #b2c0ad6e,
+   0 0 0 calc(var(--shell-w) * .0028) #809084;
+ background-color:#141e18;
 }
 .css3d-display{border-radius:11.8% / 5.6%}
 .css3d-island{top:1.55%;width:22.7%;height:2.62%;background:#080c0c;box-shadow:0 0 0 .55px #46504b}

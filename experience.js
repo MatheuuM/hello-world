@@ -262,7 +262,9 @@ function render(p){
  const selected=w.indexOf(Math.max(...w)),active=intro?intro.active(p,selected):selected;
  const backdrop='rgb('+bg+')';
  if(backdrop!==lastBackdrop){stage.style.backgroundColor=backdrop;lastBackdrop=backdrop;}
- stage.classList.toggle('dark',active===2);header.classList.toggle('dark',active===2);
+ const dark=bg[0]*.213+bg[1]*.715+bg[2]*.072<123;
+ stage.classList.toggle('dark',dark);header.classList.toggle('dark',dark);
+ window.MOVVA_TRAINING?.render(p,active);
  scenes.forEach((el,i)=>{
   const cache=sceneCache[i],opacity=w[i].toFixed(4);
   const visible=w[i]>.002,visibility=visible?'visible':'hidden';
@@ -337,7 +339,7 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=t-(lastTime|
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
-function clearScenes(){sceneCache.forEach(c=>{c.opacity=null;c.visibility=null;c.inert=null;c.transform=null;});lastScene=-1;lastBackdrop=null;window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
+function clearScenes(){sceneCache.forEach(c=>{c.opacity=null;c.visibility=null;c.inert=null;c.transform=null;});lastScene=-1;lastBackdrop=null;window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_TRAINING?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
 function applyMode(){
  // Keep the phone and scroll-driven cards active at every viewport size.
  // WebGL failure is handled by the existing CSS3D renderer; static HTML remains

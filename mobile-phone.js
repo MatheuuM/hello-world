@@ -28,7 +28,7 @@ const slope=(i,k)=>{
  return (w0+w1)/(w0/left+w1/right);
 };
 const rotations=[
- [0,-12,-3,-3], [.10,-12,-3,-3], [.16,-135,1,0], [.215,-171,4,2],
+ [0,-9,-1,-2], [.10,-18,-2,-3], [.16,-135,1,0], [.215,-171,4,2],
  [.26,-235,4,2], [.32,-346,-2,-2], [.40,-350,1,2],
  [.46,-364,-2,2], [.58,-345,2,-2], [.66,-350,-2,2],
  [.77,-368,2,1], [.84,-379,-2,2], [.92,-385,2,-2], [1,-390,1,0]
@@ -47,14 +47,15 @@ function poseAt(p){
 const names=['home','training','nutrition','evolution','circle'];
 // Chapter switches are discrete accessibility states; the physical camera is
 // not. Positions must be sampled from continuous scroll progress alone.
+const desktopHeroX=.71;
 const desktopMoves=[
- [.216,.334,.73,.27], // Connected -> Training, wider camera move
+ [.216,.334,desktopHeroX,.27], // Connected -> Training, wider camera move
  [.532,.653,.27,.73], // Nutrition -> Evolution
  [.717,.831,.73,.27], // Evolution -> Circle
  [.906,.983,.27,.50]  // Circle -> closing scene
 ];
 function desktopX(p){
- let value=.73;
+ let value=desktopHeroX;
  for(const [start,end,from,to] of desktopMoves){
   if(p<start)return value;
   if(p<end)return lerp(from,to,smooth((p-start)/(end-start)));
@@ -67,8 +68,12 @@ const cutHalfWidths=[.028,.038,.028,.037,.031,.043];
 function mobileFrame(sceneIndex,stageR,vw,vh,barTop){
  const copy=scenes[sceneIndex]?.querySelector('.copy');
  const rect=copy?.getBoundingClientRect();
- const contentBottom=clamp((rect?.bottom||vh*.47)-stageR.top+14,135,vh*.82);
- const freeEnd=clamp(barTop-15,250,vh-43),available=Math.max(80,freeEnd-contentBottom);
+ // The opening camera uses layout coordinates and a constant navigation reserve,
+ // so a fading headline or a denser chapter bar cannot nudge the device.
+ const opening=sceneIndex<=1;
+ const copyBottom=opening&&copy?scenes[sceneIndex].offsetTop+copy.offsetTop+copy.offsetHeight:(rect?.bottom||vh*.47)-stageR.top;
+ const contentBottom=clamp(copyBottom+(opening?18:14),135,vh*.82);
+ const freeEnd=clamp(opening?vh-64:barTop-15,250,vh-43),available=Math.max(80,freeEnd-contentBottom);
  let h=Math.max(100,Math.min(vw<=355?385:460,available*.994));
  let cy=contentBottom+available*.48;
  if(sceneIndex===6){
@@ -76,7 +81,12 @@ function mobileFrame(sceneIndex,stageR,vw,vh,barTop){
   cy=Math.max(contentBottom+h*.45,Math.min(vh*.78,cy+10));
  }
  if(h*PRO_MAX_ASPECT>vw*.54)h=vw*.54/PRO_MAX_ASPECT;
- return{cx:vw*.5,cy,h};
+ return {cx:vw*.5,cy,h};
+}
+function openingMobileFrame(p,stageR,vw,vh,barTop){
+ const frame=mobileFrame(0,stageR,vw,vh,barTop);
+ const approach=smooth(p/.10);
+ return {cx:frame.cx+vw*.018*(1-approach),cy:frame.cy,h:frame.h*(.96+.04*approach)};
 }
 function mobileCamera(p,stageR,vw,vh,barTop){
  let index=0;
@@ -84,21 +94,22 @@ function mobileCamera(p,stageR,vw,vh,barTop){
   const a=sceneCuts[i]-cutHalfWidths[i],b=sceneCuts[i]+cutHalfWidths[i];
   if(p<a)break;
   if(p<=b){
-   const from=mobileFrame(i,stageR,vw,vh,barTop);
+   const from=i===0?openingMobileFrame(p,stageR,vw,vh,barTop):mobileFrame(i,stageR,vw,vh,barTop);
    const to=mobileFrame(i+1,stageR,vw,vh,barTop);
    const t=smooth((p-a)/(b-a));
    return{cx:lerp(from.cx,to.cx,t),cy:lerp(from.cy,to.cy,t),h:lerp(from.h,to.h,t)};
   }
   index=i+1;
  }
- return mobileFrame(index,stageR,vw,vh,barTop);
+ return index===0?openingMobileFrame(p,stageR,vw,vh,barTop):mobileFrame(index,stageR,vw,vh,barTop);
 }
 function desktopCamera(p,vw,vh){
+ const approach=smooth(p/.10);
  const close=smooth((p-.906)/(.983-.906));
  return {
-  cx:vw*desktopX(p),
+  cx:vw*(desktopX(p)+.027*(1-approach)),
   cy:vh*lerp(.52,.73,close),
-  h:lerp(Math.min(610,vh*.71),Math.min(300,vh*.38),close)
+  h:lerp(lerp(Math.min(560,vh*.66),Math.min(610,vh*.71),approach),Math.min(300,vh*.38),close)
  };
 }
 function render(p,active,ix,blend){

@@ -2,6 +2,8 @@
 .enhanced .stage.intro-active .ghost-word{opacity:calc(1 - var(--intro-quiet,1))}
 .enhanced .stage.intro-active .halo{opacity:.10}
 .enhanced .stage.intro-active.dark .halo{opacity:.065}
+.enhanced .stage.dark .scene-connected h2 em { color: #d6bd85; }
+.enhanced .stage.dark .scene-connected .pillars { color: #d1d9ce; }
 .enhanced .scene-connected .pillars{gap:18px;max-width:440px}
 .enhanced .scene-connected .pillars span{display:inline-block}
 .enhanced .scene-training .modality-list span{display:inline-block}

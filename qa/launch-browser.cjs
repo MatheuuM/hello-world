@@ -25,6 +25,27 @@ async function settled(page, target) {
   });
 }
 
+async function verifyBench(page, label, capture) {
+  const demo = page.locator('.bench-demo');
+  const frames = [];
+  for (const progress of [.348, .375, .404, .375]) {
+    await page.evaluate(value => window.__MOVVA_QA__.setProgress(value), progress);
+    await settled(page, progress);
+    await page.waitForFunction(() => document.querySelector('.bench-demo').classList.contains('bench-frames-ready'));
+    frames.push(Number(await demo.locator('canvas').getAttribute('data-frame')));
+  }
+  assert.ok(frames[0] < frames[1] && frames[1] < frames[2], 'Supino não avançou com a rolagem');
+  assert.equal(frames[1], frames[3], 'Voltar a rolagem deve revelar o mesmo quadro');
+
+  const picture = await demo.locator('.bench-visual').boundingBox();
+  const caption = await demo.locator('figcaption').boundingBox();
+  const chapters = await page.locator('.chapter-bar').boundingBox();
+  const header = await page.locator('header').boundingBox();
+  assert.ok(picture.height >= 110 && picture.y >= header.y + header.height - 1, 'Enquadramento do supino');
+  assert.ok(caption.y + caption.height <= chapters.y, 'Legenda do supino invade a navegação');
+  await capture('supino-' + label);
+}
+
 async function test(browser, engine, [label, viewport]) {
   console.log('QA', engine, label);
   const context = await browser.newContext(viewport);
@@ -88,6 +109,9 @@ async function test(browser, engine, [label, viewport]) {
         await screenshot(engine + '-' + name + '-' + label);
       }
     }
+    await verifyBench(page, label, name => screenshot(engine + '-' + name));
+    await page.evaluate(() => window.__MOVVA_QA__.setProgress(0));
+    await settled(page, 0);
     await page.locator('.nav-cta').click();
     await page.waitForFunction(() => {
       const launch = document.querySelector('#launch').getBoundingClientRect();
@@ -117,6 +141,9 @@ async function test(browser, engine, [label, viewport]) {
     if (label === 'iphone') {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       assert.equal(await page.evaluate(() => window.MOVVA_3D_STATUS().active), true);
+      await page.evaluate(() => window.__MOVVA_QA__.setProgress(.375));
+      await settled(page, .375);
+      assert.equal(await page.locator('.bench-frames-ready').count(), 0);
       await page.goto(origin + '/?visual=estatico#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('html.enhanced').count(), 0);
       assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
@@ -136,7 +163,9 @@ async function test(browser, engine, [label, viewport]) {
     if (process.env.QA_ENGINE && engine !== process.env.QA_ENGINE) return;
     const browser = await type.launch();
     try {
-      for (const viewport of viewports) await test(browser, engine, viewport);
+      for (const viewport of viewports) {
+        if (!process.env.QA_VIEWPORT || viewport[0] === process.env.QA_VIEWPORT) await test(browser, engine, viewport);
+      }
       const context = await browser.newContext({ ...devices['iPhone 15'], javaScriptEnabled: false });
       const page = await context.newPage();
       await page.goto(origin + '/#nutrition', { waitUntil: 'load' });
