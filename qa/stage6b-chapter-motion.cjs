@@ -74,8 +74,8 @@ const positions=[
    assert.equal(n['nutrition-full'].headingText,n['rewind-nutrition'].headingText,'Heading content mutated');
    assert.ok(n['nutrition-full'].allHeadings.some(x=>x.includes('MOVVA')),'Heading text lost');
    assert.ok(Object.values(samples).every(x=>Math.abs(x.overflow)<=1&&x.state.active),'Overflow or renderer failed');
-   const values=n['nutrition-full'].metrics;
-   assert.ok(values.renders>=positions.length,'Chapter renderer not attached to scroll');
+   const renders=Object.values(samples).map(sample=>sample.metrics.renders);
+   assert.ok(renders.every((count,i)=>i===0||count>renders[i-1]),'Chapter renderer missed a scroll position');
    if(!process.env.QA_NO_CAPTURE){
     for(const [key,p] of [['nutrition',.510],['evolution',.705],['circle',.856],['finale',.992]]){
      await at(p);
