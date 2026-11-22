@@ -5,7 +5,7 @@ const origin = process.env.QA_ORIGIN || 'http://127.0.0.1:8077';
 const output = path.resolve(process.env.QA_OUTPUT || 'qa-launch');
 require('node:fs').mkdirSync(output, { recursive: true });
 const viewports = [
-  ['desktop', { viewport: { width: 1440, height: 900 } }],
+  ['desktop', { viewport: { width: 1920, height: 1080 } }],
   ['iphone', { ...devices['iPhone 15'], viewport: { width: 393, height: 852 } }],
   ['compacto', { ...devices['iPhone 15'], viewport: { width: 320, height: 568 }, deviceScaleFactor: 2 }],
   ['paisagem', { ...devices['iPhone 15'], viewport: { width: 844, height: 390 } }],
@@ -46,6 +46,77 @@ async function scrollToProgress(page, progress, useWheel) {
     else await page.evaluate(delta => window.scrollBy(0, delta), distance);
   }
   await settled(page, progress);
+}
+
+async function verifyScreenPixels(page, screenshot) {
+  const sample = await page.evaluate(async encoded => {
+    const image = new Image();
+    image.src = 'data:image/png;base64,' + encoded;
+    await image.decode();
+    // Sample only the glass, inside the bezel. The real home capture combines
+    // dark summary cards with the warmer photographic elements above and below.
+    const canvas = document.createElement('canvas');
+    canvas.width = 24;
+    canvas.height = 48;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, image.width * .44, image.height * .25,
+      image.width * .12, image.height * .5, 0, 0, canvas.width, canvas.height);
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+    let dark = 0;
+    let warm = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const [r, g, b] = data.subarray(i, i + 3);
+      if (Math.max(r, g, b) < 80) dark++;
+      if (r > 48 && r > g + 8 && r > b + 16) warm++;
+    }
+    return { dark, warm, total: data.length / 4 };
+  }, screenshot.toString('base64'));
+  assert.ok(sample.dark / sample.total > .2 && sample.warm / sample.total > .01,
+    'O visor precisa mostrar a captura original da MOVVA. Amostra ' + JSON.stringify(sample));
+}
+
+async function verifyOpening(page, useWheel, capture) {
+  const handset = page.locator('#react-phone');
+  const compiled = await page.locator('script[type="module"]').evaluateAll(scripts =>
+    scripts.some(script => script.textContent.includes('react-phone-build.js') || script.src.includes('react-phone-build'))
+  );
+  const supported = compiled && await page.evaluate(() => {
+    const probe = document.createElement('canvas').getContext('webgl2');
+    probe?.getExtension('WEBGL_lose_context')?.loseContext();
+    return Boolean(probe);
+  });
+  if (supported) {
+    await page.locator('#react-phone.is-ready canvas').waitFor({ timeout: 30000 });
+    assert.equal(await page.locator('.hero-react-poster').isVisible(), false);
+    await capture();
+    const angle = () => handset.evaluate(el => Number(el.dataset.yaw));
+    const firstAngle = await angle();
+    if (useWheel) {
+      const bounds = await handset.boundingBox();
+      await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    }
+    const firstImage = await handset.screenshot({ scale: 'css' });
+    await verifyScreenPixels(page, firstImage);
+    await scrollToProgress(page, .075, useWheel);
+    await page.waitForFunction(first => Number(document.querySelector('#react-phone').dataset.yaw) > first + 5, firstAngle);
+    const forwardAngle = await angle();
+    const forwardImage = await handset.screenshot({ scale: 'css' });
+    assert.equal(forwardImage.equals(firstImage), false, 'O celular deve girar dentro da abertura.');
+    await page.waitForTimeout(600);
+    assert.equal(await angle(), forwardAngle, 'O ângulo deve ficar parado até a próxima rolagem.');
+    assert.ok(forwardImage.equals(await handset.screenshot({ scale: 'css' })), 'O celular se moveu sem rolagem.');
+    await scrollToProgress(page, 0, useWheel);
+    await page.waitForFunction(first => Math.abs(Number(document.querySelector('#react-phone').dataset.yaw) - first) < .05, firstAngle);
+    assert.ok(firstImage.equals(await handset.screenshot({ scale: 'css' })), 'Voltar ao início deve recuperar o mesmo enquadramento.');
+  } else {
+    assert.equal(await page.locator('#react-phone.is-ready').count(), 0);
+    assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
+    await capture();
+    const first = await page.locator('.hero-react-poster').boundingBox();
+    await scrollToProgress(page, .075, useWheel);
+    const later = await page.locator('.hero-react-poster').boundingBox();
+    assert.ok(Math.abs(later.width - first.width) < 1 && Math.abs(later.height - first.height) < 1);
+  }
 }
 
 async function verifyNutrition(page, useWheel) {
@@ -152,19 +223,11 @@ async function test(browser, engine, [label, viewport]) {
     assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), 'https://www.movvawellness.com.br/');
     assert.equal(await page.locator('meta[name=robots]').count(), 0);
     const screenshot = n => page.screenshot({ path: path.join(output, n + '.jpg'), quality: 86, scale: 'css' });
-    await verifyImage(page, '.hero-product-photo', 1672, 941);
-    await verifyImage(page, '.hero-product-home', 589, 1280);
+    await verifyImage(page, '.hero-react-poster', 907, 907);
     assert.ok(await page.locator('.hero-surface').evaluate(el => Number(getComputedStyle(el).opacity) > .95));
     const handsetOpacity = () => page.locator('#css3d-device').evaluate(el => +getComputedStyle(el).opacity);
     assert.ok(await handsetOpacity() < .05);
-    await screenshot(engine + '-abertura-' + label);
-    const photograph = page.locator('.hero-product');
-    const opening = await photograph.boundingBox();
-    await page.evaluate(() => window.__MOVVA_QA__.setProgress(.075));
-    await settled(page, .075);
-    const held = await photograph.boundingBox();
-    assert.ok(Math.abs(held.width - opening.width) <= 1, 'A abertura deve manter a largura do celular');
-    assert.ok(Math.abs(held.height - opening.height) <= 1, 'A abertura deve manter a altura do celular');
+    await verifyOpening(page, engine !== 'webkit' || !viewport.hasTouch, () => screenshot(engine + '-abertura-' + label));
     await page.evaluate(() => window.__MOVVA_QA__.setProgress(.115));
     await settled(page, .115);
     assert.ok(await handsetOpacity() < .05, 'O aparelho giratório apareceu na transição de abertura');
@@ -251,12 +314,16 @@ async function test(browser, engine, [label, viewport]) {
     }
     if (label === 'iphone') {
       await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.locator('#react-phone.is-ready').waitFor({ state: 'detached' });
+      assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
       assert.equal(await page.evaluate(() => window.MOVVA_3D_STATUS().active), true);
       await page.evaluate(() => window.__MOVVA_QA__.setProgress(.375));
       await settled(page, .375);
       await verifyBenchPoster(page);
       await page.goto(origin + '/?visual=estatico#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('html.enhanced').count(), 0);
+      assert.equal(await page.locator('#react-phone canvas').count(), 0);
+      assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
       assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
       await verifyImage(page, '#nutrition .static-shot', 589, 1280);
       assert.equal(await page.locator('#nutrition-take').isVisible(), false);

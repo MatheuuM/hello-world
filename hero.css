@@ -46,8 +46,7 @@ html:not(.enhanced) .home-page #start .static-shot {
   border: 0;
   clip-path: inset(50%);
 }
-/* The photo is composed at 1672 × 941. Clip the food outside the first
-   840 pixels and project the current Início capture onto the photographed glass. */
+/* White studio behind the phone and its first-frame poster. */
 .home-page #stage .hero-surface {
   position: absolute;
   display: block;
@@ -63,34 +62,6 @@ html:not(.enhanced) .home-page #start .static-shot {
   transform: none;
 }
 html:not(.enhanced) .home-page #stage .hero-surface { opacity: 1; }
-.hero-product {
-  position: absolute;
-  left: calc(var(--hero-phone-x) - var(--hero-phone-h) * .635);
-  top: calc(var(--hero-phone-y) - var(--hero-phone-h) * .518);
-  width: calc(var(--hero-phone-h) * 840 / 830);
-  aspect-ratio: 840 / 941;
-  overflow: hidden;
-}
-.hero-product-photo {
-  position: absolute;
-  inset: 0 auto auto 0;
-  width: calc(100% * 1672 / 840);
-  height: 100%;
-  max-width: none;
-  -webkit-mask-image: linear-gradient(#000 92.5%, transparent);
-  mask-image: linear-gradient(#000 92.5%, transparent);
-}
-.hero-product-home {
-  position: absolute;
-  left: 55.43%;
-  top: 4.57%;
-  width: 70.12%;
-  height: 136.03%;
-  max-width: none;
-  transform-origin: 0 0;
-  transform: matrix(.583, -.0172, -.1641, .61, 0, 0);
-  border-radius: 13.6% 10.2% 15.3% 15.6% / 7.8% 6.25% 7.5% 8.6%;
-}
 .enhanced .home-page #stage.hero-backdrop {
   background-color: #151f19 !important;
 }

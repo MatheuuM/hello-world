@@ -1,4 +1,4 @@
-/* Scroll-owned cuts from the studio photograph to the app and into Training. */
+/* Scroll-owned transitions from the opening into Training. */
 (() => {
 'use strict';
 const stage=document.querySelector('#stage'),copy=document.querySelector('.scene-hero .copy'),slot=document.querySelector('.hero-device-slot');
