@@ -1,126 +1,153 @@
 (() => {
   'use strict';
+
   const track = document.querySelector('.sequence');
   const stage = track.querySelector('.stage');
-  const glass = stage.querySelector('.phone-screen');
-  const caption = stage.querySelector('[data-caption]');
-  const cameraStatus = stage.querySelector('[data-camera-status]');
-  const controls = [...stage.querySelectorAll('[data-step]')];
-  const cards = [...stage.querySelectorAll('.insight')];
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-  const frontal = new URLSearchParams(location.search).get('enquadramento') === 'frontal';
-  const steps = [
-    {start: 0, jump: 0, phase: 'aim', title: 'Ajuste o ângulo'},
-    {start: .36, jump: .43, phase: 'aligned', title: 'Inclinação adequada'},
-    {start: .55, jump: .64, phase: 'processing', title: 'Analisando a refeição'},
-    {start: .72, jump: .94, phase: 'results', title: 'Resultado da análise'}
+  const slider = stage.querySelector('input.progress-control, .progress-control input[type="range"]');
+  const hint = stage.querySelector('[data-scroll-hint]');
+  const announcement = stage.querySelector('[data-state]');
+  const opening = stage.querySelector('.opening');
+  const finder = stage.querySelector('.finder-photo');
+  const sourcePicker = stage.querySelector('#reference-file');
+  const sourceMessage = stage.querySelector('[data-source-message]');
+  const cards = Array.from(stage.querySelectorAll('.result-card'));
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const phases = [
+    { start: 0, name: 'aim', label: 'Incline um pouco o celular' },
+    { start: 0.29, name: 'aligned', label: 'Inclinação adequada' },
+    { start: 0.54, name: 'processing', label: 'Analisando a refeição' },
+    { start: 0.72, name: 'results', label: 'Resultado da análise' }
   ];
 
-  const clamp = value => Math.min(1, Math.max(0, value));
-  const mix = (from, to, amount) => from + (to - from) * amount;
-  const ease = (value, from, to) => {
-    const t = clamp((value - from) / (to - from));
-    return t * t * (3 - 2 * t);
-  };
-  function set(element, values) {
-    for (const [name, value] of Object.entries(values)) element.style.setProperty(name, value);
-  }
-  const px = value => value.toFixed(2) + 'px';
-  const deg = value => value.toFixed(2) + 'deg';
+  const clamp = value => Math.max(0, Math.min(1, value));
+  const range = (value, start, end) => clamp((value - start) / (end - start));
+  const mix = (from, to, progress) => from + (to - from) * progress;
+  const smooth = progress => progress * progress * (3 - 2 * progress);
   let frame = 0;
-  let progress;
-  let lastTime = 0;
-  let phase = -1;
+  let currentPhase = '';
 
-  function render(p) {
-    const align = ease(p, 0, .365);
-    const capture = ease(p, .487, .547);
-    const results = ease(p, .72, .94);
-    const flash = reduced.matches ? 0 : ease(p, .525, .546) * (1 - ease(p, .546, .555));
-    const small = stage.clientWidth <= 650;
-    set(stage, {
-      '--table-x': px(mix(-9, 6, align)),
-      '--table-y': px(mix(4, -7, align)),
-      '--table-scale': mix(1.09, 1.045, align).toFixed(4),
-      '--rig-x': px(mix(-9, 18, align) - (small ? 50 : 34) * results),
-      '--rig-y': px(mix(14, -8, align) - (small ? 5 : 23) * results),
-      '--rig-roll': deg(mix(frontal ? -3.2 : -11, frontal ? 0 : 1.5, align) - 2 * results),
-      '--rig-pitch': deg(mix(frontal ? 7 : 14, -1, align)),
-      '--rig-yaw': deg(mix(frontal ? -3 : -21, 0, align)),
-      '--rig-scale': (1 - .04 * capture - .065 * results).toFixed(4),
-      '--camera-x': mix(-13, 0, align).toFixed(2) + '%',
-      '--camera-y': mix(7, 0, align).toFixed(2) + '%',
-      '--camera-roll': deg(mix(13, 0, align)),
-      '--camera-scale': mix(1.45, 1.065, align).toFixed(4),
-      '--shutter-scale': (1 - .13 * capture).toFixed(4),
-      '--flash': flash.toFixed(4),
-      '--analysis': mix(.12, 1, ease(p, .55, .72)).toFixed(4)
+  function phaseAt(progress) {
+    for (let index = phases.length - 1; index > 0; index--) {
+      if (progress >= phases[index].start) return phases[index];
+    }
+    return phases[0];
+  }
+
+  function render(progress) {
+    const alignment = 1 - (1 - range(progress, 0, phases[1].start)) ** 2;
+    const flash = reducedMotion.matches
+      ? 0
+      : smooth(range(progress, 0.475, 0.522)) * (1 - smooth(range(progress, 0.522, 0.555)));
+    const style = stage.style;
+    style.setProperty('--finder-x', mix(-36, 0, alignment).toFixed(2) + 'px');
+    style.setProperty('--finder-y', mix(26, 0, alignment).toFixed(2) + 'px');
+    style.setProperty('--finder-roll', mix(-8, 0, alignment).toFixed(2) + 'deg');
+    style.setProperty('--finder-scale', mix(1.18, 1.03, alignment).toFixed(4));
+    style.setProperty('--flash', flash.toFixed(4));
+    style.setProperty('--analysis', range(progress, phases[2].start, phases[3].start).toFixed(4));
+    const visorOpacity = stage.dataset.artwork !== 'custom' ? 1
+      : reducedMotion.matches ? Number(progress > 0) : range(progress, 0, 0.045);
+    style.setProperty('--visor-alpha', visorOpacity.toFixed(4));
+
+    const phase = phaseAt(progress);
+    if (currentPhase !== phase.name) {
+      currentPhase = phase.name;
+      stage.dataset.phase = phase.name;
+      if (announcement) announcement.textContent = phase.label;
+      if (slider) slider.setAttribute('aria-valuetext', phase.label);
+    }
+    if (slider) slider.value = Math.round(progress * 1000);
+
+    cards.forEach((card, index) => {
+      const start = phases[3].start + index * 0.028;
+      const rise = smooth(range(progress, start, start + 0.16));
+      card.style.setProperty('--card-alpha', smooth(range(progress, start, start + 0.075)).toFixed(4));
+      card.style.setProperty('--card-rise', rise.toFixed(4));
+      card.style.setProperty('--card-scale', mix(0.18, 1, rise).toFixed(4));
     });
-
-    const index = steps.findLastIndex(step => p >= step.start);
-    if (index !== phase) {
-      phase = index;
-      const step = steps[index];
-      stage.dataset.phase = step.phase;
-      caption.textContent = step.title;
-      cameraStatus.textContent = index === 0 ? 'Incline um pouco o celular' : 'Inclinação adequada';
-      controls.forEach((button, i) => {
-        if (i === index) button.setAttribute('aria-current', 'step');
-        else button.removeAttribute('aria-current');
-      });
-    }
-
-    if (p < .72) {
-      for (const card of cards) card.style.setProperty('--card-alpha', '0');
-      return;
-    }
-
-    const origin = glass.getBoundingClientRect();
-    const dock = cards[0].parentElement.getBoundingClientRect();
-    for (const [i, card] of cards.entries()) {
-      const takeoff = ease(p, .72 + i * .028, .858 + i * .034);
-      const targetX = dock.left + card.offsetLeft + card.offsetWidth / 2;
-      const targetY = dock.top + card.offsetTop + card.offsetHeight / 2;
-      set(card, {
-        '--card-alpha': ease(p, .728 + i * .028, .798 + i * .028).toFixed(4),
-        '--card-x': px((origin.left + origin.width * .60 - targetX) * (1 - takeoff)),
-        '--card-y': px((origin.top + origin.height * .48 - targetY) * (1 - takeoff) - 22 * Math.sin(Math.PI * takeoff)),
-        '--card-scale': mix(.19, 1, takeoff).toFixed(4),
-        '--card-turn': deg(mix(-22, 0, takeoff))
-      });
-    }
   }
 
-  function travel() { return Math.max(1, track.offsetHeight - stage.offsetHeight); }
-  function requestFrame() {
-    if (!frame) frame = requestAnimationFrame(tick);
+  function travel() {
+    return Math.max(1, track.offsetHeight - stage.offsetHeight);
   }
-  function tick(time) {
+
+  function syncScroll() {
     frame = 0;
-    const target = clamp((scrollY - track.offsetTop) / travel());
-    const elapsed = Math.min(120, time - (lastTime || time - 16));
-    lastTime = time;
-    const next = progress === undefined || reduced.matches || Math.abs(target - progress) < .0004
-      ? target : mix(progress, target, 1 - Math.exp(-elapsed / 75));
-    if (next !== progress) {
-      progress = next;
-      render(progress);
-    }
-    if (next !== target) requestFrame();
+    render(clamp(-track.getBoundingClientRect().top / travel()));
   }
 
-  function resize() {
-    progress = undefined;
-    lastTime = 0;
-    requestFrame();
+  function requestSync() {
+    if (!frame) frame = requestAnimationFrame(syncScroll);
   }
 
-  controls.forEach((button, i) => button.addEventListener('click', () => {
-    scrollTo({top: track.offsetTop + steps[i].jump * travel(), behavior: reduced.matches ? 'instant' : 'smooth'});
-  }));
-  addEventListener('scroll', requestFrame, {passive: true});
-  addEventListener('resize', resize, {passive: true});
-  reduced.addEventListener?.('change', resize);
-  document.documentElement.classList.add('pov-ready');
-  requestFrame();
+  function fitArtboard() {
+    const {clientWidth: width, clientHeight: height} = stage;
+    const portraitCloseup = width <= 650 && width < height && stage.dataset.artwork !== 'custom';
+    const scale = portraitCloseup ? Math.min(width / 830, height / 1040)
+      : Math.min(width / 1672, height / 941);
+    stage.style.setProperty('--art-scale', scale.toFixed(6));
+    stage.style.setProperty('--art-shift', portraitCloseup ? (306 * scale).toFixed(2) + 'px' : '0px');
+    requestSync();
+  }
+
+  function seek(progress) {
+    const destination = window.scrollY + track.getBoundingClientRect().top + progress * travel();
+    window.scrollTo(0, destination);
+    render(progress);
+  }
+
+  function showReference() {
+    stage.dataset.source = opening.naturalWidth > 0 ? 'ready' : 'missing';
+  }
+
+  opening.addEventListener('load', showReference);
+  opening.addEventListener('error', showReference);
+  if (opening.complete) showReference();
+  let localReference;
+  let sourceAttempt = 0;
+  sourcePicker.addEventListener('change', () => {
+    const file = sourcePicker.files[0];
+    if (!file) return;
+    const attempt = ++sourceAttempt;
+    const candidate = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      if (attempt !== sourceAttempt) {
+        URL.revokeObjectURL(candidate);
+        return;
+      }
+      if (Math.abs(image.naturalWidth / image.naturalHeight - 1672 / 941) > .07) {
+        sourceMessage.textContent = 'Selecione o quadro horizontal de referência.';
+        URL.revokeObjectURL(candidate);
+        return;
+      }
+      if (localReference) URL.revokeObjectURL(localReference);
+      localReference = candidate;
+      stage.dataset.artwork = 'custom';
+      finder.src = candidate;
+      opening.src = candidate;
+      sourceMessage.textContent = 'Selecione a imagem com o celular e o prato verde.';
+      fitArtboard();
+      seek(0);
+    };
+    image.onerror = () => {
+      if (attempt === sourceAttempt) {
+        sourceMessage.textContent = 'O navegador não conseguiu abrir a imagem. Use PNG, JPG ou WebP.';
+      }
+      URL.revokeObjectURL(candidate);
+    };
+    image.src = candidate;
+  });
+
+  if (slider) slider.addEventListener('input', () => seek(Number(slider.value) / 1000));
+  if (hint) hint.addEventListener('click', () => seek(phases[1].start + 0.012));
+  window.addEventListener('scroll', requestSync, { passive: true });
+  window.addEventListener('resize', fitArtboard, { passive: true });
+  window.addEventListener('pageshow', fitArtboard);
+  if (reducedMotion.addEventListener) reducedMotion.addEventListener('change', requestSync);
+  else if (reducedMotion.addListener) reducedMotion.addListener(requestSync);
+  if (window.ResizeObserver) new ResizeObserver(fitArtboard).observe(stage);
+
+  document.documentElement.classList.add('scene-ready');
+  fitArtboard();
 })();

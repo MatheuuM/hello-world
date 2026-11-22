@@ -4,93 +4,91 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="theme-color" content="#121913">
-  <title>MOVVA Wellness — Do prato à análise</title>
-  <link rel="preload" href="assets/mesa.webp" as="image">
-  <link rel="stylesheet" href="scene.css">
-  <script src="scene.js" defer></script>
+  <meta name="theme-color" content="#ffffff">
+  <title>MOVVA Wellness | Câmera de Nutrição</title>
+  <link rel="stylesheet" href="/lab/nutricao/scene.css">
+  <script src="/lab/nutricao/scene.js" defer></script>
 </head>
 <body>
-  <a class="skip" href="#resumo">Pular para o resumo</a>
   <main>
-    <section class="sequence" id="inicio" aria-label="Demonstração da câmera de Nutrição">
-      <div class="stage">
-        <div class="backdrop" aria-hidden="true">
-          <img class="table-photo" src="assets/mesa.webp" alt="" fetchpriority="high">
-        </div>
+    <h1 class="sr-only">Câmera de Nutrição MOVVA</h1>
+    <section class="sequence" aria-label="Demonstração da câmera">
+      <div class="stage" data-phase="aim" data-source="pending">
+        <div class="frame" aria-hidden="true">
+          <img class="opening" data-reference src="/lab/nutricao/assets/estudio-branco.webp" alt="" width="1672" height="941" fetchpriority="high">
 
-        <header class="stage-header">
-          <a class="wordmark" href="/" aria-label="MOVVA Wellness, site institucional"><img src="/assets/movva.svg" width="160" height="22" alt="MOVVA"></a>
-          <span class="section-name">Nutrição</span>
-        </header>
+          <div class="phone">
+            <div class="phone-glass">
+              <img class="screen-shot" src="/lab/nutricao/assets/camera-inclinada.jpg" alt="" width="589" height="1280" fetchpriority="high">
+              <div class="finder">
+                <img class="finder-photo" data-reference src="/lab/nutricao/assets/estudio-branco.webp" alt="" width="1672" height="941">
+              </div>
 
-        <div class="editorial">
-          <h1>Do prato<br><em>à análise.</em></h1>
-          <p class="instruction">Role para acompanhar o enquadramento, a captura e a análise da refeição.</p>
-          <p class="phase-caption" aria-hidden="true"><i></i><span data-caption>Ajuste o ângulo</span></p>
-        </div>
+              <div class="camera-ui">
+                <img class="camera-controls" src="/lab/nutricao/assets/camera-inclinada.jpg" alt="" width="589" height="1280">
+                <svg class="guides" viewBox="0 0 589 1280" fill="none" aria-hidden="true">
+                  <path d="M102 475v-20q0-10 10-10h20m325 0h20q10 0 10 10v20M102 800v20q0 10 10 10h20m325 0h20q10 0 10-10v-20"/>
+                </svg>
+                <img class="tilt tilt-warning" src="/lab/nutricao/assets/camera-inclinada.jpg" alt="" width="589" height="1280">
+                <img class="tilt tilt-aligned" src="/lab/nutricao/assets/camera-alinhada.jpg" alt="" width="589" height="1280">
+                <div class="shutter-flash"></div>
+              </div>
 
-        <div class="phone-position" aria-hidden="true">
-          <div class="phone-rig">
-            <div class="phone-art">
-              <img class="phone-photo" src="assets/mao-celular.webp" alt="" fetchpriority="high">
-              <span class="forearm"></span>
-            </div>
-            <div class="phone-screen">
-              <div class="app-title">
-                <span class="island"></span>
-                <strong>Nutrição</strong>
+              <div class="scan">
+                <div class="scan-line"></div>
+                <div class="scan-note">
+                  <strong>Analisando a refeição</strong>
+                  <span class="scan-progress"><i></i></span>
+                </div>
               </div>
-              <div class="camera">
-                <img class="camera-photo" src="assets/mesa.webp" alt="">
-                <span class="camera-mode">Prato</span>
-                <span class="camera-aim"></span>
-                <span class="camera-status" data-camera-status>Incline um pouco o celular</span>
-                <span class="camera-shutter"></span>
-                <span class="phone-flash"></span>
-              </div>
-              <div class="processing">
-                <img src="assets/mesa.webp" alt="">
-                <div><strong>Analisando a refeição</strong><span class="progress-bar"><i></i></span></div>
-              </div>
-              <div class="phone-result">
-                <img src="assets/mesa.webp" alt="">
-                <p>Resultado da análise</p>
-                <strong>1.200 <small>kcal</small></strong>
+
+              <div class="screen-result">
                 <span>Estimativa da refeição</span>
+                <strong>1.200 <small>kcal</small></strong>
               </div>
+            </div>
+          </div>
+
+          <div class="results">
+            <div class="result-card result-energy">
+              <span>Estimativa da refeição</span>
+              <strong>1.200 <small>kcal</small></strong>
+            </div>
+            <div class="result-card">
+              <span>Proteínas</span>
+              <strong>68 <small>g</small></strong>
+            </div>
+            <div class="result-card">
+              <span>Carboidratos</span>
+              <strong>123 <small>g</small></strong>
+            </div>
+            <div class="result-card">
+              <span>Gorduras</span>
+              <strong>48 <small>g</small></strong>
             </div>
           </div>
         </div>
 
-        <div class="insights" aria-hidden="true">
-          <div class="insight insight-main">
-            <span>Estimativa da refeição</span>
-            <strong>1.200 <small>kcal</small></strong>
-          </div>
-          <div class="insight insight-protein"><span>Proteínas</span><strong>68 <small>g</small></strong></div>
-          <div class="insight insight-carbs"><span>Carboidratos</span><strong>123 <small>g</small></strong></div>
-          <div class="insight insight-fat"><span>Gorduras</span><strong>48 <small>g</small></strong></div>
+        <div class="source-picker">
+          <label for="reference-file">Abrir imagem de referência</label>
+          <input id="reference-file" type="file" accept="image/png,image/jpeg,image/webp">
+          <p data-source-message>Selecione a imagem com o celular e o prato verde.</p>
         </div>
 
-        <nav class="stage-nav" aria-label="Etapas da demonstração">
-          <button type="button" data-step="0" aria-current="step">Enquadrar</button>
-          <button type="button" data-step="1">Alinhar</button>
-          <button type="button" data-step="2">Capturar</button>
-          <button type="button" data-step="3">Análise</button>
-        </nav>
+        <div class="stage-controls">
+          <button type="button" data-scroll-hint>Role para enquadrar <span aria-hidden="true">↓</span></button>
+          <label class="sr-only" for="scene-progress">Progresso da demonstração</label>
+          <input class="progress-control" id="scene-progress" type="range" min="0" max="1000" value="0">
+          <span class="sr-only" data-state aria-live="polite">Incline um pouco o celular</span>
+        </div>
       </div>
     </section>
-    <section class="summary" id="resumo" tabindex="-1">
-      <h2>Resultado da análise</h2>
-      <dl>
-        <div><dt>Energia</dt><dd>1.200 kcal</dd></div>
-        <div><dt>Proteínas</dt><dd>68 g</dd></div>
-        <div><dt>Carboidratos</dt><dd>123 g</dd></div>
-        <div><dt>Gorduras</dt><dd>48 g</dd></div>
-      </dl>
-      <p>Protótipo com dados ilustrativos.</p>
-      <a href="#inicio">Rever a cena ↑</a>
+
+    <section class="summary" aria-label="Resultado ilustrativo">
+      <h2>Estimativa da refeição</h2>
+      <p>1.200 kcal · 68 g de proteínas · 123 g de carboidratos · 48 g de gorduras</p>
+      <p>Valores ilustrativos.</p>
+      <a href="#">Rever a demonstração ↑</a>
     </section>
   </main>
 </body>
