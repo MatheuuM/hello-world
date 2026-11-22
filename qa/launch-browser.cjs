@@ -6,6 +6,7 @@ const output = path.resolve(process.env.QA_OUTPUT || 'qa-launch');
 require('node:fs').mkdirSync(output, { recursive: true });
 const viewports = [
   ['desktop', { viewport: { width: 1920, height: 1080 } }],
+  ['janela', { viewport: { width: 648, height: 870 } }],
   ['iphone', { ...devices['iPhone 15'], viewport: { width: 393, height: 852 } }],
   ['compacto', { ...devices['iPhone 15'], viewport: { width: 320, height: 568 }, deviceScaleFactor: 2 }],
   ['paisagem', { ...devices['iPhone 15'], viewport: { width: 844, height: 390 } }],
@@ -282,6 +283,7 @@ async function test(browser, engine, [label, viewport]) {
     assert.ok(await handsetOpacity() < .05);
     const opening = await verifyOpening(page, engine !== 'webkit' || !viewport.hasTouch, () => screenshot(engine + '-abertura-' + label));
     await verifyOpeningTransition(page, engine !== 'webkit' || !viewport.hasTouch);
+    if (label === 'janela') await verifyNarrowHandoff(page);
     assert.ok(await handsetOpacity() < .05, 'O aparelho giratório apareceu na transição de abertura');
     await page.evaluate(() => window.__MOVVA_QA__.setProgress(0));
     await settled(page, 0);
@@ -439,6 +441,62 @@ async function verifySlowMobileOpening(browser) {
   }
 }
 
+async function verifyNarrowHandoff(page) {
+  const frames = page.locator('#react-phone-frames.is-frame-ready');
+  const sequence = [];
+  for (const progress of [.08, .115, .15, .18, .115]) {
+    await scrollToProgress(page, progress, true);
+    sequence.push(await frames.evaluate(canvas => {
+      const sample = document.createElement('canvas');
+      sample.width = sample.height = 64;
+      const ctx = sample.getContext('2d');
+      ctx.drawImage(canvas, 0, 0, 64, 64);
+      const { data } = ctx.getImageData(0, 0, 64, 64);
+      let hash = 0;
+      for (let i = 0; i < data.length; i += 4) hash = Math.imul(hash ^ data[i], 16777619);
+      return hash;
+    }));
+  }
+  assert.equal(new Set(sequence.slice(0, 4)).size, 4, 'O giro deve continuar enquanto o fundo fica verde.');
+  assert.equal(sequence[4], sequence[1], 'O giro deve voltar aos mesmos pixels durante a transição.');
+}
+
+async function verifyNarrowPosters(browser) {
+  const context = await browser.newContext({ viewport: { width: 648, height: 870 } });
+  try {
+    await context.route('**/assets/react-phone-frames-mobile.webp', route => route.abort());
+    const page = await context.newPage();
+    await page.goto(origin);
+    await settled(page, 0);
+    const angled = page.locator('.hero-react-poster');
+    const front = page.locator('.hero-react-front');
+    const tilt = () => angled.evaluate(el => {
+      const m = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+      return Math.atan2(m.b, m.a) * 180 / Math.PI;
+    });
+    assert.ok(Math.abs(await tilt()) < .1);
+    await scrollToProgress(page, .115, true);
+    assert.equal(await angled.isVisible(), true);
+    assert.ok(Math.abs(await tilt()) >= 4, 'O celular precisa mudar de inclinação mesmo sem a sequência de imagens.');
+    await scrollToProgress(page, .18, true);
+    assert.equal(await angled.isVisible(), false);
+    assert.equal(await front.isVisible(), true);
+    await verifyScreenPixels(page, await page.screenshot({ clip: await front.boundingBox(), scale: 'css' }));
+
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await scrollToProgress(page, 0, true);
+    const initialTilt = await tilt();
+    await scrollToProgress(page, .115, true);
+    assert.ok(Math.abs(await tilt() - initialTilt) < .1, 'Com movimento reduzido o aparelho deve manter a inclinação.');
+    await scrollToProgress(page, .18, true);
+    assert.equal(await front.isVisible(), true);
+    assert.equal(await angled.isVisible(), false);
+    await scrollToProgress(page, 0, true);
+    assert.equal(await angled.isVisible(), true);
+    assert.equal(await front.isVisible(), false);
+  } finally { await context.close(); }
+}
+
 async function verifyOpeningWithoutWebGL(browser, engine) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   try {
@@ -458,7 +516,8 @@ async function verifyOpeningWithoutWebGL(browser, engine) {
     await verifyScreenPixels(page, await page.screenshot({ clip: await opening.display.boundingBox(), scale: 'css' }));
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.locator('#react-phone-frames.is-frame-ready').waitFor({ state: 'detached' });
-    assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
+    assert.equal(await page.locator('.hero-react-front').isVisible(), true);
+    assert.equal(await page.locator('.hero-react-poster').isVisible(), false);
     console.log(engine + ' abertura sem WebGL e movimento reduzido OK');
   } finally { await context.close(); }
 }
@@ -474,6 +533,7 @@ async function verifyOpeningWithoutWebGL(browser, engine) {
       if (engine === 'chromium' && (!process.env.QA_VIEWPORT || process.env.QA_VIEWPORT === 'iphone')) {
         await verifySlowMobileOpening(browser);
       }
+      if (!process.env.QA_VIEWPORT || process.env.QA_VIEWPORT === 'janela') await verifyNarrowPosters(browser);
       await verifyOpeningWithoutWebGL(browser, engine);
       const context = await browser.newContext({ ...devices['iPhone 15'], javaScriptEnabled: false });
       const page = await context.newPage();

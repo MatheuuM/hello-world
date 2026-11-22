@@ -5,6 +5,8 @@ const stage=document.querySelector('#stage'),copy=document.querySelector('.scene
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const ease=v=>{v=clamp(v);return v*v*(3-2*v);};
 const connected=document.querySelector('#connected'),connectedCopy=connected.querySelector('.copy');
+const surface=stage.querySelector('.hero-surface');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 let layout=null;
 function measure(){
  if(!stage||!copy||!slot)return;
@@ -15,13 +17,25 @@ function measure(){
  layout={x:r.left-s.left,y:r.top-s.top,width:r.width,height:r.height,viewportWidth:s.width,viewportHeight:s.height};
  if(layout.width>0&&layout.height>0)stage.style.setProperty('--hero-ground',((layout.y+layout.height+12)/s.height*100).toFixed(2));
 }
+let previousPhoneProgress,previousReduced;
+function positionPhone(p){
+ const progress=clamp(p,0,.166);
+ if(progress===previousPhoneProgress&&reduced.matches===previousReduced)return;
+ // Translate the same handset on the native scroll track, even before its renderer loads.
+ const glide=reduced.matches?0:Math.sqrt(progress/.166);
+ surface.style.setProperty('--hero-phone-slide',(-5.2*glide).toFixed(3)+'vw');
+ surface.style.setProperty('--hero-phone-scale',(1+.08*glide).toFixed(4));
+ surface.style.setProperty('--hero-poster-tilt',(-9*glide).toFixed(3)+'deg');
+ surface.classList.toggle('hero-front',progress>=.162);
+ previousPhoneProgress=progress;
+ previousReduced=reduced.matches;
+}
 let previousProgress;
 function visual(p){
  const progress=clamp(p,0,.311);
  const weight=1-ease((progress-.267)/.027);
  if(progress!==previousProgress){
-  // The same handset holds through both headlines. Only the copy changes
-  // while the stage moves from white to the darker Connected palette.
+  // Keep one handset visible while the title and palette change.
   stage.classList.toggle('hero-active',progress<.294);
   stage.classList.toggle('hero-transition',progress<.311);
   stage.style.setProperty('--hero-intensity',weight.toFixed(5));
@@ -67,7 +81,7 @@ function fit(p,pose,compose,halfW,halfH){
  const opening=[nx,ny,scale,rx,ry,rz];
  return pose.map((v,i)=>v+(opening[i]-v)*weight);
 }
-window.MOVVA_HERO={measure,fit,visual,get layout(){return layout?{...layout}:null}};
+window.MOVVA_HERO={measure,positionPhone,fit,visual,get layout(){return layout?{...layout}:null}};
 // Font loading can change the text block's height, especially on an iPhone.
 const observer=new ResizeObserver(()=>{measure();window.dispatchEvent(new Event('movva:hero-layout'));});
 observer.observe(copy);

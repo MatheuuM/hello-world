@@ -7,7 +7,6 @@ const context = canvas?.getContext('2d');
 if (context && live) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const mobile = matchMedia(MOBILE_PHONE_QUERY).matches;
-  const surface = canvas.parentElement;
   const atlasSource = mobile ? '/assets/react-phone-frames-mobile.webp' : '/assets/react-phone-frames.webp';
   if (mobile) canvas.width = canvas.height = 384;
   const frameCount = 30;
@@ -24,7 +23,6 @@ if (context && live) {
       columns = 0;
     }
     if (reduced.matches || liveReady) {
-      if (mobile) surface.style.removeProperty('--hero-phone-scale');
       canvas.classList.remove('is-frame-ready');
       return;
     }
@@ -33,8 +31,6 @@ if (context && live) {
     if (!sheet && progress > PHONE_MOTION_END + .021) return;
 
     const turn = phoneTurnAt(progress, mobile);
-    // The phone also responds to the first swipe while the rendered angles load.
-    if (mobile) surface.style.setProperty('--hero-phone-scale', (1 + .08 * turn).toFixed(4));
 
     if (!sheet) {
       const image = new Image();

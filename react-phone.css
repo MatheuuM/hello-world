@@ -1,12 +1,14 @@
 .hero-react-phone,
 .hero-react-frames,
+.hero-react-front,
 .hero-react-poster {
   position: absolute;
   top: var(--hero-phone-y);
   left: var(--hero-phone-x);
   height: min(85svh, calc(var(--hero-phone-h) * 1.15));
   pointer-events: none;
-  transform: translate(-50%, -50%);
+  transform: translate(calc(-50% + clamp(-56px, var(--hero-phone-slide, 0px), 0px)), -50%)
+    rotate(var(--hero-image-rotation, 0deg)) scale(var(--hero-phone-scale, 1));
 }
 
 .hero-react-phone {
@@ -16,22 +18,28 @@
 
 /* Preserve the handset and its shadow at that same size while WebGL starts. */
 .hero-react-frames,
+.hero-react-front,
 .hero-react-poster {
   width: auto;
   max-width: none;
-  transform: translate(-50%, -50%) scale(var(--hero-phone-scale, 1));
 }
 
-.hero-react-frames {
-  opacity: 0;
+.hero-react-poster {
+  --hero-image-rotation: var(--hero-poster-tilt, 0deg);
 }
+
+.hero-react-front { display: none; }
+.enhanced .hero-surface.hero-front > .hero-react-front { display: block; }
+.enhanced .hero-surface.hero-front > .hero-react-poster { visibility: hidden; }
+
+.hero-react-frames { opacity: 0; }
 
 .enhanced .hero-react-phone.is-ready,
 .enhanced .hero-react-frames.is-frame-ready {
   opacity: 1;
 }
 
-.enhanced .hero-surface:has(> .hero-react-phone.is-ready, > .hero-react-frames.is-frame-ready) > .hero-react-poster {
+.enhanced .hero-surface:has(> .hero-react-phone.is-ready, > .hero-react-frames.is-frame-ready) > :is(.hero-react-poster, .hero-react-front) {
   visibility: hidden;
 }
 
@@ -50,6 +58,7 @@
 @media (max-width: 760px) and (orientation: portrait) {
   .hero-react-phone,
   .hero-react-frames,
+  .hero-react-front,
   .hero-react-poster {
     height: calc(var(--hero-phone-h) * 1.12);
   }
