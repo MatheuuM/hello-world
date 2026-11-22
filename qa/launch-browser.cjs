@@ -91,23 +91,24 @@ async function verifyOpening(page, useWheel, capture) {
     await capture();
     const angle = () => handset.evaluate(el => Number(el.dataset.yaw));
     const firstAngle = await angle();
-    if (useWheel) {
-      const bounds = await handset.boundingBox();
-      await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-    }
-    const firstImage = await handset.screenshot({ scale: 'css' });
+    const bounds = await handset.boundingBox();
+    if (useWheel) await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    // Locator screenshots may scroll a partially clipped handset into view.
+    // Cropping the viewport preserves the actual reading position in landscape.
+    const image = () => page.screenshot({ clip: bounds, scale: 'css' });
+    const firstImage = await image();
     await verifyScreenPixels(page, firstImage);
     await scrollToProgress(page, .075, useWheel);
     await page.waitForFunction(first => Number(document.querySelector('#react-phone').dataset.yaw) > first + 5, firstAngle);
     const forwardAngle = await angle();
-    const forwardImage = await handset.screenshot({ scale: 'css' });
+    const forwardImage = await image();
     assert.equal(forwardImage.equals(firstImage), false, 'O celular deve girar dentro da abertura.');
     await page.waitForTimeout(600);
     assert.equal(await angle(), forwardAngle, 'O ângulo deve ficar parado até a próxima rolagem.');
-    assert.ok(forwardImage.equals(await handset.screenshot({ scale: 'css' })), 'O celular se moveu sem rolagem.');
+    assert.ok(forwardImage.equals(await image()), 'O celular se moveu sem rolagem.');
     await scrollToProgress(page, 0, useWheel);
     await page.waitForFunction(first => Math.abs(Number(document.querySelector('#react-phone').dataset.yaw) - first) < .05, firstAngle);
-    assert.ok(firstImage.equals(await handset.screenshot({ scale: 'css' })), 'Voltar ao início deve recuperar o mesmo enquadramento.');
+    assert.ok(firstImage.equals(await image()), 'Voltar ao início deve recuperar o mesmo enquadramento.');
   } else {
     assert.equal(await page.locator('#react-phone.is-ready').count(), 0);
     assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
