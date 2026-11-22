@@ -1,37 +1,37 @@
-/* Stage 3: fit the opening hardware into a measured editorial slot.
- * Active only before progress .13. No changes to subsequent scenes or textures.
- * The device uses the same WebGL geometry and perspective camera as Stage 2.
- */
+/* Scroll-owned cuts from the studio photograph to the app and into Training. */
 (() => {
 'use strict';
 const stage=document.querySelector('#stage'),copy=document.querySelector('.scene-hero .copy'),slot=document.querySelector('.hero-device-slot');
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const ease=v=>{v=clamp(v);return v*v*(3-2*v);};
+const connected=document.querySelector('#connected'),connectedCopy=connected.querySelector('.copy');
 let layout=null;
 function measure(){
  if(!stage||!copy||!slot)return;
  const s=stage.getBoundingClientRect();
  const r=slot.getBoundingClientRect();
+ const copyEnd=connectedCopy.offsetTop+connectedCopy.offsetHeight;
+ stage.style.setProperty('--connected-copy-end', copyEnd+'px');
  layout={x:r.left-s.left,y:r.top-s.top,width:r.width,height:r.height,viewportWidth:s.width,viewportHeight:s.height};
  if(layout.width>0&&layout.height>0)stage.style.setProperty('--hero-ground',((layout.y+layout.height+12)/s.height*100).toFixed(2));
 }
 let previousProgress;
 function visual(p){
- const weight=1-ease((p-.085)/.045);
- // Resume the rotating 3D handset as the photographic opening leaves.
- const progress=clamp(p,0,.13);
+ const progress=clamp(p,0,.311);
+ const weight=1-ease((progress-.101)/.034);
  if(progress!==previousProgress){
-  const cut=.113;
-  const turn=ease((progress-.082)/(cut-.082));
-  const unfold=ease((progress-cut)/(.13-cut));
-  stage.classList.toggle('hero-active',p<.13);
-  stage.classList.toggle('hero-photo-ended',progress>=cut);
-  stage.style.setProperty('--hero-intensity',weight.toFixed(5));
-  stage.style.setProperty('--hero-motion',ease(progress/.105).toFixed(5));
-  stage.style.setProperty('--hero-turn',turn.toFixed(5));
-  stage.style.setProperty('--hero-fold',(1-.91*turn).toFixed(5));
-  stage.style.setProperty('--hero-unfold',(.12+.88*unfold).toFixed(5));
-  stage.style.setProperty('--hero-hardware-alpha',progress<cut?'0':String(.42+.58*unfold));
+  // Finish each shot before the next phone appears. The renderer can continue
+  // positioning the Training screen off-camera during the Connected chapter.
+  stage.classList.toggle('hero-active',progress<.135);
+  stage.classList.toggle('hero-backdrop',progress<.179);
+  stage.classList.toggle('hero-transition',progress<.311);
+  stage.style.setProperty('--hero-intensity',weight>0?'1':'0');
+  stage.style.setProperty('--hero-cut',((1-weight)*100).toFixed(3)+'%');
+  stage.style.setProperty('--connected-copy-alpha',connected.style.opacity||'0');
+  const connectedShot=ease((progress-.125)/.021)*(1-ease((progress-.269)/.022));
+  stage.style.setProperty('--connected-shot-alpha',connectedShot.toFixed(5));
+  const trainingReveal=ease((progress-.289)/.022);
+  stage.style.setProperty('--hero-hardware-alpha',trainingReveal.toFixed(5));
   previousProgress=progress;
  }
  return weight;
@@ -65,5 +65,6 @@ window.MOVVA_HERO={measure,fit,visual,get layout(){return layout?{...layout}:nul
 // Font loading can change the text block's height, especially on an iPhone.
 const observer=new ResizeObserver(()=>{measure();window.dispatchEvent(new Event('movva:hero-layout'));});
 observer.observe(copy);
+observer.observe(connectedCopy);
 document.fonts?.ready.then(()=>{measure();window.dispatchEvent(new Event('movva:hero-layout'));});
 })();

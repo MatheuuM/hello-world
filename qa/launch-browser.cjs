@@ -34,54 +34,94 @@ async function verifyImage(page, selector, expectedWidth, expectedHeight) {
   assert.deepEqual(size, [expectedWidth, expectedHeight], selector + ' deve usar a captura atual.');
 }
 
-async function verifyCamera(page, useWheel) {
-  const camera = page.locator('#stage > .nutrition-camera');
-  for (const [progress, phase] of [
-    [.48, 'aim'], [.513, 'aligned'], [.533, 'processing'],
-    [.57, 'results'], [.533, 'processing'], [.513, 'aligned'], [.48, 'aim']
-  ]) {
-    const distance = await page.evaluate(p => {
-      const experience = document.getElementById('experience');
-      const travel = experience.offsetHeight - document.getElementById('stage').clientHeight;
-      return Math.round(experience.offsetTop + p * travel) - scrollY;
-    }, progress);
-    if (distance) {
-      // Playwright exposes the wheel on desktop WebKit; iOS WebKit uses native document scrolling.
-      if (useWheel) await page.mouse.wheel(0, distance);
-      else await page.evaluate(delta => window.scrollBy(0, delta), distance);
-    }
-    await settled(page, progress);
-    await page.waitForFunction(expected => {
-      const camera = document.querySelector('#stage > .nutrition-camera[data-loaded]');
-      return camera?.dataset.phase === expected && Number(getComputedStyle(camera).opacity) > .90;
-    }, phase);
-    assert.equal(await camera.isVisible(), true);
-    assert.equal(await page.locator('.chapter-dots [aria-current]').getAttribute('href'), '#nutrition');
+async function scrollToProgress(page, progress, useWheel) {
+  const distance = await page.evaluate(p => {
+    const experience = document.getElementById('experience');
+    const travel = experience.offsetHeight - document.getElementById('stage').clientHeight;
+    return Math.round(experience.offsetTop + p * travel) - scrollY;
+  }, progress);
+  if (distance) {
+    // Mobile WebKit does not expose the wheel through Playwright.
+    if (useWheel) await page.mouse.wheel(0, distance);
+    else await page.evaluate(delta => window.scrollBy(0, delta), distance);
   }
+  await settled(page, progress);
 }
 
-async function verifyBench(page, label, capture) {
-  const demo = page.locator('.bench-demo');
-  const frames = [];
-  const fingerprints = [];
-  for (const progress of [.348, .375, .404, .375]) {
-    await page.evaluate(value => window.__MOVVA_QA__.setProgress(value), progress);
-    await settled(page, progress);
-    await page.waitForFunction(() => document.querySelector('.bench-demo').classList.contains('bench-frames-ready'));
-    const sample = await demo.locator('canvas').evaluate(canvas => {
-      const {width, height} = canvas;
-      const pixels = canvas.getContext('2d').getImageData(0, 0, width, height).data;
-      let hash = 0;
-      for (let i = 0; i < pixels.length; i += 13) hash = Math.imul(hash ^ pixels[i], 16777619);
-      return {frame: Number(canvas.dataset.frame), hash};
-    });
-    frames.push(sample.frame);
-    fingerprints.push(sample.hash);
+async function verifyNutrition(page, useWheel) {
+  const chapter = page.locator('#nutrition');
+  const take = chapter.locator('#nutrition-take');
+  const video = take.locator('video[data-scroll-video]');
+  assert.equal(await chapter.getAttribute('aria-hidden'), 'false');
+  assert.equal(await page.locator('.chapter-dots [aria-current]').getAttribute('href'), '#nutrition');
+  assert.equal(await page.locator('.nutrition-camera, .nc-results, .nc-result-card').count(), 0);
+  await verifyImage(page, '.css3d-screen-nutrition', 589, 1280);
+
+  const hasSource = await video.evaluate(el => Boolean(el.dataset.src || el.getAttribute('src') || el.querySelector('source[src]')));
+  if (!hasSource) {
+    assert.equal(await take.isVisible(), false);
+    assert.equal(await chapter.locator('.default-title').isVisible(), true);
+    assert.equal(await chapter.locator('.description').isVisible(), true);
+    return;
   }
-  assert.ok(frames[0] < frames[1] && frames[1] < frames[2], 'Supino não avançou com a rolagem');
-  assert.equal(frames[1], frames[3], 'Voltar a rolagem deve revelar o mesmo quadro');
-  assert.equal(new Set(fingerprints.slice(0, 3)).size, 3, 'O supino deve mudar os pixels do canvas');
-  assert.equal(fingerprints[1], fingerprints[3], 'Retroceder precisa devolver a mesma imagem');
+
+  await scrollToProgress(page, .49, useWheel);
+  await page.locator('#nutrition-take.is-scroll-ready').waitFor();
+  const firstTime = await video.evaluate(el => el.currentTime);
+  await scrollToProgress(page, .54, useWheel);
+  await page.waitForFunction(start => {
+    const clip = document.querySelector('#nutrition-take video');
+    return !clip.seeking && clip.currentTime > start;
+  }, firstTime);
+  const forwardTime = await video.evaluate(el => el.currentTime);
+  await page.waitForTimeout(700);
+  assert.deepEqual(await video.evaluate(el => [el.currentTime, el.paused]), [forwardTime, true]);
+  await scrollToProgress(page, .49, useWheel);
+  await page.waitForFunction(start => {
+    const clip = document.querySelector('#nutrition-take video');
+    return !clip.seeking && Math.abs(clip.currentTime - start) < .04;
+  }, firstTime);
+}
+
+async function sampleBenchFrame(page) {
+  await page.waitForSelector('.bench-demo.bench-frames-ready');
+  return page.locator('.bench-demo canvas').evaluate(canvas => {
+    const {width, height} = canvas;
+    const pixels = canvas.getContext('2d').getImageData(0, 0, width, height).data;
+    let hash = 0;
+    for (let i = 0; i < pixels.length; i += 13) hash = Math.imul(hash ^ pixels[i], 16777619);
+    return {frame: Number(canvas.dataset.frame), hash};
+  });
+}
+
+async function verifyBenchPoster(page) {
+  const poster = '.bench-visual img';
+  await verifyImage(page, poster, 640, 480);
+  await page.waitForFunction(selector => {
+    const image = document.querySelector(selector);
+    const canvas = image.nextElementSibling;
+    return +getComputedStyle(image).opacity === 1 && +getComputedStyle(canvas).opacity === 0;
+  }, poster);
+  assert.equal(await page.locator(poster).isVisible(), true);
+  assert.equal(await page.locator('.bench-demo button').count(), 0);
+}
+
+async function verifyBench(page, label, capture, useWheel) {
+  const demo = page.locator('.bench-demo');
+  const samples = [];
+  if (useWheel) {
+    const {width, height} = page.viewportSize();
+    await page.mouse.move(width / 2, height / 2);
+  }
+  for (const progress of [.33, .375, .404, .375]) {
+    await scrollToProgress(page, progress, useWheel);
+    samples.push(await sampleBenchFrame(page));
+  }
+  const [start, middle, end, reverse] = samples;
+  assert.ok(start.frame < middle.frame && middle.frame < end.frame, 'Supino não avançou com a rolagem');
+  assert.deepEqual(reverse, middle, 'Retroceder precisa devolver o mesmo quadro e os mesmos pixels');
+  assert.equal(new Set(samples.slice(0, 3).map(sample => sample.hash)).size, 3, 'O supino deve mudar os pixels do canvas');
+  assert.equal(await demo.locator('button').count(), 0);
 
   const picture = await demo.locator('.bench-visual').boundingBox();
   const caption = await demo.locator('figcaption').boundingBox();
@@ -90,19 +130,6 @@ async function verifyBench(page, label, capture) {
   assert.ok(picture.height >= 110 && picture.y >= header.y + header.height - 1, 'Enquadramento do supino');
   assert.ok(caption.y + caption.height <= chapters.y, 'Legenda do supino invade a navegação');
   await capture('supino-' + label);
-  if (label === 'desktop') {
-    const scrollOrigin = await page.evaluate(() => scrollY);
-    await page.mouse.move(650, 480);
-    await page.mouse.wheel(0, 106);
-    await page.waitForFunction(({y, frame}) =>
-      scrollY > y + 70 && Number(document.querySelector('.bench-demo canvas').dataset.frame) > frame + 4,
-    {y: scrollOrigin, frame: frames[1]});
-    await page.mouse.wheel(0, -106);
-    await page.waitForFunction(({y, frame}) =>
-      Math.abs(scrollY - y) < 2 &&
-      Number(document.querySelector('.bench-demo canvas').dataset.frame) === frame,
-    {y: scrollOrigin, frame: frames[1]});
-  }
 }
 
 async function test(browser, engine, [label, viewport]) {
@@ -127,8 +154,21 @@ async function test(browser, engine, [label, viewport]) {
     await verifyImage(page, '.hero-product-photo', 1672, 941);
     await verifyImage(page, '.hero-product-home', 589, 1280);
     assert.ok(await page.locator('.hero-surface').evaluate(el => Number(getComputedStyle(el).opacity) > .95));
-    assert.ok(await page.locator('#css3d-device').evaluate(el => Number(getComputedStyle(el).opacity) < .05));
+    const handsetOpacity = () => page.locator('#css3d-device').evaluate(el => +getComputedStyle(el).opacity);
+    assert.ok(await handsetOpacity() < .05);
     await screenshot(engine + '-abertura-' + label);
+    const photograph = page.locator('.hero-product');
+    const opening = await photograph.boundingBox();
+    await page.evaluate(() => window.__MOVVA_QA__.setProgress(.075));
+    await settled(page, .075);
+    const held = await photograph.boundingBox();
+    assert.ok(Math.abs(held.width - opening.width) <= 1, 'A abertura deve manter a largura do celular');
+    assert.ok(Math.abs(held.height - opening.height) <= 1, 'A abertura deve manter a altura do celular');
+    await page.evaluate(() => window.__MOVVA_QA__.setProgress(.115));
+    await settled(page, .115);
+    assert.ok(await handsetOpacity() < .05, 'O aparelho giratório apareceu na transição de abertura');
+    await page.evaluate(() => window.__MOVVA_QA__.setProgress(0));
+    await settled(page, 0);
     if (label === 'paisagem') {
       const cta = await page.locator('.hero-cta').boundingBox();
       const chapters = await page.locator('.chapter-bar').boundingBox();
@@ -144,22 +184,23 @@ async function test(browser, engine, [label, viewport]) {
     }
     await settled(page, .18);
     assert.equal(new URL(page.url()).hash, '#connected');
+    assert.ok(await handsetOpacity() < .05, 'O aparelho giratório apareceu em Tudo conectado');
+    assert.equal(await page.locator('#connected .static-shot').isVisible(), true);
+    await verifyImage(page, '#connected .static-shot', 589, 1280);
     await page.locator('.chapter-dots a[href="#training"]').click();
     await settled(page, .33);
     assert.equal(new URL(page.url()).hash, '#training');
-    const pause = page.getByRole('button', { name: 'Pausar supino' });
-    await pause.waitFor();
-    await page.waitForFunction(() => Number(document.querySelector('.bench-demo canvas').dataset.frame) >= 8);
-    await pause.click();
-    await page.getByRole('button', { name: 'Reproduzir supino' }).waitFor();
+    const entryFrame = await sampleBenchFrame(page);
+    await page.waitForTimeout(700);
+    assert.deepEqual(await sampleBenchFrame(page), entryFrame, 'Parar de rolar deve congelar o supino');
     await page.goBack();
     await settled(page, .18);
     await page.goForward();
     await settled(page, .33);
+    const nutritionJump = Number(await page.locator('.chapter-dots a[href="#nutrition"]').getAttribute('data-jump'));
     await page.goto(origin + '/#nutrition', { waitUntil: 'load' });
-    await settled(page, .48);
-    assert.equal(await page.locator('#nutrition').getAttribute('aria-hidden'), 'false');
-    await verifyCamera(page, engine !== 'webkit' || !viewport.hasTouch);
+    await settled(page, nutritionJump);
+    await verifyNutrition(page, engine !== 'webkit' || !viewport.hasTouch);
     for (const progress of [.70, .86, .98, .66, .52, .365, 0]) {
       await page.evaluate(value => window.__MOVVA_QA__.setProgress(value), progress);
       await settled(page, progress);
@@ -178,7 +219,7 @@ async function test(browser, engine, [label, viewport]) {
         await screenshot(engine + '-' + name + '-' + label);
       }
     }
-    await verifyBench(page, label, name => screenshot(engine + '-' + name));
+    await verifyBench(page, label, name => screenshot(engine + '-' + name), engine !== 'webkit' || !viewport.hasTouch);
     await page.evaluate(() => window.__MOVVA_QA__.setProgress(0));
     await settled(page, 0);
     await page.locator('.nav-cta').click();
@@ -212,15 +253,12 @@ async function test(browser, engine, [label, viewport]) {
       assert.equal(await page.evaluate(() => window.MOVVA_3D_STATUS().active), true);
       await page.evaluate(() => window.__MOVVA_QA__.setProgress(.375));
       await settled(page, .375);
-      assert.equal(await page.locator('.bench-frames-ready').count(), 0);
-      await page.getByRole('button', { name: 'Reproduzir supino' }).click();
-      await page.getByRole('button', { name: 'Pausar supino' }).waitFor();
-      assert.equal(await page.locator('.bench-frames-ready').count(), 1);
+      await verifyBenchPoster(page);
       await page.goto(origin + '/?visual=estatico#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('html.enhanced').count(), 0);
-      assert.equal(await page.locator('#nutrition .nutrition-camera-poster').isVisible(), true);
-      await verifyImage(page, '#nutrition .nutrition-camera-poster', 1672, 941);
-      assert.equal(await page.locator('#nutrition .static-shot').isVisible(), false);
+      assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
+      await verifyImage(page, '#nutrition .static-shot', 589, 1280);
+      assert.equal(await page.locator('#nutrition-take').isVisible(), false);
       assert.equal(await page.locator('.animated-link').isVisible(), true);
       assert.equal(await page.locator('#launch .static-link:visible').count(), 0);
       assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior), 'auto');
@@ -245,7 +283,11 @@ async function test(browser, engine, [label, viewport]) {
       await page.goto(origin + '/#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('#nutrition').isVisible(), true);
       assert.equal(await page.locator('.static-shot').count(), 6);
-      assert.equal(await page.locator('#nutrition .nutrition-camera-poster').isVisible(), true);
+      assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
+      await verifyImage(page, '#nutrition .static-shot', 589, 1280);
+      assert.equal(await page.locator('#nutrition-take').isVisible(), false);
+      await page.locator('.bench-visual img').scrollIntoViewIfNeeded();
+      await verifyBenchPoster(page);
       for (const destination of ['privacy/', 'terms/', 'support/', 'robots.txt', 'sitemap.xml', 'assets/compartilhar-movva.jpg']) {
         assert.equal((await context.request.get(origin + '/' + destination)).status(), 200, destination);
       }

@@ -50,224 +50,70 @@
  #nutrition .nutrition-readout{margin-top:10px;padding-top:8px}
 }
 
-/* The photograph becomes the camera surface on the existing chapter timeline. */
-#nutrition .nutrition-camera { margin: 0; width: min(53vw, 880px); flex-shrink: 1; }
-#nutrition .nutrition-camera-poster { width: 100%; height: auto; display: block; }
-#nutrition .nutrition-camera ~ .static-shot { display: none; }
-#nutrition { background-color: #fff; }
-.enhanced #nutrition { background-color: transparent; }
-.enhanced #nutrition .nutrition-camera, .nutrition-camera .nc-frame { display: none; }
-.enhanced #stage > .nutrition-camera {
-  display: block;
+/* One uninterrupted take, framed inside the existing Nutrition chapter. */
+#nutrition-take { display: none; }
+
+.enhanced #nutrition-take {
   position: absolute;
-  z-index: 9;
   inset: 0;
-  margin: 0;
-  overflow: hidden;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  opacity: 0;
   pointer-events: none;
+  width: 100%;
+  margin: 0;
+  padding: clamp(82px, 12svh, 140px) 0 clamp(38px, 7svh, 72px);
   background: #fff;
-  color: #171919;
-  font-family: var(--sans, system-ui), sans-serif;
-  opacity: var(--camera-presence, 0);
 }
-.enhanced #stage > .nutrition-camera > :is(.nc-frame, .nutrition-camera-poster) {
-  position: absolute;
-  width: 1672px;
-  height: 941px;
-  max-width: none;
-  left: var(--camera-center-x);
-  top: var(--camera-center-y);
-  transform: translate(-50%, -50%) scale(var(--camera-scale));
+
+.enhanced #nutrition-take.is-scroll-ready {
+  opacity: 1;
 }
-.enhanced #stage > .nutrition-camera[data-loaded] .nc-frame { display: block; }
-.enhanced #stage > .nutrition-camera[data-loaded] .nutrition-camera-poster { visibility: hidden; }
-.nutrition-camera .nc-opening, .enhanced #stage > .nutrition-camera > .nutrition-camera-poster {
-  -webkit-mask-image: linear-gradient(black 93%, transparent 100%);
-  mask-image: linear-gradient(black 93%, transparent 100%);
-}
-.nc-opening, .nc-screen-shot, .nc-camera-controls, .nc-tilt, .nc-guides {
-  position: absolute;
-  inset: 0;
+
+#nutrition-take video {
   display: block;
   width: 100%;
   height: 100%;
+  min-height: 0;
+  object-fit: contain;
 }
 
-.nc-phone {
+.enhanced #nutrition:has(#nutrition-take.is-scroll-ready) .copy {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 589px;
-  height: 1280px;
-  transform-origin: 0 0;
-  /* Map the corners of the 589 × 1280 app capture onto the photographed glass. */
-  transform: matrix3d(.51182277,-.05716538,0,-.0000923483,-.18433830,.55607206,0,-.0000580105,0,0,1,0,460.7587,48.7279,0,1);
+  z-index: 9;
+  top: clamp(79px, 10svh, 120px);
+  left: var(--gutter);
+  width: auto;
+  padding: 0;
+  color: var(--ink);
 }
-.nc-phone-glass {
-  position: absolute;
-  inset: 0;
-  isolation: isolate;
-  overflow: hidden;
-  border-radius: 80px 60px 90px 92px / 100px 80px 96px 110px;
-  background: #111;
 
+#nutrition:has(#nutrition-take.is-scroll-ready) .take-title {
+  font: 500 clamp(14px, 1.4vw, 22px)/1.2 var(--sans);
+  letter-spacing: -.025em;
 }
-.nc-finder, .nc-scan, .nc-shutter-flash {
-  position: absolute;
-  left: 19px;
-  top: 282px;
-  width: 550px;
-  height: 716px;
-  overflow: hidden;
-  border-radius: 38px;
-}
-.nc-finder { background: #f4f3f1; }
-.nc-phone-glass::after {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  content: "";
-  pointer-events: none;
-  background: linear-gradient(142deg, #fff2 0%, #fff1 14%, transparent 45%);
-}
-.nc-finder-photo {
-  position: absolute;
-  max-width: none;
-  width: 1333px;
-  height: 750px;
-  left: -665px;
-  top: -23px;
-  transform-origin: 943px 403px;
-  transform: translate(var(--finder-x, -36px), var(--finder-y, 26px))
-    rotate(var(--finder-roll, -8deg)) scale(var(--finder-scale, 1.18));
-}
-.nc-finder::after {
-  position: absolute;
-  inset: 0;
-  content: "";
-  background: linear-gradient(#16161842, transparent 30%, transparent 70%, #16161855);
-}
-.nc-camera-ui { position: absolute; inset: 0; }
-.nc-camera-controls {
-  /* The tabs and shutter controls are cropped directly from the MOVVA screenshot. */
-  clip-path: path("M87 331H503a26 26 0 0 1 0 52H87a26 26 0 0 1 0 -52Z M76 895a28 28 0 1 1 0 56a28 28 0 1 1 0 -56Z M282.5 876a46.5 46.5 0 1 1 0 93a46.5 46.5 0 1 1 0 -93Z M439 895a28 28 0 1 1 0 56a28 28 0 1 1 0 -56Z M512 895a28 28 0 1 1 0 56a28 28 0 1 1 0 -56Z");
-}
-.nc-guides { stroke: #fff; stroke-width: 2.8; stroke-linecap: round; }
-.nc-tilt { transition: opacity 100ms linear; }
-.nc-tilt-warning { clip-path: inset(459px 189px 784px 190px round 19px); }
-.nc-tilt-aligned {
-  opacity: 0;
-  clip-path: inset(460px 205px 784px 206px round 18px);
-}
-.nutrition-camera[data-phase="aligned"] .nc-tilt-warning { opacity: 0; }
-.nutrition-camera[data-phase="aligned"] .nc-tilt-aligned { opacity: 1; }
-.nc-shutter-flash { background: white; opacity: var(--flash, 0); }
 
-.nc-scan, .nc-screen-result { display: none; }
-.nutrition-camera[data-phase="processing"] .nc-scan { display: block; }
-.nutrition-camera[data-phase="processing"] .nc-camera-ui, .nutrition-camera[data-phase="results"] .nc-camera-ui { display: none; }
-.nc-scan {
-  background: linear-gradient(transparent 8%, #16181916 45%, #191b1bb9 90%);
+#nutrition .take-title,
+#nutrition:has(#nutrition-take.is-scroll-ready) .copy > :not(.take-title) {
+  display: none;
 }
-.nc-scan-line {
-  position: absolute;
-  left: 7%;
-  right: 7%;
-  top: calc(12% + var(--analysis, 0) * 51%);
-  height: 2px;
-  border-radius: 5px;
-  background: #b7ffca;
-  box-shadow: 0 0 16px #94f9b6;
-}
-.nc-scan-note, .nc-screen-result {
-  position: absolute;
-  left: 45px;
-  right: 45px;
-  border-radius: 27px;
-  background: #171918f2;
-  color: #fff;
-  padding: 23px 26px;
-  font-size: 21px;
-  line-height: 1.3;
-}
-.nc-scan-note { bottom: 30px; left: 24px; right: 24px; }
-.nc-scan-progress {
-  display: block;
-  overflow: hidden;
-  height: 5px;
-  margin-top: 16px;
-  border-radius: 4px;
-  background: #ffffff4a;
-}
-.nc-scan-progress i {
-  display: block;
-  height: 100%;
-  background: #8aebaa;
-  transform-origin: left;
-  transform: scaleX(var(--analysis, 0));
-}
-.nc-screen-result { top: 814px; }
-.nc-screen-result strong { display: block; font-size: 42px; }
-.nc-screen-result small { font-size: 25px; font-weight: 500; }
-.nutrition-camera[data-phase="results"] .nc-screen-result { display: block; }
 
-.nc-results {
-  position: absolute;
-  left: 946px;
-  top: 269px;
-  width: 540px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+#nutrition:has(#nutrition-take.is-scroll-ready) .take-title {
+  display: inline;
 }
-.nc-result-card {
-  --flight-x: 0px;
-  --flight-y: 0px;
-  padding: 18px;
-  border: 1px solid #ffffffca;
-  border-radius: 18px;
-  background: #f8f8f1f0;
-  color: #171b18;
-  box-shadow: 0 10px 28px #101a1630;
-  opacity: var(--card-alpha, 0);
-  transform: translate(calc(var(--flight-x) * (1 - var(--card-rise, 0))), calc(var(--flight-y) * (1 - var(--card-rise, 0))))
-    scale(var(--card-scale, .35));
-}
-.nc-result-energy {
-  --flight-x: -690px;
-  --flight-y: 124px;
-  grid-column: 1 / -1;
-  padding: 22px 26px;
-}
-.nc-result-card:nth-child(2) { --flight-x: -513px; --flight-y: 16px; }
-.nc-result-card:nth-child(3) { --flight-x: -697px; --flight-y: 16px; }
-.nc-result-card:nth-child(4) { --flight-x: -881px; --flight-y: 16px; }
-.nc-result-card span { display: block; font-size: 16px; }
-.nc-result-card strong { display: block; font-size: 37px; line-height: 1.15; letter-spacing: -.04em; }
-.nc-result-card small { font-size: .5em; font-weight: 500; letter-spacing: 0; }
-.nc-result-energy span { font-size: 20px; }
-.nc-result-energy strong { font-size: 76px; }
 
+.enhanced #stage:has(#nutrition-take.is-scroll-ready) .motion-studio {
+  visibility: hidden;
+}
 
-@supports (-webkit-hyphens: none) {
-  .nutrition-camera .nc-phone { transform: matrix(.583,-.0172,-.1641,.61,465.6,43); }
+@media (max-width: 760px) and (orientation: portrait) {
+  #nutrition-take video {
+    object-fit: cover;
+    object-position: calc(18% + 32% * var(--take-video-progress, 0)) center;
+  }
 }
-@media (max-width: 760px) {
-  #nutrition .nutrition-camera { width: 100%; }
-}
-@media (orientation: portrait) and (max-width: 760px) {
-  .nutrition-camera .nc-opening,
-  .enhanced #stage > .nutrition-camera > .nutrition-camera-poster { clip-path: inset(0 832px 0 0); }
-  .nutrition-camera .nc-results { left: 216px; top: 839px; width: 628px; }
-  .nutrition-camera .nc-result-energy { --flight-x: -8px; --flight-y: -448px; }
-  .nutrition-camera .nc-result-card:nth-child(2) { --flight-x: 206px; --flight-y: -570px; }
-  .nutrition-camera .nc-result-card:nth-child(3) { --flight-x: -8px; --flight-y: -570px; }
-  .nutrition-camera .nc-result-card:nth-child(4) { --flight-x: -220px; --flight-y: -570px; }
-  .nutrition-camera .nc-result-card span { font-size: 23px; }
-  .nutrition-camera .nc-result-card strong { font-size: 44px; }
-  .nutrition-camera .nc-result-energy strong { font-size: 72px; }
-}
+
 @media (prefers-reduced-motion: reduce) {
-  .nutrition-camera .nc-finder-photo, .nutrition-camera .nc-result-card { transform: none; }
-  .nutrition-camera .nc-shutter-flash { visibility: hidden; }
+  .enhanced #nutrition-take { display: none; }
 }

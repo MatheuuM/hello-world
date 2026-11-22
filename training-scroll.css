@@ -21,22 +21,6 @@
   height: auto;
   aspect-ratio: 4 / 3;
 }
-.bench-play {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid #e8eddf66;
-  border-radius: 999px;
-  background: #101b15;
-  color: #faf4e8;
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-  pointer-events: auto;
-}
-.bench-play:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .bench-visual canvas {
   position: absolute;
   inset: 0;
@@ -82,7 +66,7 @@
   background: #b4ce9d;
 }
 .bench-active > .motion-studio {
-  opacity: calc(1 - var(--bench-presence, 0) * .91);
+  opacity: calc(1 - var(--bench-presence, 0));
 }
 
 @media (min-width: 761px) {

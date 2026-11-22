@@ -282,6 +282,12 @@ function render(p){
   lastScene=active;
  }
  renderCounters(p);
+ const takeStart = .448, takeEnd = .582;
+ const takeActive = active === 3;
+ window.MOVVA_NUTRITION_TAKE?.render(
+  takeActive ? clamp((target - takeStart) / (takeEnd - takeStart)) : null,
+  target >= .365 && target < .61
+ );
  if(domDevice){
   // CSS3D is the production renderer: skip the unused WebGL matrix fit.
   let ix=0,blend=0,transitions=[[.253,.275],[.421,.443],[.578,.60],[.753,.775]];
@@ -291,7 +297,7 @@ function render(p){
   intro?.visual(p);
   window.MOVVA_CHAPTER_MOTION?.render(p,active);
   window.MOVVA_DOM_DEVICE?.render(p,active,ix,blend);
-  window.MOVVA_TRAINING?.render(p,active);
+  window.MOVVA_TRAINING?.render(p,active,target);
   window.MOVVA_MOTION?.render(p,active,null);
   drawCalls=0;frameCount++;return;
  }
@@ -319,7 +325,7 @@ function render(p){
  draw({geom:o.base,color:[.85,.85,.79],metal:.22,shine:80},panelM,txA,txA,0);
  draw({geom:o.geom,color:[1,1,1],mode:1,rect:o.rect},mm(panelM,mat.translation(0,0,.027)),textures[o.tex],textures[o.tex],0);
  }
- window.MOVVA_TRAINING?.render(p,active);
+ window.MOVVA_TRAINING?.render(p,active,target);
  window.MOVVA_MOTION?.render(p,active,{nx,ny,scale});
  $('.ground-shadow').style.left=(50+nx*50)+'%';$('.ground-shadow').style.opacity=active===6?.3:1;
  $('.halo').style.transform=`translate(-50%,-50%) rotate(${p*110}deg) scale(${1+p*.08})`;

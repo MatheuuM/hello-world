@@ -14,8 +14,6 @@
 /* The same stage coordinates feed the CSS handset and the scroll renderer. */
 .home-page #stage {
   --hero-phone-x: 74%;
-  --hero-drift-x: -3vw;
-  --hero-join-y: calc(var(--svh) * .52);
   --hero-phone-y: calc(var(--svh) * .54);
   --hero-phone-h: min(800px, calc(var(--svh) * .73), 52vw);
   --hero-phone-w: calc(var(--hero-phone-h) * 78 / 163.4);
@@ -72,13 +70,7 @@ html:not(.enhanced) .home-page #stage .hero-surface { opacity: 1; }
   width: calc(var(--hero-phone-h) * 840 / 830);
   aspect-ratio: 840 / 941;
   overflow: hidden;
-  transform-origin: 62.5% 46%;
-  transform:
-    translate(calc(var(--hero-drift-x) * var(--hero-turn, 0)),
-              calc((var(--hero-join-y) - var(--hero-phone-y)) * var(--hero-turn, 0) - 6px * var(--hero-motion, 0)))
-    scaleX(var(--hero-fold, 1)) rotate(calc(-1.2deg * var(--hero-motion, 0) - 9deg * var(--hero-turn, 0)));
 }
-html:not(.enhanced) .hero-product { transform: none; }
 .hero-product-photo {
   position: absolute;
   inset: 0 auto auto 0;
@@ -99,13 +91,55 @@ html:not(.enhanced) .hero-product { transform: none; }
   transform: matrix(.583, -.0172, -.1641, .61, 0, 0);
   border-radius: 13.6% 10.2% 15.3% 15.6% / 7.8% 6.25% 7.5% 8.6%;
 }
-.enhanced .home-page #stage.hero-photo-ended .hero-product { visibility: hidden; }
-.enhanced .home-page #stage.hero-active #css3d-object { scale: var(--hero-unfold, 1) 1; }
-.enhanced .home-page #stage.hero-active :is(#css3d-device, #world) {
+.enhanced .home-page #stage.hero-backdrop {
+  background-color: #151f19 !important;
+}
+.enhanced .home-page #stage.hero-active .hero-surface,
+.enhanced .home-page #stage.hero-active #start {
+  clip-path: inset(0 0 var(--hero-cut, 0%) 0);
+}
+.enhanced .home-page #stage.hero-active .hero-surface { z-index: 6; }
+.enhanced .home-page #stage.hero-active #start { z-index: 7; opacity: 1 !important; }
+.enhanced .home-page #stage.hero-transition :is(#css3d-device, #world) {
   opacity: var(--hero-hardware-alpha, 0) !important;
 }
 .enhanced .home-page #stage.hero-active :is(.ambient, .halo, .ground-shadow, .ghost-word) {
   visibility: hidden;
+}
+/* The screen can hold between headlines, including when the scene is inert. */
+.enhanced #stage.hero-transition #connected {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+.enhanced #stage.hero-transition #connected .copy {
+  opacity: var(--connected-copy-alpha, 0);
+}
+.enhanced #stage.hero-transition #connected .static-shot {
+  opacity: var(--connected-shot-alpha, 1);
+}
+.enhanced #connected .static-shot {
+  display: block;
+  position: absolute;
+  left: 71%;
+  top: 52%;
+  width: auto;
+  height: min(71svh, 635px);
+  aspect-ratio: 589 / 1280;
+  border: 3px solid #1c1c1b;
+  border-radius: 12.5% / 5.75%;
+  box-shadow: 0 0 0 1px #8b898270, 0 24px 52px -22px #020a05a6;
+  transform: translate(-50%, -50%);
+}
+@media (max-width: 760px) and (orientation: portrait) {
+  .enhanced #connected .static-shot {
+    --screen-room: calc(var(--svh) - var(--connected-copy-end) - 83px);
+    left: 50%;
+    top: calc(var(--connected-copy-end) + 18px + var(--screen-room) / 2);
+    height: min(460px, var(--screen-room));
+  }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+  .enhanced #connected .static-shot { height: 65svh; left: 76%; }
 }
 .home-page #start h1 { color: #202821; }
 .home-page #start h1 em { color: #4a6246; }
@@ -155,8 +189,6 @@ html:not(.enhanced) .hero-product { transform: none; }
    --hero-copy-end: clamp(334px, calc(162px + 54vw), 421px);
    --hero-camera-room: max(82px, calc(var(--svh) - var(--hero-copy-end) - 64px));
    --hero-phone-x: 51.8%;
-   --hero-drift-x: -1.8vw;
-   --hero-join-y: var(--hero-phone-y);
    --hero-phone-y: calc(var(--hero-copy-end) + var(--hero-camera-room) * .48);
    --hero-phone-h: min(442px, calc(var(--hero-camera-room) * .96), calc(54vw * 163.4 / 78));
  }
@@ -211,7 +243,6 @@ html:not(.enhanced) .hero-product { transform: none; }
 @media (max-width: 760px) and (max-height: 540px) and (orientation: landscape) {
   .home-page #stage {
     --hero-phone-x: 76%;
-    --hero-drift-x: 0px;
     --hero-phone-y: calc(var(--svh) * .52);
     --hero-phone-h: calc(var(--svh) * .65);
   }
