@@ -3,10 +3,6 @@
 'use strict';
 const stage=document.getElementById('stage'),rig=document.getElementById('css3d-device'),device=document.getElementById('css3d-object');
 const frames=[...rig.querySelectorAll('.css3d-screen')];
-const shellStyle=getComputedStyle(rig);
-const faceInsetRatio=Number(shellStyle.getPropertyValue('--shell-face-inset'));
-const glassInsetX=parseFloat(shellStyle.getPropertyValue('--chapter-glass-inset-x'))/100;
-const glassInsetY=parseFloat(shellStyle.getPropertyValue('--chapter-glass-inset-y'))/100;
 const firstScreen=frames[0];
 if(firstScreen&&!firstScreen.naturalWidth){
  firstScreen.style.visibility='hidden';
@@ -222,12 +218,13 @@ function render(p,active,ix,blend){
 // camera pose. It is computed from the same transforms, with no per-frame
 // getBoundingClientRect on the hundreds of shell faces.
 function projectScreenPoint(u,v){
- if(!last.pose||!Number.isFinite(last.x)||!Number.isFinite(last.h))return null;
+ const aperture=window.MOVVA_SHELL?.frontAperture;
+ if(!aperture||!last.pose||!Number.isFinite(last.x)||!Number.isFinite(last.h))return null;
  const mobile=last.mode==='compact';
  const width=mobile?BASE_WIDTH:last.w,height=mobile?BASE_HEIGHT:last.h;
- const faceInset=width*faceInsetRatio;
- const glassWidth=(width-2*faceInset)*(1-2*glassInsetX);
- const glassHeight=(height-2*faceInset)*(1-2*glassInsetY);
+ const faceInset=width*aperture.faceInset;
+ const glassWidth=(width-2*faceInset)*(1-2*aperture.x);
+ const glassHeight=(height-2*faceInset)*(1-2*aperture.y);
  const x0=(u-.5)*glassWidth,y0=(v-.5)*glassHeight;
  const z0=width*.056;
  const [ry,rx,rz]=last.pose.map(angle=>angle*Math.PI/180);

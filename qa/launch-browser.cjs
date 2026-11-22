@@ -242,6 +242,17 @@ async function verifyChapterPhone(page, screen) {
   assert.ok(bezel.includes('/assets/react-phone-chapter-bezel.webp'));
   assert.equal(await rig.locator('.css3d-unibody').isVisible(), false);
   assert.equal(await rig.locator('.css3d-control').first().isVisible(), false);
+  const error = await rig.locator('.css3d-display').evaluate(display => {
+    const marker = document.createElement('i');
+    marker.style.cssText = 'position:absolute;left:53%;top:41%;width:0;height:0';
+    display.append(marker);
+    const point = marker.getBoundingClientRect();
+    marker.remove();
+    const stage = document.querySelector('#stage').getBoundingClientRect();
+    const projected = window.MOVVA_DOM_DEVICE.projectScreenPoint(.53, .41);
+    return Math.hypot(point.x - stage.x - projected.x, point.y - stage.y - projected.y);
+  });
+  assert.ok(error < 1, 'Origem projetada do cartão fora do vidro em ' + screen + ' (' + error + ' px).');
 }
 
 async function verifyBench(page, label, capture, useWheel) {

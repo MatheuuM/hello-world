@@ -20,6 +20,10 @@ const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=compact?10:14;
 // Each tangent is sized to the true contour; excessive strip overlap caused
 // visibly folded corners when CSS transformed the individual faces.
 const FACE=.056,WALL=.038,INSET=.0092;
+const frontAperture={faceInset:INSET,x:.0355,y:.0155};
+rig.style.setProperty('--shell-face-inset',String(frontAperture.faceInset));
+rig.style.setProperty('--chapter-glass-inset-x',(frontAperture.x*100)+'%');
+rig.style.setProperty('--chapter-glass-inset-y',(frontAperture.y*100)+'%');
 const STRAIGHT_OVERLAP=.16,CURVE_OVERLAP=.055,DEPTH_OVERLAP=.02;
 const contour=[],pt=(x,y)=>contour.push({x,y});
 pt(-W/2+RX,-H/2);pt(W/2-RX,-H/2);
@@ -204,7 +208,7 @@ function setPose(ry,rx,rz){
  profile.style.transform='translateX(-50%) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
-window.MOVVA_SHELL={setSize,setPose,isWebKit,compact,legacyGeometry,fastEdgeCount:compact?4:0,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
+window.MOVVA_SHELL={setSize,setPose,frontAperture,isWebKit,compact,legacyGeometry,fastEdgeCount:compact?4:0,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };
