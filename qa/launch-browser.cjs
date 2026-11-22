@@ -59,8 +59,9 @@ async function verifyNutrition(page, useWheel) {
 
   const hasSource = await video.evaluate(el => Boolean(el.dataset.src || el.getAttribute('src') || el.querySelector('source[src]')));
   if (!hasSource) {
-    assert.equal(await take.isVisible(), false);
-    assert.equal(await chapter.locator('.default-title').isVisible(), true);
+    assert.equal(await take.evaluate(el => getComputedStyle(el).opacity), '0');
+    assert.equal(await chapter.locator('h2:not(.take-title)').isVisible(), true);
+    assert.equal(await chapter.locator('.nutrition-local').isVisible(), false);
     assert.equal(await chapter.locator('.description').isVisible(), true);
     return;
   }

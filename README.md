@@ -2,6 +2,8 @@
 
 Site institucional estático em português. A rolagem nativa conduz sete capítulos. Na abertura, a foto de estúdio mostra a tela Início do app. O supino avança e retrocede com a rolagem. Em Nutrição, a página mostra a tela do app. A cena pode reproduzir uma tomada do enquadramento pela posição da rolagem quando o vídeo estiver configurado. A galeria após os capítulos reúne capturas atuais do aplicativo. O WebGL experimental fica disponível em desktop via `?renderer=webgl`.
 
+A opção `/?video=local#nutrition` abre uma tomada de teste escolhida no próprio navegador. O arquivo permanece local e a rolagem controla a posição do vídeo.
+
 ## Acessibilidade
 
 A versão `/?visual=estatico` mostra os sete capítulos sem animação por rolagem. O conteúdo também é legível sem JavaScript. O modo padrão mantém o 3D e respeita a preferência do sistema por movimento reduzido ao pular para um capítulo.

@@ -95,7 +95,7 @@
 }
 
 #nutrition .take-title,
-#nutrition:has(#nutrition-take.is-scroll-ready) .copy > :not(.take-title) {
+#nutrition:has(#nutrition-take.is-scroll-ready) .copy > :not(.take-title, .nutrition-local) {
   display: none;
 }
 
@@ -116,4 +116,74 @@
 
 @media (prefers-reduced-motion: reduce) {
   .enhanced #nutrition-take { display: none; }
+}
+
+#nutrition:has(.nutrition-local:not([hidden])) .copy > :not(.take-title, .nutrition-local) {
+  display: none;
+}
+
+#nutrition:has(.nutrition-local:not([hidden])) .take-title {
+  display: block;
+}
+
+.nutrition-local:not([hidden]) {
+  position: relative;
+  pointer-events: auto;
+  margin-top: 18px;
+}
+
+.nutrition-local label {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid #28352b;
+  border-radius: 24px;
+  background: #28352b;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nutrition-local input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}
+
+.nutrition-local:focus-within label {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.nutrition-local-status {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .nutrition-local {
+  margin-top: 0;
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .nutrition-local label {
+  padding-inline: 11px;
+  background: #fff;
+  color: #28352b;
+  font-size: 12px;
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .nutrition-local-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
