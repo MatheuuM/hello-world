@@ -248,9 +248,11 @@ async function verifyChapterPhone(page, screen) {
     display.append(marker);
     const point = marker.getBoundingClientRect();
     marker.remove();
-    const stage = document.querySelector('#stage').getBoundingClientRect();
+    const stage = document.querySelector('#stage');
+    const bounds = stage.getBoundingClientRect();
     const projected = window.MOVVA_DOM_DEVICE.projectScreenPoint(.53, .41);
-    return Math.hypot(point.x - stage.x - projected.x, point.y - stage.y - projected.y);
+    return Math.hypot(point.x - bounds.x + stage.scrollLeft - projected.x,
+      point.y - bounds.y + stage.scrollTop - projected.y);
   });
   assert.ok(error < 1, 'Origem projetada do cartão fora do vidro em ' + screen + ' (' + error + ' px).');
 }
