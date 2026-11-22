@@ -17,7 +17,7 @@ const PRO_MAX_ASPECT=78/163.4;
 // Avoid invalidating the entire shell's calc()-driven geometry when its
 // width and height did not actually change.
 const BASE_WIDTH=170,BASE_HEIGHT=BASE_WIDTH/PRO_MAX_ASPECT;
-const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null,mode:null,rigTransform:null,pose:null,dolly:1};
+const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,faceOn:null,opacity:null,mode:null,rigTransform:null,pose:null,dolly:1};
 const metrics={renders:0,sizeWrites:0,scaleWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
@@ -199,6 +199,11 @@ function render(p,active,ix,blend){
  }
  const degrees=((-safeRy%360)+360)%360;
  const rear=degrees>92&&degrees<268;
+ const faceOn=active>=2&&(degrees<45||degrees>315);
+ if(faceOn!==last.faceOn){
+  rig.classList.toggle('css3d-face-on',faceOn);
+  last.faceOn=faceOn;
+ }
  if(rear!==last.rear){
   rig.querySelector('.css3d-front').style.visibility=rear?'hidden':'visible';
   rig.querySelector('.css3d-back').style.visibility=rear?'visible':'hidden';
@@ -213,11 +218,14 @@ function render(p,active,ix,blend){
 // camera pose. It is computed from the same transforms, with no per-frame
 // getBoundingClientRect on the hundreds of shell faces.
 function projectScreenPoint(u,v){
- if(!last.pose||!Number.isFinite(last.x)||!Number.isFinite(last.h))return null;
+ const aperture=window.MOVVA_SHELL?.frontAperture;
+ if(!aperture||!last.pose||!Number.isFinite(last.x)||!Number.isFinite(last.h))return null;
  const mobile=last.mode==='compact';
  const width=mobile?BASE_WIDTH:last.w,height=mobile?BASE_HEIGHT:last.h;
- const frameInset=width*(.0092+.021);
- const x0=(u-.5)*(width-2*frameInset),y0=(v-.5)*(height-2*frameInset);
+ const faceInset=width*aperture.faceInset;
+ const glassWidth=(width-2*faceInset)*(1-2*aperture.x);
+ const glassHeight=(height-2*faceInset)*(1-2*aperture.y);
+ const x0=(u-.5)*glassWidth,y0=(v-.5)*glassHeight;
  const z0=width*.056;
  const [ry,rx,rz]=last.pose.map(angle=>angle*Math.PI/180);
  const cy=Math.cos(ry),sy=Math.sin(ry);

@@ -1,11 +1,17 @@
 /* MOVVA Stage 1A — continuous rounded phone shell (geometric prototype). */
-.css3d-device{--shell-w:170px;--shell-h:364.026px}
+.css3d-device{
+ --shell-w:170px;
+ --shell-h:364.026px;
+ --shell-face-inset:.0092;
+ --chapter-glass-inset-x:3.55%;
+ --chapter-glass-inset-y:1.55%;
+}
 .css3d-unibody{position:absolute;inset:0;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;pointer-events:none}
 .css3d-shell-face{position:absolute;left:50%;top:50%;margin:0;display:block;box-sizing:border-box;transform-origin:0 0;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .css3d-shell-face--wall{background:linear-gradient(0deg,#333235 0%,#777579 16%,#d0cecc 48%,#918e8c 82%,#414042 100%)}
 .css3d-shell-face--front{background:linear-gradient(0deg,#444345,#dbd9d7 42%,#858386 100%)}
 .css3d-shell-face--rear{background:linear-gradient(0deg,#39393b,#c4c1bd 45%,#666467 100%)}
-.css3d-front,.css3d-back{inset:calc(var(--shell-w) * .0092);border-radius:12.8% / 5.92%;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.css3d-front,.css3d-back{inset:calc(var(--shell-w) * var(--shell-face-inset));border-radius:12.8% / 5.92%;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .css3d-front{border:calc(var(--shell-w) * .027) solid #434b44;transform:translateZ(calc(var(--shell-w) * .056));box-shadow:inset 0 0 0 1px rgba(255,255,255,.36)}
 .css3d-back{border:calc(var(--shell-w) * .012) solid #7b8378;transform:rotateY(180deg) translateZ(calc(var(--shell-w) * .056));box-shadow:inset 0 0 0 1.2px rgba(255,255,255,.21)}
 .css3d-display{border-radius:9.4% / 4.7%}
@@ -367,7 +373,7 @@
  }
  .css3d-fast-edge--left,.css3d-fast-edge--right{
    width:calc(var(--shell-w) * .112);
-   height:calc(var(--shell-h) * .981);
+   height:calc(var(--shell-h) * .865);
    border-radius:calc(var(--shell-w) * .042);
    background:linear-gradient(90deg,#323135 0%,#858384 19%,#d5d2cf 49%,#898687 79%,#3a383b 100%);
  }
@@ -378,7 +384,7 @@
    transform:translate(-50%,-50%) translateX(calc(var(--shell-w) * .490)) rotateY(90deg);
  }
  .css3d-fast-edge--top,.css3d-fast-edge--bottom{
-   width:calc(var(--shell-w) * .80);
+   width:calc(var(--shell-w) * .74);
    height:calc(var(--shell-w) * .112);
    border-radius:calc(var(--shell-w) * .015);
    background:linear-gradient(180deg,#39383b 0%,#aaa7a5 40%,#d8d6d2 53%,#424144 100%);
@@ -393,4 +399,34 @@
    filter:none!important;
    background:radial-gradient(ellipse,rgba(76,73,57,.27),transparent 72%);
  }
+}
+
+/* The opening mockup's front bezel, with the original app screenshots beneath
+   its transparent display. The glass insets also drive card projection. */
+.css3d-front{
+ border:0;
+ border-radius:16% / 7.8%;
+ overflow:visible;
+ transform-style:flat;
+ background:#101012;
+ box-shadow:none;
+}
+.css3d-front::after{
+ content:"";
+ position:absolute;
+ inset:0;
+ z-index:3;
+ background:url('/assets/react-phone-chapter-bezel.webp') center / 100% 100% no-repeat;
+ pointer-events:none;
+}
+.css3d-front .css3d-display,.css3d-front .css3d-glint{
+ inset:var(--chapter-glass-inset-y) var(--chapter-glass-inset-x);
+ border-radius:13.5% / 6.4%;
+}
+.css3d-front .css3d-island{display:none}
+
+/* Front-facing chapters use a single outline. Keep the extrusion and controls
+   available in profile, where the phone's physical depth is visible. */
+.css3d-face-on :is(.css3d-unibody,.css3d-control,.css3d-antenna,.css3d-port,.css3d-speakers){
+ visibility:hidden;
 }
