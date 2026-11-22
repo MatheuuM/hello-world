@@ -1,4 +1,5 @@
 .hero-react-phone,
+.hero-react-frames,
 .hero-react-poster {
   position: absolute;
   top: var(--hero-phone-y);
@@ -14,16 +15,22 @@
 }
 
 /* Preserve the handset and its shadow at that same size while WebGL starts. */
+.hero-react-frames,
 .hero-react-poster {
   width: auto;
   max-width: none;
 }
 
-.enhanced .hero-react-phone.is-ready {
+.hero-react-frames {
+  opacity: 0;
+}
+
+.enhanced .hero-react-phone.is-ready,
+.enhanced .hero-react-frames.is-frame-ready {
   opacity: 1;
 }
 
-.enhanced .hero-surface:has(> .hero-react-phone.is-ready) > .hero-react-poster {
+.enhanced .hero-surface:has(> .hero-react-phone.is-ready, > .hero-react-frames.is-frame-ready) > .hero-react-poster {
   visibility: hidden;
 }
 
@@ -41,6 +48,7 @@
 
 @media (max-width: 760px) and (orientation: portrait) {
   .hero-react-phone,
+  .hero-react-frames,
   .hero-react-poster {
     height: calc(var(--hero-phone-h) * 1.12);
   }

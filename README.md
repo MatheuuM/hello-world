@@ -1,6 +1,6 @@
 # MOVVA Wellness
 
-Site institucional estático em português. A rolagem nativa conduz sete capítulos. Na abertura, o componente IPhoneMockup mostra a tela Início do app. A posição da rolagem controla o ângulo do aparelho. O supino avança e retrocede com a rolagem. Em Nutrição, a página mostra a tela do app. A cena pode reproduzir uma tomada do enquadramento pela posição da rolagem quando o vídeo estiver configurado. A galeria após os capítulos reúne capturas atuais do aplicativo. O WebGL experimental fica disponível em desktop via `?renderer=webgl`.
+Site institucional estático em português. A rolagem nativa conduz sete capítulos. Na abertura, o componente IPhoneMockup mostra a tela Início do app. A rolagem controla o ângulo do aparelho, que permanece em cena até o fim de Tudo conectado. O navegador recorre a quadros do mesmo modelo quando o WebGL fica indisponível. O supino avança e retrocede com a rolagem. Em Nutrição, a página mostra a tela do app. A cena pode reproduzir uma tomada do enquadramento pela posição da rolagem quando o vídeo estiver configurado. O WebGL experimental fica disponível em desktop via `?renderer=webgl`.
 
 A opção `/?video=local#nutrition` abre uma tomada de teste escolhida no próprio navegador. O arquivo permanece local e a rolagem controla a posição do vídeo.
 

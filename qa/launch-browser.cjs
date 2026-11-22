@@ -85,39 +85,81 @@ async function verifyOpening(page, useWheel, capture) {
     probe?.getExtension('WEBGL_lose_context')?.loseContext();
     return Boolean(probe);
   });
-  if (supported) {
-    await page.locator('#react-phone.is-ready canvas').waitFor({ timeout: 30000 });
-    assert.equal(await page.locator('.hero-react-poster').isVisible(), false);
-    await capture();
-    const angle = () => handset.evaluate(el => Number(el.dataset.yaw));
-    const firstAngle = await angle();
-    const bounds = await handset.boundingBox();
-    if (useWheel) await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-    // Locator screenshots may scroll a partially clipped handset into view.
-    // Cropping the viewport preserves the actual reading position in landscape.
-    const image = () => page.screenshot({ clip: bounds, scale: 'css' });
-    const firstImage = await image();
-    await verifyScreenPixels(page, firstImage);
-    await scrollToProgress(page, .075, useWheel);
-    await page.waitForFunction(first => Number(document.querySelector('#react-phone').dataset.yaw) > first + 5, firstAngle);
-    const forwardAngle = await angle();
-    const forwardImage = await image();
-    assert.equal(forwardImage.equals(firstImage), false, 'O celular deve girar dentro da abertura.');
-    await page.waitForTimeout(600);
-    assert.equal(await angle(), forwardAngle, 'O ângulo deve ficar parado até a próxima rolagem.');
-    assert.ok(forwardImage.equals(await image()), 'O celular se moveu sem rolagem.');
-    await scrollToProgress(page, 0, useWheel);
-    await page.waitForFunction(first => Math.abs(Number(document.querySelector('#react-phone').dataset.yaw) - first) < .05, firstAngle);
-    assert.ok(firstImage.equals(await image()), 'Voltar ao início deve recuperar o mesmo enquadramento.');
-  } else {
-    assert.equal(await page.locator('#react-phone.is-ready').count(), 0);
-    assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
-    await capture();
-    const first = await page.locator('.hero-react-poster').boundingBox();
-    await scrollToProgress(page, .075, useWheel);
-    const later = await page.locator('.hero-react-poster').boundingBox();
-    assert.ok(Math.abs(later.width - first.width) < 1 && Math.abs(later.height - first.height) < 1);
+  const selector = supported ? '#react-phone.is-ready canvas' : '#react-phone-frames.is-frame-ready';
+  const display = page.locator(selector);
+  await display.waitFor({ timeout: 30000 });
+  assert.equal(await page.locator('.hero-react-poster').isVisible(), false);
+  await capture();
+  const phase = supported
+    ? () => handset.evaluate(el => Number(el.dataset.yaw))
+    : () => display.evaluate(el => Number(el.dataset.frame));
+  const firstPhase = await phase();
+  const bounds = await display.boundingBox();
+  if (useWheel) await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  // Locator screenshots may scroll a partially clipped handset into view.
+  // Cropping the viewport preserves the actual reading position in landscape.
+  const image = () => page.screenshot({ clip: bounds, scale: 'css' });
+  const firstImage = await image();
+  await verifyScreenPixels(page, firstImage);
+  const shortScroll = await page.evaluate(() => 150 /
+    (document.querySelector('#experience').offsetHeight - document.querySelector('#stage').clientHeight));
+  await scrollToProgress(page, shortScroll, useWheel);
+  const forwardPhase = await phase();
+  assert.ok(forwardPhase - firstPhase >= (supported ? 8 : 3), 'Uma rolagem de 150 px deve girar o celular.');
+  const forwardImage = await image();
+  assert.equal(forwardImage.equals(firstImage), false, 'O celular deve girar dentro da abertura.');
+  await page.waitForTimeout(600);
+  assert.equal(await phase(), forwardPhase, 'O celular deve ficar parado até a próxima rolagem.');
+  assert.ok(forwardImage.equals(await image()), 'O celular se moveu sem rolagem.');
+  await scrollToProgress(page, 0, useWheel);
+  assert.equal(await phase(), firstPhase);
+  assert.ok(firstImage.equals(await image()), 'Voltar ao início deve recuperar o mesmo enquadramento.');
+  return { display, node: await display.elementHandle() };
+}
+
+async function backdropLuminance(page) {
+  const { height } = page.viewportSize();
+  const strip = await page.screenshot({
+    clip: { x: 2, y: Math.round(height * .2), width: 4, height: Math.round(height * .55) }, scale: 'css'
+  });
+  return page.evaluate(async encoded => {
+    const image = new Image();
+    image.src = 'data:image/png;base64,' + encoded;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 9;
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0, 1, 9);
+    const { data } = context.getImageData(0, 0, 1, 9);
+    const samples = [];
+    for (let i = 0; i < data.length; i += 4) {
+      samples.push((data[i] + data[i + 1] + data[i + 2]) / 3);
+    }
+    return samples;
+  }, strip.toString('base64'));
+}
+
+async function verifyOpeningTransition(page, useWheel) {
+  const levels = [];
+  for (const progress of [.08, .103, .12, .14, .16, .18]) {
+    await scrollToProgress(page, progress, useWheel);
+    const samples = await backdropLuminance(page);
+    assert.ok(Math.max(...samples) - Math.min(...samples) < 24,
+      'Uma borda horizontal dividiu o fundo da abertura em ' + progress);
+    levels.push(samples[4]);
+    await page.locator('#start, #start .copy, #start h1, .hero-surface, #connected, #connected .copy, #connected h2')
+      .evaluateAll(elements => {
+        for (const element of elements) {
+          if (getComputedStyle(element).clipPath !== 'none') throw new Error('Recorte no título ou aparelho: ' + element.className);
+        }
+      });
+    assert.ok(await page.locator('.hero-surface').evaluate(el => +getComputedStyle(el).opacity > .95),
+      'O aparelho precisa ficar visível na passagem para Tudo conectado.');
   }
+  assert.ok(levels[0] - levels.at(-1) > 100, 'O fundo deveria passar de branco a verde-escuro.');
+  assert.ok(levels.slice(1, -1).filter(value => value < levels[0] - 15 && value > levels.at(-1) + 15).length >= 2,
+    'A passagem deve incluir tons intermediários.');
 }
 
 async function verifyNutrition(page, useWheel) {
@@ -220,17 +262,18 @@ async function test(browser, engine, [label, viewport]) {
     await settled(page, 0);
     await page.evaluate(() => document.fonts.ready);
     assert.equal(await page.locator('.scene').count(), 7);
+    assert.equal(await page.locator('#telas').count(), 0);
+    assert.equal(await page.getByRole('heading', { name: 'Por dentro do app', exact: true, includeHidden: true }).count(), 0);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), 'https://www.movvawellness.com.br/');
     assert.equal(await page.locator('meta[name=robots]').count(), 0);
     const screenshot = n => page.screenshot({ path: path.join(output, n + '.jpg'), quality: 86, scale: 'css' });
-    await verifyImage(page, '.hero-react-poster', 907, 907);
+    await verifyImage(page, '.hero-react-poster', 672, 672);
     assert.ok(await page.locator('.hero-surface').evaluate(el => Number(getComputedStyle(el).opacity) > .95));
     const handsetOpacity = () => page.locator('#css3d-device').evaluate(el => +getComputedStyle(el).opacity);
     assert.ok(await handsetOpacity() < .05);
-    await verifyOpening(page, engine !== 'webkit' || !viewport.hasTouch, () => screenshot(engine + '-abertura-' + label));
-    await page.evaluate(() => window.__MOVVA_QA__.setProgress(.115));
-    await settled(page, .115);
+    const opening = await verifyOpening(page, engine !== 'webkit' || !viewport.hasTouch, () => screenshot(engine + '-abertura-' + label));
+    await verifyOpeningTransition(page, engine !== 'webkit' || !viewport.hasTouch);
     assert.ok(await handsetOpacity() < .05, 'O aparelho giratório apareceu na transição de abertura');
     await page.evaluate(() => window.__MOVVA_QA__.setProgress(0));
     await settled(page, 0);
@@ -250,7 +293,9 @@ async function test(browser, engine, [label, viewport]) {
     await settled(page, .18);
     assert.equal(new URL(page.url()).hash, '#connected');
     assert.ok(await handsetOpacity() < .05, 'O aparelho giratório apareceu em Tudo conectado');
-    assert.equal(await page.locator('#connected .static-shot').isVisible(), true);
+    assert.equal(await page.locator('#connected .static-shot').isVisible(), false);
+    assert.equal(await opening.display.evaluate((el, initial) => el === initial, opening.node), true);
+    await verifyScreenPixels(page, await page.screenshot({ clip: await opening.display.boundingBox(), scale: 'css' }));
     await verifyImage(page, '#connected .static-shot', 589, 1280);
     await page.locator('.chapter-dots a[href="#training"]').click();
     await settled(page, .33);
@@ -315,7 +360,7 @@ async function test(browser, engine, [label, viewport]) {
     }
     if (label === 'iphone') {
       await page.emulateMedia({ reducedMotion: 'reduce' });
-      await page.locator('#react-phone.is-ready').waitFor({ state: 'detached' });
+      await page.locator('#react-phone.is-ready, #react-phone-frames.is-frame-ready').waitFor({ state: 'detached' });
       assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
       assert.equal(await page.evaluate(() => window.MOVVA_3D_STATUS().active), true);
       await page.evaluate(() => window.__MOVVA_QA__.setProgress(.375));
@@ -323,7 +368,7 @@ async function test(browser, engine, [label, viewport]) {
       await verifyBenchPoster(page);
       await page.goto(origin + '/?visual=estatico#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('html.enhanced').count(), 0);
-      assert.equal(await page.locator('#react-phone canvas').count(), 0);
+      assert.equal(await page.locator('#react-phone canvas, #react-phone-frames.is-frame-ready').count(), 0);
       assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
       assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
       await verifyImage(page, '#nutrition .static-shot', 589, 1280);
@@ -339,6 +384,30 @@ async function test(browser, engine, [label, viewport]) {
   } finally { await context.close(); }
 }
 
+async function verifyOpeningWithoutWebGL(browser, engine) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  try {
+    await context.addInitScript(() => {
+      const getContext = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function(type, ...args) {
+        return /webgl/i.test(type) ? null : getContext.call(this, type, ...args);
+      };
+    });
+    const page = await context.newPage();
+    await page.goto(origin);
+    await settled(page, 0);
+    const opening = await verifyOpening(page, true, () => Promise.resolve());
+    assert.equal(await opening.display.getAttribute('id'), 'react-phone-frames');
+    await scrollToProgress(page, .18, true);
+    assert.equal(await opening.display.evaluate((el, first) => el === first, opening.node), true);
+    await verifyScreenPixels(page, await page.screenshot({ clip: await opening.display.boundingBox(), scale: 'css' }));
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.locator('#react-phone-frames.is-frame-ready').waitFor({ state: 'detached' });
+    assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
+    console.log(engine + ' abertura sem WebGL e movimento reduzido OK');
+  } finally { await context.close(); }
+}
+
 (async () => {
   await Promise.all([['chromium', chromium], ['webkit', webkit]].map(async ([engine, type]) => {
     if (process.env.QA_ENGINE && engine !== process.env.QA_ENGINE) return;
@@ -347,11 +416,15 @@ async function test(browser, engine, [label, viewport]) {
       for (const viewport of viewports) {
         if (!process.env.QA_VIEWPORT || viewport[0] === process.env.QA_VIEWPORT) await test(browser, engine, viewport);
       }
+      await verifyOpeningWithoutWebGL(browser, engine);
       const context = await browser.newContext({ ...devices['iPhone 15'], javaScriptEnabled: false });
       const page = await context.newPage();
       await page.goto(origin + '/#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('#nutrition').isVisible(), true);
       assert.equal(await page.locator('.static-shot').count(), 6);
+      assert.equal(await page.locator('#telas').count(), 0);
+      assert.equal(await page.locator('#react-phone.is-ready, #react-phone-frames.is-frame-ready').count(), 0);
+      assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
       assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
       await verifyImage(page, '#nutrition .static-shot', 589, 1280);
       assert.equal(await page.locator('#nutrition-take').isVisible(), false);

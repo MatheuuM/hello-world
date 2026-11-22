@@ -5,14 +5,10 @@ import { IPhoneMockup } from 'react-3d-mockups';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { CanvasTexture, MeshBasicMaterial, SRGBColorSpace } from 'three';
+import { PHONE_MOTION_END, PHONE_TURN_END, phonePoseAt, readPhoneProgress } from './phone-motion.js';
 
 const screenUrl = '/assets/home.webp';
-const openingPortion = .105;
 const toRadians = Math.PI / 180;
-
-function yawAt(progress) {
-  return -25 + 22 * progress;
-}
 
 function mountScreenTexture(model, image, cutout) {
   let panel;
@@ -89,26 +85,30 @@ class PhoneFallback extends Component {
 }
 
 function OpeningPhone({ mount, experience, stage }) {
-  const [progress, setProgress] = useState(0);
+  const [turnProgress, setTurnProgress] = useState(() => Math.min(readPhoneProgress(experience, stage), PHONE_TURN_END));
   const phone = useRef(null);
   const screenImage = useRef(null);
   const renderer = useRef(null);
 
   useLayoutEffect(() => {
-    const sync = trigger => {
-      const next = trigger.progress;
-      mount.dataset.progress = next.toFixed(5);
-      mount.dataset.yaw = yawAt(next).toFixed(3);
-      setProgress(next);
+    const sync = () => {
+      const progress = Math.min(readPhoneProgress(experience, stage), PHONE_MOTION_END);
+      const pose = phonePoseAt(progress);
+      mount.dataset.progress = (progress / PHONE_MOTION_END).toFixed(5);
+      mount.dataset.pageProgress = progress.toFixed(5);
+      mount.dataset.yaw = pose.yaw.toFixed(3);
+      mount.dataset.pitch = pose.pitch.toFixed(3);
+      mount.dataset.roll = pose.roll.toFixed(3);
+      setTurnProgress(Math.min(progress, PHONE_TURN_END));
     };
     const trigger = ScrollTrigger.create({
       trigger: experience,
       start: 'top top',
-      end: () => '+=' + Math.max(1, (experience.offsetHeight - stage.clientHeight) * openingPortion),
+      end: () => '+=' + Math.max(1, (experience.offsetHeight - stage.clientHeight) * PHONE_MOTION_END),
       onUpdate: sync,
       onRefresh: sync,
     });
-    sync(trigger);
+    sync();
 
     const observer = new ResizeObserver(() => trigger.refresh());
     observer.observe(experience);
@@ -117,7 +117,10 @@ function OpeningPhone({ mount, experience, stage }) {
       observer.disconnect();
       trigger.kill();
       delete mount.dataset.progress;
+      delete mount.dataset.pageProgress;
       delete mount.dataset.yaw;
+      delete mount.dataset.pitch;
+      delete mount.dataset.roll;
     };
   }, [mount, experience, stage]);
 
@@ -169,6 +172,7 @@ function OpeningPhone({ mount, experience, stage }) {
     };
   }, []);
 
+  const { pitch, yaw, roll } = phonePoseAt(turnProgress);
   return (
     <IPhoneMockup
       ref={phone}
@@ -182,11 +186,7 @@ function OpeningPhone({ mount, experience, stage }) {
       frameloop="demand"
       dpr={[1, 1.75]}
       resolution={589}
-      rotation={[
-        (5 - 4 * progress) * toRadians,
-        yawAt(progress) * toRadians,
-        (-3 + 2 * progress) * toRadians,
-      ]}
+      rotation={[pitch * toRadians, yaw * toRadians, roll * toRadians]}
       onCreated={onCreated}
       label="iPhone 17 Pro Max com o aplicativo MOVVA"
     >

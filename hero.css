@@ -46,7 +46,7 @@ html:not(.enhanced) .home-page #start .static-shot {
   border: 0;
   clip-path: inset(50%);
 }
-/* White studio behind the phone and its first-frame poster. */
+/* One studio layer carries the handset through Início and Tudo conectado. */
 .home-page #stage .hero-surface {
   position: absolute;
   display: block;
@@ -62,55 +62,34 @@ html:not(.enhanced) .home-page #start .static-shot {
   transform: none;
 }
 html:not(.enhanced) .home-page #stage .hero-surface { opacity: 1; }
-.enhanced .home-page #stage.hero-backdrop {
-  background-color: #151f19 !important;
+.enhanced .home-page #stage .hero-surface {
+  z-index: 4;
+  background: transparent;
 }
-.enhanced .home-page #stage.hero-active .hero-surface,
-.enhanced .home-page #stage.hero-active #start {
-  clip-path: inset(0 0 var(--hero-cut, 0%) 0);
-}
-.enhanced .home-page #stage.hero-active .hero-surface { z-index: 6; }
-.enhanced .home-page #stage.hero-active #start { z-index: 7; opacity: 1 !important; }
 .enhanced .home-page #stage.hero-transition :is(#css3d-device, #world) {
   opacity: var(--hero-hardware-alpha, 0) !important;
 }
 .enhanced .home-page #stage.hero-active :is(.ambient, .halo, .ground-shadow, .ghost-word) {
   visibility: hidden;
 }
-/* The screen can hold between headlines, including when the scene is inert. */
-.enhanced #stage.hero-transition #connected {
+/* Stagger the headlines so they never compete in the same text column. */
+.enhanced #stage.hero-transition :is(#start, #connected) {
   visibility: visible !important;
   opacity: 1 !important;
+  transform: none !important;
+}
+.enhanced #stage.hero-transition #start .copy {
+  visibility: var(--hero-opening-copy-visibility, visible);
+  opacity: var(--hero-opening-copy-alpha, 1);
+  translate: 0 var(--hero-opening-copy-y, 0px);
 }
 .enhanced #stage.hero-transition #connected .copy {
+  visibility: var(--connected-copy-visibility, hidden);
   opacity: var(--connected-copy-alpha, 0);
+  translate: 0 var(--connected-copy-y, 0px);
 }
 .enhanced #stage.hero-transition #connected .static-shot {
-  opacity: var(--connected-shot-alpha, 1);
-}
-.enhanced #connected .static-shot {
-  display: block;
-  position: absolute;
-  left: 71%;
-  top: 52%;
-  width: auto;
-  height: min(71svh, 635px);
-  aspect-ratio: 589 / 1280;
-  border: 3px solid #1c1c1b;
-  border-radius: 12.5% / 5.75%;
-  box-shadow: 0 0 0 1px #8b898270, 0 24px 52px -22px #020a05a6;
-  transform: translate(-50%, -50%);
-}
-@media (max-width: 760px) and (orientation: portrait) {
-  .enhanced #connected .static-shot {
-    --screen-room: calc(var(--svh) - var(--connected-copy-end) - 83px);
-    left: 50%;
-    top: calc(var(--connected-copy-end) + 18px + var(--screen-room) / 2);
-    height: min(460px, var(--screen-room));
-  }
-}
-@media (max-height: 540px) and (orientation: landscape) {
-  .enhanced #connected .static-shot { height: 65svh; left: 76%; }
+  display: none;
 }
 .home-page #start h1 { color: #202821; }
 .home-page #start h1 em { color: #4a6246; }
@@ -157,7 +136,9 @@ html:not(.enhanced) .home-page #stage .hero-surface { opacity: 1; }
  .home-page #start { display: block; padding-top: 101px; }
  .home-page #start .copy { width: 100%; padding: 0; transform: none; }
  .home-page #stage {
-   --hero-copy-end: clamp(334px, calc(162px + 54vw), 421px);
+   --hero-open-copy-end: clamp(334px, calc(162px + 54vw), 421px);
+   --hero-connected-copy-room: max(0px, calc(var(--connected-copy-end, 0px) + 17px - var(--hero-open-copy-end)));
+   --hero-copy-end: calc(var(--hero-open-copy-end) + var(--hero-connected-copy-room) * var(--hero-connected-mix, 0));
    --hero-camera-room: max(82px, calc(var(--svh) - var(--hero-copy-end) - 64px));
    --hero-phone-x: 51.8%;
    --hero-phone-y: calc(var(--hero-copy-end) + var(--hero-camera-room) * .48);

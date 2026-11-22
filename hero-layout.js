@@ -18,19 +18,25 @@ function measure(){
 let previousProgress;
 function visual(p){
  const progress=clamp(p,0,.311);
- const weight=1-ease((progress-.101)/.034);
+ const weight=1-ease((progress-.267)/.027);
  if(progress!==previousProgress){
-  // Finish each shot before the next phone appears. The renderer can continue
-  // positioning the Training screen off-camera during the Connected chapter.
-  stage.classList.toggle('hero-active',progress<.135);
-  stage.classList.toggle('hero-backdrop',progress<.179);
+  // The same handset holds through both headlines. Only the copy changes
+  // while the stage moves from white to the darker Connected palette.
+  stage.classList.toggle('hero-active',progress<.294);
   stage.classList.toggle('hero-transition',progress<.311);
-  stage.style.setProperty('--hero-intensity',weight>0?'1':'0');
-  stage.style.setProperty('--hero-cut',((1-weight)*100).toFixed(3)+'%');
-  stage.style.setProperty('--connected-copy-alpha',connected.style.opacity||'0');
-  const connectedShot=ease((progress-.125)/.021)*(1-ease((progress-.269)/.022));
-  stage.style.setProperty('--connected-shot-alpha',connectedShot.toFixed(5));
-  const trainingReveal=ease((progress-.289)/.022);
+  stage.style.setProperty('--hero-intensity',weight.toFixed(5));
+  stage.style.setProperty('--hero-connected-mix',ease((progress-.110)/.056).toFixed(5));
+  const openingExit=ease((progress-.081)/.036);
+  const connectedEnter=ease((progress-.134)/.036);
+  const connectedExit=ease((progress-.235)/.041);
+  const connectedAlpha=connectedEnter*(1-connectedExit);
+  stage.style.setProperty('--hero-opening-copy-alpha',(1-openingExit).toFixed(5));
+  stage.style.setProperty('--hero-opening-copy-y',(-10*openingExit).toFixed(3)+'px');
+  stage.style.setProperty('--hero-opening-copy-visibility',openingExit<1?'visible':'hidden');
+  stage.style.setProperty('--connected-copy-alpha',connectedAlpha.toFixed(5));
+  stage.style.setProperty('--connected-copy-y',(10*(1-connectedEnter)-10*connectedExit).toFixed(3)+'px');
+  stage.style.setProperty('--connected-copy-visibility',connectedAlpha>0?'visible':'hidden');
+  const trainingReveal=ease((progress-.295)/.016);
   stage.style.setProperty('--hero-hardware-alpha',trainingReveal.toFixed(5));
   previousProgress=progress;
  }

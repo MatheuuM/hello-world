@@ -42,10 +42,10 @@
 <link rel="stylesheet" href="/chapter-motion.css">
 <script defer src="/chapter-motion.js"></script>
 <link rel="stylesheet" href="/launch.css">
-<link rel="stylesheet" href="/app-screens.css">
 <link rel="stylesheet" href="/training-scroll.css">
 <script defer src="/training-scroll.js"></script>
 <script defer src="/experience.js"></script>
+<script type="module" src="/phone-frames.js"></script>
 <!-- react-phone-entry -->
 </head>
 <body class="home-page">
@@ -67,7 +67,8 @@
 <div class="ground-shadow" aria-hidden="true"></div>
 <div class="hero-device-slot" aria-hidden="true"></div>
 <div class="hero-surface" aria-hidden="true">
-  <img class="hero-react-poster" src="/assets/react-phone-poster.webp" width="907" height="907" alt="" fetchpriority="high">
+  <img class="hero-react-poster" src="/assets/react-phone-poster.webp" width="672" height="672" alt="" fetchpriority="high">
+  <canvas id="react-phone-frames" class="hero-react-frames" width="672" height="672"></canvas>
   <div id="react-phone" class="hero-react-phone"></div>
 </div>
 <canvas id="world" aria-hidden="true"></canvas>
@@ -133,97 +134,6 @@
 <div class="chapter-bar" aria-label="Capítulos da experiência"><div class="chapter-current"><span id="chapter-number">01</span><i></i><span id="chapter-name">SEU RITMO</span></div><div class="chapter-dots"><a href="#start" data-jump="0" aria-label="Seu ritmo" aria-current="step"></a><a href="#connected" data-jump="0.18" aria-label="Tudo conectado"></a><a href="#training" data-jump="0.33" aria-label="Treinos"></a><a href="#nutrition" data-jump="0.458" aria-label="Nutrição"></a><a href="#evolution" data-jump="0.66" aria-label="Evolução"></a><a href="#circle" data-jump="0.83" aria-label="Circle"></a><a href="#rhythm" data-jump="0.97" aria-label="MOVVA Wellness"></a></div><span class="scroll-label">ROLE PARA DESCOBRIR <span aria-hidden="true">↓</span></span></div>
 </div></div>
 <section class="overview" id="overview" aria-labelledby="overview-title" tabindex="-1"><div class="overview-heading"><h2 id="overview-title">Sua rotina,<br><em>mais conectada.</em></h2><p>Planeje seu próximo treino, acompanhe o que comeu e veja como tem evoluído. Você pode fazer isso no seu ritmo e com quem quiser por perto.</p></div><div class="overview-grid"><article><h3>Movimento</h3><p>Treinos, programas e histórico para diferentes maneiras de se mover.</p><a href="#training" data-jump="0.33">Ver treinos <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M8 6h10v10"/></svg></span></a></article><article><h3>Nutrição</h3><p>Refeições e hidratação reunidas para acompanhar a sua rotina.</p><a href="#nutrition" data-jump="0.458">Ver nutrição <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M8 6h10v10"/></svg></span></a></article><article><h3>Evolução</h3><p>Atividades, corpo e desempenho com uma visão do que muda ao longo do tempo.</p><a href="#evolution" data-jump="0.66">Ver evolução <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M8 6h10v10"/></svg></span></a></article><article><h3>Circle</h3><p>Pequenos grupos. Metas compartilhadas. Mais incentivo para continuar.</p><a href="#circle" data-jump="0.83">Ver Circle <span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18 18 6M8 6h10v10"/></svg></span></a></article></div></section>
-<section id="telas" class="app-screens" aria-labelledby="telas-title">
-  <h2 id="telas-title">Por dentro do app</h2>
-  <fieldset>
-    <legend>Escolha a área da MOVVA</legend>
-    <input type="radio" name="app-screens-group" id="shots-daily" aria-controls="panel-daily" checked><label for="shots-daily">Início e Circle</label>
-    <input type="radio" name="app-screens-group" id="shots-training" aria-controls="panel-training"><label for="shots-training">Treinos</label>
-    <input type="radio" name="app-screens-group" id="shots-nutrition" aria-controls="panel-nutrition"><label for="shots-nutrition">Nutrição</label>
-    <input type="radio" name="app-screens-group" id="shots-evolution" aria-controls="panel-evolution"><label for="shots-evolution">Evolução</label>
-    <div class="app-shots shots-daily" id="panel-daily" role="region" aria-label="Telas de Início e Circle" tabindex="0">
-      <figure>
-        <img src="/assets/home.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Resumo de atividade da semana, Wellness Score e treino de hoje.">
-        <figcaption>Início no modo escuro</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/inicio-claro.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Tela inicial no tema claro com foto de corrida.">
-        <figcaption>Início no modo claro</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/circle.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Check-in do grupo e atividades da semana.">
-        <figcaption>Circle</figcaption>
-      </figure>
-    </div>
-    <div class="app-shots shots-training" id="panel-training" role="region" aria-label="Telas de Treinos" tabindex="0">
-      <figure>
-        <img src="/assets/training.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Programas de força e biblioteca de exercícios.">
-        <figcaption>Programas de força</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/treino-biblioteca.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Crucifixo no voador (Peck Deck), com demonstração e músculos trabalhados.">
-        <figcaption>Demonstração do exercício</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/treino-forca.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Detalhes da remada com barra, com repetições e cargas por série.">
-        <figcaption>Séries e cargas</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/treino-corrida.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Distância, tempo total e ritmo médio de uma corrida.">
-        <figcaption>Histórico de corrida</figcaption>
-      </figure>
-    </div>
-    <div class="app-shots shots-nutrition" id="panel-nutrition" role="region" aria-label="Telas de Nutrição" tabindex="0">
-      <figure>
-        <img src="/assets/nutrition.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Calorias, macronutrientes, refeições e hidratação registrados.">
-        <figcaption>Refeições do dia</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/nutricao-semana.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Comparação do consumo diário com a meta da semana.">
-        <figcaption>Resumo da semana</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/nutricao-30-dias.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Regularidade nutricional e histórico de consumo em 30 dias.">
-        <figcaption>Últimos 30 dias</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/nutricao-rotulo.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Câmera da MOVVA com o modo Rótulo selecionado.">
-        <figcaption>Leitura de rótulo</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/nutricao-codigo.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Visor de leitura e alternativa de digitar o código de barras.">
-        <figcaption>Código de barras</figcaption>
-      </figure>
-    </div>
-    <div class="app-shots shots-evolution" id="panel-evolution" role="region" aria-label="Telas de Evolução" tabindex="0">
-      <figure>
-        <img src="/assets/evolution.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Calendário de atividades e curva de balanço calórico.">
-        <figcaption>Atividade e balanço calórico</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/evolucao-desempenho.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Recordes pessoais de força e estatísticas por modalidade.">
-        <figcaption>Desempenho</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/evolucao-carga-semanal.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Comparação semanal de carga de treino por grupo muscular.">
-        <figcaption>Volume semanal</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/evolucao-carga-mensal.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Comparação mensal de carga de treino por grupo muscular.">
-        <figcaption>Volume mensal</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/evolucao-comparativo.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Tempo de atividade no mês comparado ao mês anterior.">
-        <figcaption>Comparativo mensal</figcaption>
-      </figure>
-      <figure>
-        <img src="/assets/telas/evolucao-habitos.webp" width="589" height="1280" loading="lazy" decoding="async" alt="Planejamento diário com um hábito de leitura e histórico do autodesafio.">
-        <figcaption>Hábitos e autodesafios</figcaption>
-      </figure>
-    </div>
-  </fieldset>
-</section>
-
 <section class="launch" id="launch" aria-labelledby="launch-title" tabindex="-1">
   <div class="launch-copy">
     <p class="eyebrow">EM BREVE PARA IPHONE</p>
