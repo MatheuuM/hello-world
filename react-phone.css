@@ -19,6 +19,7 @@
 .hero-react-poster {
   width: auto;
   max-width: none;
+  transform: translate(-50%, -50%) scale(var(--hero-phone-scale, 1));
 }
 
 .hero-react-frames {

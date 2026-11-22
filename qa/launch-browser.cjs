@@ -80,7 +80,9 @@ async function verifyOpening(page, useWheel, capture) {
   const compiled = await page.locator('script[type="module"]').evaluateAll(scripts =>
     scripts.some(script => script.textContent.includes('react-phone-build.js') || script.src.includes('react-phone-build'))
   );
-  const supported = compiled && await page.evaluate(() => {
+  const mobile = await page.evaluate(() =>
+    matchMedia('(max-width: 760px), (hover: none) and (pointer: coarse)').matches);
+  const supported = !mobile && compiled && await page.evaluate(() => {
     const probe = document.createElement('canvas').getContext('webgl2');
     probe?.getExtension('WEBGL_lose_context')?.loseContext();
     return Boolean(probe);
@@ -88,6 +90,12 @@ async function verifyOpening(page, useWheel, capture) {
   const selector = supported ? '#react-phone.is-ready canvas' : '#react-phone-frames.is-frame-ready';
   const display = page.locator(selector);
   await display.waitFor({ timeout: 30000 });
+  if (mobile) {
+    assert.equal(await display.evaluate(el => el.width), 384);
+    const paths = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => new URL(entry.name).pathname));
+    assert.ok(paths.includes('/assets/react-phone-frames-mobile.webp'));
+    assert.equal(paths.includes('/assets/react-phone-frames.webp') || paths.includes('/react-phone-build.js'), false);
+  }
   assert.equal(await page.locator('.hero-react-poster').isVisible(), false);
   await capture();
   const phase = supported
@@ -296,7 +304,6 @@ async function test(browser, engine, [label, viewport]) {
     assert.equal(await page.locator('#connected .static-shot').isVisible(), false);
     assert.equal(await opening.display.evaluate((el, initial) => el === initial, opening.node), true);
     await verifyScreenPixels(page, await page.screenshot({ clip: await opening.display.boundingBox(), scale: 'css' }));
-    await verifyImage(page, '#connected .static-shot', 589, 1280);
     await page.locator('.chapter-dots a[href="#training"]').click();
     await settled(page, .33);
     assert.equal(new URL(page.url()).hash, '#training');
@@ -384,6 +391,54 @@ async function test(browser, engine, [label, viewport]) {
   } finally { await context.close(); }
 }
 
+async function verifySlowMobileOpening(browser) {
+  const context = await browser.newContext(devices['iPhone 15']);
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  try {
+    await context.route('**/assets/react-phone-frames-mobile.webp', async route => {
+      await gate;
+      await route.continue();
+    });
+    const page = await context.newPage();
+    await page.goto(origin, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => window.MOVVA_PHONE_FRAMES && window.__MOVVA_QA__?.ready);
+    const poster = page.locator('.hero-react-poster');
+    const box = await poster.boundingBox();
+    const x = Math.round(box.x + box.width / 2);
+    const y = Math.round(box.y + box.height / 2);
+    const input = await context.newCDPSession(page);
+    async function swipe(delta) {
+      const send = (type, pointY) => input.send('Input.dispatchTouchEvent', {
+        type, touchPoints: type === 'touchEnd' ? [] : [{ x, y: pointY, id: 1 }]
+      });
+      await send('touchStart', y);
+      for (let i = 1; i <= 8; i++) {
+        await send('touchMove', Math.round(y + delta * i / 8));
+        await page.waitForTimeout(25);
+      }
+      await page.waitForTimeout(200);
+      await send('touchEnd', y + delta);
+    }
+
+    await swipe(-75);
+    await page.waitForFunction(() => scrollY >= 45 && window.__MOVVA_QA__?.settled);
+    assert.equal(await poster.isVisible(), true);
+    assert.ok((await poster.boundingBox()).width > box.width * 1.008, 'Sem a imagem, o primeiro toque deve mover o aparelho.');
+    release();
+
+    const frames = page.locator('#react-phone-frames.is-frame-ready');
+    await frames.waitFor({ timeout: 10000 });
+    assert.ok(Number(await frames.getAttribute('data-frame')) >= 5, 'O aparelho precisa assumir o ângulo do gesto ao carregar.');
+    await swipe(100);
+    await page.waitForFunction(() => scrollY === 0 && document.querySelector('#react-phone-frames')?.dataset.frame === '0');
+    console.log('chromium gesto de toque com imagem atrasada OK');
+  } finally {
+    release();
+    await context.close();
+  }
+}
+
 async function verifyOpeningWithoutWebGL(browser, engine) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   try {
@@ -416,12 +471,17 @@ async function verifyOpeningWithoutWebGL(browser, engine) {
       for (const viewport of viewports) {
         if (!process.env.QA_VIEWPORT || viewport[0] === process.env.QA_VIEWPORT) await test(browser, engine, viewport);
       }
+      if (engine === 'chromium' && (!process.env.QA_VIEWPORT || process.env.QA_VIEWPORT === 'iphone')) {
+        await verifySlowMobileOpening(browser);
+      }
       await verifyOpeningWithoutWebGL(browser, engine);
       const context = await browser.newContext({ ...devices['iPhone 15'], javaScriptEnabled: false });
       const page = await context.newPage();
       await page.goto(origin + '/#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('#nutrition').isVisible(), true);
       assert.equal(await page.locator('.static-shot').count(), 6);
+      await page.locator('#connected .static-shot').scrollIntoViewIfNeeded();
+      await verifyImage(page, '#connected .static-shot', 589, 1280);
       assert.equal(await page.locator('#telas').count(), 0);
       assert.equal(await page.locator('#react-phone.is-ready, #react-phone-frames.is-frame-ready').count(), 0);
       assert.equal(await page.locator('.hero-react-poster').isVisible(), true);
