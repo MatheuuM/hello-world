@@ -1,21 +1,27 @@
-# MOVVA Wellness — Studio 3D
+# MOVVA Wellness
 
-Isolated public website preview. Static HTML/CSS and a custom WebGL renderer; no app repository, database, account, payments or DNS changes.
+Site institucional estático em português. A rolagem nativa conduz sete capítulos. Na abertura, o componente IPhoneMockup mostra a tela Início do app. A rolagem controla o ângulo do aparelho, que permanece em cena até o fim de Tudo conectado. O navegador recorre a quadros do mesmo modelo quando o WebGL fica indisponível. O supino avança e retrocede com a rolagem. Em Nutrição, a página mostra a tela do app. A cena pode reproduzir uma tomada do enquadramento pela posição da rolagem quando o vídeo estiver configurado. O WebGL experimental fica disponível em desktop via `?renderer=webgl`.
 
-## View
+A opção `/?video=local#nutrition` abre uma tomada de teste escolhida no próprio navegador. O arquivo permanece local e a rolagem controla a posição do vídeo.
 
-Current preview alias: https://hello-world-jade-alpha.vercel.app/
+## Acessibilidade
 
-## Experience
-
-Triangulated rounded phone body, metal frame, front glass, side buttons, rear lens barrels, flash and etched logo. Five supplied MOVVA screenshots are mapped onto the front screen. Native scroll controls rotation, shot changes, UI fragments and demonstrative counters. Reference Wellness Score is 52/100 (partial).
-
-## Accessibility and fallback
-
-All chapters exist as semantic normal-flow HTML. WebGL enhancement activates only after assets initialize. Reduced motion, the movement switch, unavailable WebGL and very short viewports use a complete static experience. No scroll-wheel interception or telemetry.
+A versão `/?visual=estatico` mostra os sete capítulos sem animação por rolagem. O conteúdo também é legível sem JavaScript. O modo padrão mantém o 3D e respeita a preferência do sistema por movimento reduzido ao pular para um capítulo.
 
 ## QA
 
-The `studio-3d` branch runs `qa/browser-check.cjs` on GitHub Actions. Browser screenshots and a JSON report are published as a workflow artifact. A successful bootstrap run without the test file is not full QA.
+Com Node.js e Playwright (Chromium e WebKit) disponíveis, instale as dependências e sirva a versão compilada do site.
 
-Legal pages are expressly provisional and not the final app policy. This preview is noindex. Do not repoint official domains or modify the FERA app infrastructure.
+```sh
+npm ci
+npm run build
+node qa/serve-static.cjs dist
+```
+
+Em outro terminal, rode o fluxo de lançamento. Use `QA_ENGINE=chromium` ou `QA_ENGINE=webkit` para executar um navegador por vez e `QA_OUTPUT` para escolher a pasta de capturas.
+
+```sh
+node qa/launch-browser.cjs
+```
+
+O sitemap lista o domínio oficial. As páginas de privacidade, termos e suporte têm rotas próprias.

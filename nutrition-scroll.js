@@ -10,13 +10,14 @@ if(!stage||!scene||!original)return;
 const copy=scene.querySelector('.copy'), steps=[...scene.querySelectorAll('.nutrition-chapters span')];
 const readout=scene.querySelector('.nutrition-readout'), note=scene.querySelector('.micro-note');
 const number=document.querySelector('#water-number'), fill=document.querySelector('#water-fill');
+const formatWater=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const clamp=x=>Math.max(0,Math.min(1,x));
 const ease=x=>{x=clamp(x);return x*x*x*(x*(x*6-15)+10);};
 const ramp=(p,a,b)=>ease((p-a)/(b-a));
 const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
 const inside=p=>p>.435&&p<.595;
-let slot=null,touched=false,lastColor=null;
-const surface=document.createElement('div');surface.className='nutrition-surface';surface.setAttribute('aria-hidden','true');stage.insertBefore(surface,document.querySelector('#world'));
+const hydrationProgress=p=>ramp(p,.466,.557);
+let slot=null,touched=false;
 function measure(){
  const vw=stage.clientWidth,vh=stage.clientHeight;if(!vw||!vh)return;
  const tall=vw<=760,gutter=parseFloat(getComputedStyle(stage).getPropertyValue('--gutter'))||24;
@@ -25,7 +26,6 @@ function measure(){
  const top=tall?scene.offsetTop+copy.offsetTop+copy.offsetHeight+22:header+34;
  const x=tall?28:gutter+8,width=tall?vw-56:vw*.39;
  slot={x,y:top,width,height:Math.max(60,bottom-top),vw,vh,tall};
- surface.style.left=(x+width/2)+'px';surface.style.top=(top+(bottom-top)/2)+'px';
 }
 function bounds(pose,compose,hw,hh){
  const[nx,ny,s,rx,ry,rz]=pose,m=compose(nx*hw,ny*hh,0,rx,ry,rz,s),xs=[],ys=[];
@@ -50,9 +50,9 @@ function fit(p,base,compose,hw,hh){
  return mix(previous,pose,w);
 }
 function background(p,base){
- const previous=original.background(p,base);if(!inside(p)){lastColor=null;return previous;}
- const t=ramp(p,.435,.46)*(1-ramp(p,.567,.595));
- lastColor=mix(previous,[242,233,217],t).map(Math.round);return lastColor;
+ const previous=original.background(p,base);if(!inside(p))return previous;
+ const t=ramp(p,.435,.462)*(1-ramp(p,.569,.595));
+ return mix(previous,[245,242,232],t).map(Math.round);
 }
 function panel(p,chapter,base){
  const previous=original.panel(p,chapter,base);
@@ -64,24 +64,24 @@ function panel(p,chapter,base){
 function reset(){
  stage.classList.remove('nutrition-active');
  if(!touched)return;touched=false;
- stage.style.removeProperty('--nutrition-presence');stage.style.removeProperty('--nutrition-orbit');
+ stage.style.removeProperty('--nutrition-presence');
  [...steps,readout,note].forEach(el=>{el.style.removeProperty('opacity');el.style.removeProperty('transform');});
 }
 function visual(p){
- original.visual(p);if(!inside(p)){reset();return;}
+ original.visual(p);
+ if(!inside(p)){reset();return;}
  touched=true;stage.classList.add('nutrition-active');
  const presence=ramp(p,.442,.47)*(1-ramp(p,.565,.595));
  stage.style.setProperty('--nutrition-presence',presence.toFixed(5));
- stage.style.setProperty('--nutrition-orbit',ramp(p,.46,.57).toFixed(5));
- if(lastColor){const dark=lastColor.reduce((s,v)=>s+v,0)/3<120;stage.classList.toggle('dark',dark);document.querySelector('.header').classList.toggle('dark',dark);}
  steps.forEach((el,i)=>{const t=ramp(p,.463+i*.009,.487+i*.009);el.style.opacity=String(.45+.55*t);el.style.transform=`translateY(${(1-t)*5}px)`;});
  const reveal=ramp(p,.474,.494);readout.style.opacity=String(reveal);readout.style.transform=`translateY(${(1-reveal)*8}px)`;
- const progress=ramp(p,.491,.549);
- number.textContent=(2*progress).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
- fill.style.width=(progress*100*2/2.7)+'%';
+ const progress=hydrationProgress(p);
+ const value=formatWater.format(progress),width=Math.round(progress*3700)/100;
+ if(number.textContent!==value)number.textContent=value;
+ if(parseFloat(fill.style.width)!==width)fill.style.width=width+'%';
  note.style.opacity=String(ramp(p,.507,.528));
 }
-window.MOVVA_NUTRITION={measure,fit,background,panel,visual,reset,get layout(){return slot?{...slot}:null},scope:[.435,.595]};
+window.MOVVA_NUTRITION={measure,fit,background,panel,visual,reset,hydrationProgress,get layout(){return slot?{...slot}:null},scope:[.435,.595]};
 window.MOVVA_INTRO=Object.assign(Object.create(original),{
  measure(){original.measure();measure();},fit,background,panel,visual,
  reset(){original.reset();reset();}

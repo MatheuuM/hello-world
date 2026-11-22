@@ -85,11 +85,12 @@ async function main() {
           renderedFaces: [...document.querySelectorAll('.css3d-shell-face,.css3d-camera-wall-face')].filter(el => getComputedStyle(el).display !== 'none').length,
           fastPlanes: [...document.querySelectorAll('.css3d-fast-edge')].filter(el => getComputedStyle(el).display !== 'none').length,
           legacyGeometry: Boolean(MOVVA_SHELL.legacyGeometry),
+          launch: Boolean(document.querySelector('#launch-title')),
           origins: MOVVA_MOTION.origins.length
         })));
       }
       assert.deepEqual(scenes.map(s => s.chapter), [1, 2, 3, 5, 2], 'Wrong chapters on scroll or rewind');
-      assert.ok(scenes.every(s => s.renderer === 'CSS3D DOM' && s.origins === 12));
+      assert.ok(scenes.every(s => s.renderer === 'CSS3D DOM' && s.origins === (s.launch ? 11 : 12)));
       assert.ok(scenes.every(s => Math.abs(s.overflow) <= 1));
       assert.ok(scenes.every(s => s.cardCount >= 1));
       if (width <= 760) {

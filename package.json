@@ -1,0 +1,20 @@
+{
+  "name": "movva-wellness-site",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "gsap": "3.15.1",
+    "react": "19.3.1",
+    "react-3d-mockups": "0.2.0",
+    "react-dom": "19.3.1",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

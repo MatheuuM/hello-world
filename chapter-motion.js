@@ -3,7 +3,6 @@
  * All demo data stays sourced from the existing static MOVVA presentation. */
 (()=>{'use strict';
 const stage=document.getElementById('stage');
-const nutrition=document.querySelector('.motion-fragment[data-kind="nutrition"]');
 const graph=document.querySelector('.motion-fragment[data-kind="graph"] .graph-svg');
 const orbit=document.querySelector('.circle-orbit');
 if(!stage)return;
@@ -41,14 +40,6 @@ for(const ch of chapters){
  heading.classList.add('movva-editorial-heading');
  phrases.push(...ch.lines);
 }
-// Animated Nutrition visualization is decorative; canonical kcal totals stay
-// exactly as written in the demo. Use already-existing ring and meter markup.
-const rings=nutrition?[...nutrition.querySelectorAll('.m-nut-rings .nr i')]:[];
-const amounts=rings.map(el=>parseFloat(el.style.getPropertyValue('--value'))||0);
-const lastRingValues=rings.map(()=>null);
-const nutrientMeter=nutrition?.querySelector('.m-meter i');
-const meterFull=nutrientMeter?(parseFloat(nutrientMeter.style.width)||86):86;
-let lastMeterValue=null;
 // The graph stroke is already scroll-controlled. Add a small marker that
 // follows the real SVG path, without introducing another animation loop.
 const trace=graph?.querySelector('.trace');
@@ -104,21 +95,6 @@ function render(p){
    }
   }
  }
- if(nutrition){
-  const t=ramp(p,.456,.542);
-  for(const [i,el] of rings.entries()){
-   const value=(amounts[i]*ramp(t,.08*i,.72+.06*i)).toFixed(2)+'deg';
-   if(lastRingValues[i]!==value){
-    el.style.setProperty('--value',value);lastRingValues[i]=value;updates.dataWrites++;
-   }
-  }
-  if(nutrientMeter){
-   const width=(meterFull*t).toFixed(2)+'%';
-   if(lastMeterValue!==width){
-    nutrientMeter.style.width=width;lastMeterValue=width;updates.dataWrites++;
-   }
-  }
- }
  if(marker&&graphCoordinates.length){
   const t=ramp(p,.668,.737),v=t*100,low=Math.floor(v),high=Math.min(100,low+1);
   const a=graphCoordinates[low],b=graphCoordinates[high];
@@ -156,8 +132,6 @@ function render(p){
 function reset(){
  lastProgress=null;
  for(const line of phrases)line.style.removeProperty('--movva-reveal');
- for(const [i,el] of rings.entries()){el.style.setProperty('--value',amounts[i]+'deg');lastRingValues[i]=null;}
- if(nutrientMeter){nutrientMeter.style.width=meterFull+'%';lastMeterValue=null;}
  if(marker){marker.style.removeProperty('opacity');marker.style.removeProperty('transform');lastMarkerTransform=null;lastMarkerOpacity=null;}
  for(const [i,line] of links.entries()){line.style.removeProperty('stroke-dashoffset');lastLinkOffsets[i]=null;}
  finale?.style.removeProperty('--movva-finale-progress');

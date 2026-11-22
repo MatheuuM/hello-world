@@ -23,8 +23,10 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
    const elements=[...document.querySelectorAll('.css3d-screen')];
    const display=document.querySelector('.css3d-display'),stage=document.querySelector('#stage');
    const origins=MOVVA_MOTION.origins;
-   const examples=[],poses=[.055,.135,.178,.335,.512,.67,.842];
+   const examples=[],poses=[.055,.12,.135,.178,.335,.512,.67,.842];
    for(const p of poses){
+    // Include the opening transition before measuring the device projection.
+    MOVVA_HERO.visual(p);
     MOVVA_DOM_DEVICE.render(p,p<.13?0:p<.28?1:Math.min(6,Math.floor(p*7)),p<.28?0:Math.min(4,Math.floor((p-.25)*8)),0);
     for(const source of origins){
      const marker=document.createElement('span');
@@ -45,7 +47,8 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
     worst:examples.sort((a,b)=>b.error-a.error).slice(0,3)
    };
   });
-  assert.equal(measure.origins.length,12);
+  assert.equal(measure.origins.length,11);
+  assert.ok(!measure.origins.some(source=>source.kind==='water'));
   assert.ok(measure.origins.every(c=>Number.isFinite(c.u)&&Number.isFinite(c.v)&&c.u>0&&c.u<1&&c.v>0&&c.v<1&&c.screen),'Missing semantic UI anchors');
   assert.equal(measure.allScreens,5);
   assert.ok(measure.maxError<=2.5,'3D projection missed real screenshot UI: '+JSON.stringify(measure.worst));

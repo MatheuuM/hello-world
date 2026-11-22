@@ -1,6 +1,6 @@
 /* Stage 4 — only Hero → Connected → Training (0.08 < p < 0.435).
  * One reversible scroll clock. No wheel listeners, autoplay, new UI data or assets.
- * Initial Stage 3 hero and every chapter from Nutrition onwards remain unchanged.
+ * Opening and Connected share a dark stage. Later colors stay with their chapters.
  */
 (() => {
 'use strict';
@@ -77,8 +77,9 @@ function weights(p,base){
 }
 function active(p,fallback){return p>.08&&p<.435?(p<.129?0:p<.28?1:p<.433?2:fallback):fallback;}
 function background(p,base){
- if(p<=.12||p>=.435)return base;
- let color=p<.225?mix([242,239,230],[234,232,220],ramp(p,.12,.225)):mix([234,232,220],[35,43,34],ramp(p,.235,.302));
+ if(p>=.435)return base;
+ const opening=[255,255,255],connected=[21,31,25],training=[35,43,34];
+ const color=p<.225?mix(opening,connected,ramp(p,.08,.179)):mix(connected,training,ramp(p,.235,.302));
  return mix(color,base,ramp(p,.409,.435)).map(Math.round);
 }
 function screen(p){
@@ -90,18 +91,17 @@ function visual(p){
  const on=p>.08&&p<.435;stage.classList.toggle('intro-active',on);
  if(!on){reset();return;}
  touched=true;
- // Keep the header and copy contrast in sync with the actual ambient transition.
- const dark=p>=.272;stage.classList.toggle('dark',dark);document.querySelector('.header').classList.toggle('dark',dark);
  stage.style.setProperty('--intro-quiet',String(1-ramp(p,.40,.435)));
- pillars.forEach((el,i)=>{const t=ramp(p,.159+i*.009,.186+i*.009);el.style.opacity=String(.42+.58*t);el.style.transform=`translateY(${(1-t)*7}px)`;});
+ pillars.forEach((el,i)=>{const t=ramp(p,.159+i*.009,.186+i*.009);el.style.opacity=String(.62+.38*t);el.style.transform=`translateY(${(1-t)*7}px)`;});
  modes.forEach((el,i)=>{const t=ramp(p,.313+i*.008,.337+i*.008);el.style.opacity=String(t);el.style.transform=`translateY(${(1-t)*8}px)`;});
- detail.style.opacity=String(ramp(p,.348,.375));
+ if(detail)detail.style.opacity=String(ramp(p,.348,.375));
 }
 function reset(){
  stage.classList.remove('intro-active');
  if(!touched)return;touched=false;
  stage.style.removeProperty('--intro-quiet');
- [...pillars,...modes,detail].forEach(el=>{el.style.removeProperty('opacity');el.style.removeProperty('transform');});
+ [...pillars,...modes].forEach(el=>{el.style.removeProperty('opacity');el.style.removeProperty('transform');});
+ detail?.style.removeProperty('opacity');
 }
 window.MOVVA_INTRO={measure,fit,weights,active,background,screen,panel,visual,reset,get layout(){return layout;}};
 const observer=new ResizeObserver(()=>{measure();window.dispatchEvent(new Event('movva:hero-layout'));});

@@ -10,23 +10,22 @@ root.innerHTML='<div class="motion-atmosphere"><i class="m-orbit"></i><i class="
 stage.appendChild(root);
 const ring=root.querySelector('.motion-atmosphere');
 // Normalised UV origins measured against the actual five MOVVA screenshot
-// assets (320x696 and 480x1043). A card must leave the part of the screen
+// assets. A card must leave the part of the screen
 // representing its content, not a synthetic point near the phone's centre.
 const screenOrigins={
  '0:activity':{screen:'home',u:.24,v:.59,label:'Atividade da semana'},
  '0:wellness':{screen:'home',u:.74,v:.59,label:'Wellness Score'},
  '1:features':{screen:'home',u:.43,v:.34,label:'Visao geral da Home'},
  '1:wellness':{screen:'home',u:.74,v:.59,label:'Wellness Score na Home'},
- '2:training':{screen:'training',u:.42,v:.15,label:'Programa de treino'},
- '2:run':{screen:'training',u:.43,v:.59,label:'Modalidade corrida'},
- '3:nutrition':{screen:'nutrition',u:.30,v:.25,label:'Resumo calorico'},
- '3:water':{screen:'nutrition',u:.50,v:.79,label:'Hidratacao'},
+ '2:training':{screen:'training',u:.36,v:.30,label:'Treino ativo'},
+ '2:run':{screen:'training',u:.30,v:.30,label:'Programa de força'},
+ '3:nutrition':{screen:'nutrition',u:.23,v:.25,label:'Calorias registradas'},
  '4:graph':{screen:'evolution',u:.49,v:.42,label:'Grafico de atividades'},
  '4:evo-score':{screen:'evolution',u:.24,v:.70,label:'Wellness Score'},
  '5:circle':{screen:'circle',u:.52,v:.26,label:'Atividade da comunidade'},
  '5:features':{screen:'circle',u:.69,v:.49,label:'Participantes do Circle'}
 };
-const items=[{"scene":0,"kind":"activity","side":-1,"level":-0.26,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 16V9m6 7V5m6 11v-7m4 7V3\"/></svg></span> Atividade da semana</div><strong>6 <small>de 7</small></strong><span class=\"subline\">dias ativos</span><div class=\"m-week\"><i class=\"\">✓</i><i class=\"\">✓</i><i class=\"\">✓</i><i class=\"\">✓</i><i class=\"off\">·</i><i class=\"\">✓</i><i class=\"\">✓</i></div>"},{"scene":0,"kind":"wellness","side":1,"level":0.26,"delay":0.009,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"m12 6 1.5 5.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-.5z\"/></svg></span> Wellness Score</div><strong>52<small>/100</small></strong><span class=\"subline\">score parcial</span><div class=\"m-multi-meter\">Mov. <i><b style=\"width:100%\"></b></i>Nut. <i><b style=\"width:20%\"></b></i>Água <i><b style=\"width:37%\"></b></i></div>"},{"scene":1,"kind":"features","side":-1,"level":-0.19,"delay":0,"content":"<div class=\"fragment-eyebrow\">Tudo conectado</div><h3>Seu movimento, em conjunto.</h3><div class=\"m-pill-row\"><em>Treinos</em><em>Nutrição</em><em>Hábitos</em></div>"},{"scene":1,"kind":"wellness","side":1,"level":0.28,"delay":0.014,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"m12 6 1.5 5.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-.5z\"/></svg></span> Bem-estar</div><strong>4 <small>pilares</small></strong><span class=\"subline\">Uma mesma jornada.</span>"},{"scene":2,"kind":"training","side":-1,"level":-0.25,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 10v4m3-7v10m3-5h6m3-5v10m3-7v4\"/></svg></span> Training</div><h3>ABCD – MM</h3><span class=\"subline\">4 treinos · 21 exercícios</span><div class=\"m-pill-row\"><em>Força</em><em>Corrida</em><em>Bike</em></div>"},{"scene":2,"kind":"run","side":1,"level":0.28,"delay":0.018,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"13\" cy=\"4.3\" r=\"1.7\"/><path d=\"m11 8 3 2 3-1m-9 10 3-5 2-2 3 4m-5-8-4 3\"/></svg></span> Corrida</div><strong>28 <small>km</small></strong><span class=\"subline\">168 minutos registrados</span>"},{"scene":3,"kind":"nutrition","side":-1,"level":-0.22,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 3v8m3-8v8M3 3v5a4 4 0 0 0 7 0V3m-3 8v10M18 3c-3 3-4 7-4 10h4v8\"/></svg></span> Nutrição</div><strong><span data-nut-count>2.018</span><small> /2.331 kcal</small></strong><div class=\"m-meter\"><i style=\"width:86%\"></i></div><div class=\"m-nut-rings\"><span class=\"nr\"><i data-value=\"89%\" style=\"--ring-color:#da9737;--value:320deg\"></i>Carb.</span><span class=\"nr\"><i data-value=\"56%\" style=\"--ring-color:#bba987;--value:202deg\"></i>Prot.</span><span class=\"nr\"><i data-value=\"100%\" style=\"--ring-color:#c98283;--value:360deg\"></i>Gord.</span></div>"},{"scene":3,"kind":"water","side":1,"level":0.29,"delay":0.019,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2C9 7 5 11 5 15a7 7 0 0 0 14 0c0-4-4-8-7-13Z\"/></svg></span> Hidratação</div><strong><span data-water-card>2,0</span><small> /2,7 L</small></strong><span class=\"subline\">Água registrada</span><div class=\"m-meter m-blue\"><i data-water-meter style=\"width:74%\"></i></div>"},{"scene":4,"kind":"graph","side":-1,"level":-0.24,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m3 18 6-7 4 3 8-9M16 5h5v5\"/></svg></span> Sua evolução</div><strong><span data-minutes-card>425</span><small> min</small></strong><svg class=\"graph-svg\" viewBox=\"0 0 220 80\" aria-hidden=\"true\"><path class=\"axis\" d=\"M1 68 H218\"/><path class=\"trace\" d=\"M2 62 C30 44 42 66 68 45 S98 58 130 37 S176 61 217 11\"/></svg>"},{"scene":4,"kind":"evo-score","side":1,"level":0.29,"delay":0.018,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"m12 6 1.5 5.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-.5z\"/></svg></span> Wellness Score</div><strong><span data-score-card>52</span><small>/100</small></strong><span class=\"subline\">Seu panorama · parcial</span><div class=\"m-meter m-mint\"><i data-score-meter style=\"width:52%\"></i></div>"},{"scene":5,"kind":"circle","side":-1,"level":-0.2,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"3\"/><circle cx=\"17\" cy=\"9\" r=\"2.5\"/><path d=\"M2 20a6 6 0 0 1 12 0m0 0a5 5 0 0 1 8 0\"/></svg></span> Circle</div><strong>1 <small>dia juntos</small></strong><span class=\"subline\">Movimento gera movimento.</span><div class=\"m-circle-dots\"><i></i><i></i><i></i></div>"},{"scene":5,"kind":"features","side":1,"level":0.28,"delay":0.018,"content":"<div class=\"fragment-eyebrow\">Seu espaço</div><strong>2–5 <small>pessoas</small></strong><span class=\"subline\">Consistência compartilhada</span>"}].map((c,i)=>{
+const items=[{"scene":0,"kind":"activity","side":-1,"level":-0.26,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 16V9m6 7V5m6 11v-7m4 7V3\"/></svg></span> Atividade da semana</div><strong>4 <small>de 7</small></strong><span class=\"subline\">dias ativos</span><div class=\"m-week\"><i>✓</i><i class=\"off\">·</i><i>✓</i><i class=\"off\">·</i><i>✓</i><i class=\"off\">·</i><i>✓</i></div>"},{"scene":0,"kind":"wellness","side":1,"level":0.26,"delay":0.009,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"m12 6 1.5 5.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-.5z\"/></svg></span> Wellness Score</div><strong>12<small>/100</small></strong><span class=\"subline\">score parcial</span><div class=\"m-multi-meter\">Mov. <i><b style=\"width:34%\"></b></i>Nut. <i><b style=\"width:0%\"></b></i>Água <i><b style=\"width:2%\"></b></i></div>"},{"scene":1,"kind":"features","side":-1,"level":-0.19,"delay":0,"content":"<div class=\"fragment-eyebrow\">Tudo conectado</div><h3>Seu movimento, em conjunto.</h3><div class=\"m-pill-row\"><em>Treinos</em><em>Nutrição</em><em>Hábitos</em></div>"},{"scene":1,"kind":"wellness","side":1,"level":0.28,"delay":0.014,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"m12 6 1.5 5.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-.5z\"/></svg></span> Bem-estar</div><strong>4 <small>pilares</small></strong><span class=\"subline\">Uma mesma jornada.</span>"},{"scene":2,"kind":"training","side":-1,"level":-0.25,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 10v4m3-7v10m3-5h6m3-5v10m3-7v4\"/></svg></span> Musculação</div><h3>Treino ativo</h3><div class=\"m-pill-row\"><em>Costas e bíceps</em></div>"},{"scene":2,"kind":"run","side":1,"level":0.28,"delay":0.018,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"13\" cy=\"4.3\" r=\"1.7\"/><path d=\"m11 8 3 2 3-1m-9 10 3-5 2-2 3 4m-5-8-4 3\"/></svg></span> Programa de força</div><strong>4 treinos</strong><span class=\"subline\">Programa ativo</span>"},{"scene":3,"kind":"nutrition","side":1,"level":-0.28,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 3v8m3-8v8M3 3v5a4 4 0 0 0 7 0V3m-3 8v10M18 3c-3 3-4 7-4 10h4v8\"/></svg></span> Nutrição de hoje</div><strong>1.870 <small>kcal</small></strong><span class=\"subline\">Consumo registrado</span>"},{"scene":3,"kind":"water","side":1,"level":0.23,"delay":0.049,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2C9 7 5 11 5 15a7 7 0 0 0 14 0c0-4-4-8-7-13Z\"/></svg></span> Hidratação</div><strong><span data-water-card>1,0</span><small> /2,7 L</small></strong><span class=\"subline\">Água registrada</span><div class=\"m-meter m-blue\"><i data-water-meter style=\"width:37%\"></i></div>"},{"scene":4,"kind":"graph","side":-1,"level":-0.24,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"m3 18 6-7 4 3 8-9M16 5h5v5\"/></svg></span> Sua evolução</div><strong><span data-minutes-card>425</span><small> min</small></strong><svg class=\"graph-svg\" viewBox=\"0 0 220 80\" aria-hidden=\"true\"><path class=\"axis\" d=\"M1 68 H218\"/><path class=\"trace\" d=\"M2 62 C30 44 42 66 68 45 S98 58 130 37 S176 61 217 11\"/></svg>"},{"scene":4,"kind":"evo-score","side":1,"level":0.29,"delay":0.018,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"m12 6 1.5 5.5L18 12l-4.5 1.5L12 18l-1.5-4.5L6 12l4.5-.5z\"/></svg></span> Wellness Score</div><strong><span data-score-card>52</span><small>/100</small></strong><span class=\"subline\">Seu panorama · parcial</span><div class=\"m-meter m-mint\"><i data-score-meter style=\"width:52%\"></i></div>"},{"scene":5,"kind":"circle","side":-1,"level":-0.2,"delay":0,"content":"<div class=\"fragment-eyebrow\"><span class=\"m-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"3\"/><circle cx=\"17\" cy=\"9\" r=\"2.5\"/><path d=\"M2 20a6 6 0 0 1 12 0m0 0a5 5 0 0 1 8 0\"/></svg></span> Circle</div><strong>1 <small>dia juntos</small></strong><span class=\"subline\">Movimento gera movimento.</span><div class=\"m-circle-dots\"><i></i><i></i><i></i></div>"},{"scene":5,"kind":"features","side":1,"level":0.28,"delay":0.018,"content":"<div class=\"fragment-eyebrow\">Seu espaço</div><strong>2–5 <small>pessoas</small></strong><span class=\"subline\">Consistência compartilhada</span>"}].map((c,i)=>{
  const n=document.createElement('div');
  n.className='motion-fragment';
  n.dataset.kind=c.kind;n.dataset.scene=String(c.scene);
@@ -98,6 +97,7 @@ function render(p,active,device){
  }
  // Every fragment is evaluated from scroll progress alone; reversing scroll
  // retraces exactly the same 3D path, with no time-based drift or autoplay.
+ const shortLandscape=!mobile&&vh<=540;
  const fragmentSide=mobile?Math.min(vw*.345,130):Math.min(vw*.145,205);
  const phoneW=phoneH*(78/163.4);
  const leftGuard=mobile?(vw<=360?10:12):22;
@@ -106,6 +106,7 @@ function render(p,active,device){
  const navY=navRect?navRect.top-stageRect.top:vh-48;
  const copyRect=stage.querySelector('.scene[aria-hidden="false"] .copy')?.getBoundingClientRect();
  const copyBottom=copyRect?.bottom-stageRect.top||0;
+ const copyLeft=copyRect?copyRect.left-stageRect.left:vw*.53;
  let visible=0,protectedCards=0;
  for(const c of items){
   const [start,end]=phases[c.scene],time=(p-start)/(end-start),delay=c.delay;
@@ -128,22 +129,33 @@ function render(p,active,device){
   // scene releases from the rear-glass silhouette; front scenes use the display.
   const release=smooth(factor);
   const extraction=c.scene===0?smooth((p-.012)/.078):smooth((factor-.065)/.855);
-  const screenPoint=window.MOVVA_DOM_DEVICE?.projectScreenPoint(c.source?.u??.5,c.source?.v??.5);
+  const isNutrition=c.scene===3;
+  const project=window.MOVVA_DOM_DEVICE?.projectScreenPoint;
+  const screenPoint=c.source?project?.(c.source.u,c.source.v):isNutrition?project?.(.66,.62):null;
   const anchorX=screenPoint?.x??(cx+c.side*phoneW*.13);
   const anchorY=screenPoint?.y??(cy+phoneH*c.level*.15);
-  const offX=c.side*fragmentSide*(mobile?1:1.0);
+  const prioritizeScreen=mobile&&(c.scene===2||c.scene===3);
+  const offX=c.side*(prioritizeScreen?vw*.38:fragmentSide);
   const offY=phoneH*c.level*(mobile?.70:.85);
+  const nutritionLift=isNutrition&&mobile?Math.sign(c.level)*Math.max(38,Math.abs(offY)):offY;
   const orbit=Math.sin((local+.07*c.index)*Math.PI*2);
   const elWidth=c.width|| (mobile?132:190);
-  const keepLeft=elWidth*.78+leftGuard,keepRight=vw-elWidth*.78-leftGuard;
-  let px=clamp(cx+offX*factor+orbit*(mobile?1.5:3.5),keepLeft,keepRight);
-  let py=cy+offY*factor+(1-factor)*(c.level<0?40:-35);
+  const edgeSpace=elWidth*(prioritizeScreen?.42:.78)+leftGuard;
+  const keepLeft=edgeSpace,keepRight=vw-edgeSpace;
+  const panelScale=isNutrition&&!mobile?clamp((copyLeft-cx-phoneW*.33)/elWidth):1;
+  // Both Nutrition cards settle alongside the display on a shared vertical axis.
+  const alignedX=mobile?vw*(vw<=360?.80:.82):Math.min(cx+phoneW*.5+elWidth*.45+10,copyLeft-elWidth*.47*panelScale-14);
+  let px=clamp(isNutrition?alignedX:cx+offX*factor+orbit*(mobile?1.5:3.5),keepLeft,keepRight);
+  let py=cy+nutritionLift*factor+(1-factor)*(c.level<0?40:-35);
   // Keep the chapter navigation and the hero CTA accessible.
   const roomTop=mobile?Math.max(copyBottom+16,vh*.25):Math.max(80,vh*.11);
   const lower=navY-(mobile?13:18);
   const elHeight=c.height||80;
   py=clamp(py,roomTop+elHeight*.5,Math.max(roomTop+elHeight*.5,lower-elHeight*.5));
-  const destinationScale=mobile?.58+.42*factor:.53+.47*factor;
+  const destinationScale=isNutrition
+   ? Math.max(.55,panelScale)*(.64+.19*factor)*(mobile&&vh<=650?.88:1)
+   : prioritizeScreen||shortLandscape ? .48+.20*factor
+   : mobile ? .58+.42*factor : .53+.47*factor;
   const scale=.16+(destinationScale-.16)*extraction;
   // Physical card depth follows the same strictly scroll-derived progress:
   // screen plane -> lifted, slightly pitched glass. No autoplay.
@@ -184,12 +196,12 @@ function render(p,active,device){
  updateText(dynamic.score,String(Math.round(52*evoE)));
  updateText(dynamic.minutes,String(Math.round(425*smooth((p-.623)/(.662-.623)))));
  updateWidth(dynamic.scoreMeter,(52*evoE)+'%');
- const water=smooth((p-.466)/(.557-.466));
- updateText(dynamic.water,(2*water).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}));
- updateWidth(dynamic.waterMeter,(74*water)+'%');
+ const water=window.MOVVA_NUTRITION?.hydrationProgress(p)??smooth((p-.466)/(.557-.466));
+ updateText(dynamic.water,water.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}));
+ updateWidth(dynamic.waterMeter,(37*water)+'%');
  window.MOVVA_MOTION_QA={visible,protectedCards,active,progress:p,cards:items.length,extractionEnabled:true,phone:{x:cx,y:cy,h:phoneH},mobile,
   layoutMeasurements:layout.measurements};
 }
 function reset(){root.style.display='none';}
-window.MOVVA_MOTION={render,reset,get cards(){return items.length},get origins(){return items.map(c=>({scene:c.scene,kind:c.kind,...c.source}))}};
+window.MOVVA_MOTION={render,reset,get cards(){return items.length},get origins(){return items.filter(c=>c.source).map(c=>({scene:c.scene,kind:c.kind,...c.source}))}};
 })();

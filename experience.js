@@ -3,6 +3,11 @@
  */
 (() => {
 'use strict';
+const launchParams=new URLSearchParams(location.search);
+if(launchParams.get('visual')==='estatico'){
+ document.documentElement.classList.add('static-experience');
+ return;
+}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const root=document.documentElement,canvas=$('#world'),stage=$('#stage'),experience=$('#experience');
 const media=matchMedia('(prefers-reduced-motion: reduce)');
@@ -10,13 +15,17 @@ const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t,smooth=t=>{t=clamp(t);return t*t*(3-2*t);};
 const range=(p,a,b)=>smooth((p-a)/(b-a));
 const windows=[[0,.13],[.125,.275],[.27,.435],[.43,.595],[.59,.775],[.77,.935],[.93,1.05]];
-const names=['SEU RITMO','TUDO CONECTADO','TRAINING','NUTRITION','EVOLUTION','CIRCLE','MOVVA'];
+const names=['SEU RITMO','TUDO CONECTADO','TREINOS','NUTRIÇÃO','EVOLUÇÃO','CIRCLE','MOVVA'];
 const scenes=$$('.scene'),dots=$$('.chapter-dots a');
+const chapterProgress=new Map(dots.map(link=>[link.hash,Number(link.dataset.jump)]));
+const header=$('.header');
+const scoreNumber=$('#score-number'),scoreArc=$('#score-arc'),waterNumber=$('#water-number'),waterFill=$('#water-fill'),activityMinutes=$('#activity-minutes');
+const activityBars=$$('.activity-bar').map(element=>({element,height:Number(element.dataset.minutes)/168*78}));
+const formatWater=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const sceneCache=scenes.map(()=>({opacity:null,visibility:null,inert:null,transform:null}));
 let lastScene=-1,lastBackdrop=null;
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
 let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null;
-const launchParams=new URLSearchParams(location.search);
  const PRO_MAX_REFERENCE_ASPECT=78/163.4;
  const PRO_MAX_MODEL_Y=(2.8/6)/PRO_MAX_REFERENCE_ASPECT;
 // The immersive presentation is on by default; old per-tab settings no longer disable it.
@@ -146,13 +155,13 @@ async function build(){
  const assetNames=['home','training','nutrition','evolution','circle'];
  await Promise.all(assetNames.map(async name=>{const image=await loadImage('/assets/'+name+'.webp');textureSizes[name]=[image.naturalWidth,image.naturalHeight];textures[name]=texture(image);}));
  // MOVVA satin aluminum unibody, ceramic glass inset and flush front seal.
- object(box(2.80,6.00,.312,.415,.046),[.706,.744,.704],[0,0,0],.77,145,[0,0,0],1);
- object(box(2.749,5.945,.043,.391,.014),[.365,.405,.376],[0,0,-.166],.51,98);
- object(box(2.713,5.907,.035,.374,.015),[.805,.833,.793],[0,0,-.189],.12,72,[0,0,0],2);
+ object(box(2.80,6.00,.312,.415,.046),[.70,.69,.70],[0,0,0],.77,145,[0,0,0],1);
+ object(box(2.749,5.945,.043,.391,.014),[.26,.25,.27],[0,0,-.166],.51,98);
+ object(box(2.713,5.907,.035,.374,.015),[.27,.26,.28],[0,0,-.189],.12,72,[0,0,0],2);
  // Inset rear glass below the elevated camera plateau, visibly distinct.
- object(box(2.52,4.10,.014,.282,.006),[.870,.886,.854],[0,-.72,-.218],.11,112,[0,0,0],2);
- object(box(2.769,5.969,.021,.393,.007),[.72,.75,.714],[0,0,.154],.83,178,[0,0,0],1);
- object(box(2.731,5.931,.030,.375,.009),[.038,.046,.042],[0,0,.169],.18,165);
+ object(box(2.52,4.10,.014,.282,.006),[.21,.20,.22],[0,-.72,-.218],.11,112,[0,0,0],2);
+ object(box(2.769,5.969,.021,.393,.007),[.76,.75,.74],[0,0,.154],.83,178,[0,0,0],1);
+ object(box(2.731,5.931,.030,.375,.009),[.017,.017,.020],[0,0,.169],.18,165);
  screenMesh=object(face(2.626,5.813,.316),[1,1,1],[0,0,.190]);screenMesh.mode=1;
  // Compact current-generation Dynamic Island with optical sensor inset.
  object(box(.624,.132,.018,.065,.006),[.010,.014,.014],[0,2.78,.207],.08,110);
@@ -165,7 +174,7 @@ async function build(){
  object(box(2.650,1.481,.071,.268,.025),
    [.56,.635,.563],[0,2.188,-.237],.81,178,[0,0,0],1);
  object(box(2.600,1.426,.077,.253,.024),
-   [.742,.798,.727],[0,2.188,-.282],.32,116,[0,0,0],2);
+   [.43,.42,.43],[0,2.188,-.282],.32,116,[0,0,0],2);
  // Three independently extruded barrels and recessed coated glass.
  const lensCenters=[[-.925,2.472],[-.318,2.172],[-.925,1.865]];
  lensCenters.forEach(([x,y])=>{
@@ -191,8 +200,8 @@ async function build(){
  for(const x of [-.98,-.87,-.76,-.65,-.54,.54,.65,.76,.87,.98])object(cylinder(.023,.012,20),[.015,.019,.017],[x,-3.005,0],.1,80,[Math.PI/2,0,0]);
  try{const image=await loadImage('/assets/movva.svg');const c=document.createElement('canvas');c.width=512;c.height=160;const ctx=c.getContext('2d');ctx.drawImage(image,40,58,432,59);backLogo=texture(c);const logo=object(face(1.2,.38,.01),[.59,.63,.577],[0,-.47,-.229],0,60,[0,Math.PI,0]);logo.mode=2;logo.fixedTexture=backLogo;}catch(_){}
  panels=[
-  {geom:face(2.15,1.04,.12),base:box(2.18,1.07,.048,.13,.006),tex:'training',rect:[.025,.554,.945,.188],chapter:2,x:1.05,y:.42,z:.90,rz:-.12},
-  {geom:face(2.03,.95,.12),base:box(2.06,.98,.048,.13,.006),tex:'nutrition',rect:[.035,.09,.93,.154],chapter:3,x:1.19,y:-.73,z:1.12,rz:.09},
+  {geom:face(2.15,1.04,.12),base:box(2.18,1.07,.048,.13,.006),tex:'training',rect:[.025,.495,.945,.193],chapter:2,x:1.05,y:.42,z:.90,rz:-.12},
+  {geom:face(2.03,.95,.12),base:box(2.06,.98,.048,.13,.006),tex:'nutrition',rect:[.035,.196,.93,.2],chapter:3,x:1.19,y:-.73,z:1.12,rz:.09},
   {geom:face(2.14,1.32,.12),base:box(2.17,1.35,.048,.13,.006),tex:'evolution',rect:[.040,.39,.93,.292],chapter:4,x:-1.25,y:-.27,z:1.07,rz:-.08}
  ];
  ready=true;applyMode();
@@ -219,6 +228,33 @@ function draw(o,model,texA,texB,mix=0){gl.bindBuffer(gl.ARRAY_BUFFER,o.geom.buff
  if(o.mode){const a=o.fixedTexture||texA,b=o.fixedTexture||texB||a;bindTexture(a,0);bindTexture(b,1);}
  gl.drawArrays(gl.TRIANGLES,0,o.geom.count);drawCalls++;
 }
+function setText(element,value){
+ const text=String(value);
+ if(element.textContent!==text)element.textContent=text;
+}
+function setActivityBar(element,height){
+ const value=height.toFixed(2),y=(88-height).toFixed(2);
+ if(element.getAttribute('height')!==value)element.setAttribute('height',value);
+ if(element.getAttribute('y')!==y)element.setAttribute('y',y);
+}
+function includesProgress(scope,p){
+ return scope&&p>scope[0]&&p<scope[1];
+}
+function renderCounters(p){
+ // Chapter modules own the data animation while their chapter is in view.
+ if(!includesProgress(window.MOVVA_NUTRITION?.scope,p)){
+  const progress=range(p,.47,.56),width=Number((progress*37).toFixed(2));
+  setText(waterNumber,formatWater.format(progress));
+  if(parseFloat(waterFill.style.width)!==width)waterFill.style.width=width+'%';
+ }
+ if(!includesProgress(window.MOVVA_EVOLUTION?.scope,p)){
+  const progress=range(p,.626,.725),offset=Number((289.026*(1-.52*progress)).toFixed(3));
+  setText(scoreNumber,Math.round(52*progress));
+  setText(activityMinutes,Math.round(425*progress));
+  if(parseFloat(scoreArc.style.strokeDashoffset)!==offset)scoreArc.style.strokeDashoffset=String(offset);
+  activityBars.forEach(({element,height},i)=>setActivityBar(element,height*range(p,.64+i*.006,.728+i*.002)));
+ }
+}
 function render(p){
  if(!domDevice&&(!gl||gl.isContextLost()))return;
  const intro=window.MOVVA_INTRO;
@@ -226,7 +262,8 @@ function render(p){
  const selected=w.indexOf(Math.max(...w)),active=intro?intro.active(p,selected):selected;
  const backdrop='rgb('+bg+')';
  if(backdrop!==lastBackdrop){stage.style.backgroundColor=backdrop;lastBackdrop=backdrop;}
- stage.classList.toggle('dark',active===2);$('.header').classList.toggle('dark',active===2);
+ const dark=bg[0]*.213+bg[1]*.715+bg[2]*.072<123;
+ stage.classList.toggle('dark',dark);header.classList.toggle('dark',dark);
  scenes.forEach((el,i)=>{
   const cache=sceneCache[i],opacity=w[i].toFixed(4);
   const visible=w[i]>.002,visibility=visible?'visible':'hidden';
@@ -244,10 +281,15 @@ function render(p){
   $('#chapter-name').textContent=names[active];
   lastScene=active;
  }
- const ep=range(p,.626,.725),np=range(p,.47,.56);
- $('#score-number').textContent=Math.round(52*ep);$('#score-arc').style.strokeDashoffset=(289.026*(1-.52*ep)).toFixed(3);
- $('#water-number').textContent=(2*np).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});$('#water-fill').style.width=(np*74)+'%';
- $$('.activity-bar').forEach((bar,i)=>{const value=+bar.dataset.minutes,t=range(p,.64+i*.006,.728+i*.002);bar.setAttribute('height',(value/168*78*t).toFixed(2));bar.setAttribute('y',(88-value/168*78*t).toFixed(2));});$('#activity-minutes').textContent=Math.round(425*ep);
+ renderCounters(p);
+ window.MOVVA_HERO?.positionPhone(target);
+ window.MOVVA_PHONE_FRAMES?.render(target);
+ const takeStart = .448, takeEnd = .582;
+ const takeActive = active === 3;
+ window.MOVVA_NUTRITION_TAKE?.render(
+  takeActive ? clamp((target - takeStart) / (takeEnd - takeStart)) : null,
+  target >= .365 && target < .61
+ );
  if(domDevice){
   // CSS3D is the production renderer: skip the unused WebGL matrix fit.
   let ix=0,blend=0,transitions=[[.253,.275],[.421,.443],[.578,.60],[.753,.775]];
@@ -257,6 +299,7 @@ function render(p){
   intro?.visual(p);
   window.MOVVA_CHAPTER_MOTION?.render(p,active);
   window.MOVVA_DOM_DEVICE?.render(p,active,ix,blend);
+  window.MOVVA_TRAINING?.render(p,active,target);
   window.MOVVA_MOTION?.render(p,active,null);
   drawCalls=0;frameCount++;return;
  }
@@ -284,6 +327,7 @@ function render(p){
  draw({geom:o.base,color:[.85,.85,.79],metal:.22,shine:80},panelM,txA,txA,0);
  draw({geom:o.geom,color:[1,1,1],mode:1,rect:o.rect},mm(panelM,mat.translation(0,0,.027)),textures[o.tex],textures[o.tex],0);
  }
+ window.MOVVA_TRAINING?.render(p,active,target);
  window.MOVVA_MOTION?.render(p,active,{nx,ny,scale});
  $('.ground-shadow').style.left=(50+nx*50)+'%';$('.ground-shadow').style.opacity=active===6?.3:1;
  $('.halo').style.transform=`translate(-50%,-50%) rotate(${p*110}deg) scale(${1+p*.08})`;
@@ -292,7 +336,7 @@ function render(p){
 function resize(){window.MOVVA_HERO?.measure();window.MOVVA_INTRO?.measure();width=stage.clientWidth;height=stage.clientHeight;mobile=width<=760;if(gl&&width&&height){const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);viewProjection=mm(mat.perspective(32*Math.PI/180,width/height,.1,60),mat.translation(0,0,-14));}requestTick();}
 function measure(){const travel=experience.offsetHeight-stage.clientHeight;return travel>0?clamp((scrollY-experience.offsetTop)/travel):0;}
 function requestTick(){if(enabled&&!raf&&!disposed&&!document.hidden)raf=requestAnimationFrame(tick);}
-function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,t-(lastTime||t-16));lastTime=t;target=measure();const k=1-Math.exp(-dt/85);position=lerp(position,target,k);pointer=pointer.map((v,i)=>lerp(v,pointerTarget[i],k));if(Math.abs(position-target)<.000006)position=target;
+function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=t-(lastTime||t-16);lastTime=t;target=measure();const k=1-Math.exp(-dt/85);position=lerp(position,target,k);pointer=pointer.map((v,i)=>lerp(v,pointerTarget[i],k));if(Math.abs(position-target)<.000006)position=target;
  try{render(position)}
  catch(err){
   console.warn('MOVVA 3D frame failed; activating compatible renderer.',err);
@@ -304,27 +348,59 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=Math.min(60,
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
-function clearScenes(){sceneCache.forEach(c=>{c.opacity=null;c.visibility=null;c.inert=null;c.transform=null;});lastScene=-1;lastBackdrop=null;window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
+function clearScenes(){sceneCache.forEach(c=>{c.opacity=null;c.visibility=null;c.inert=null;c.transform=null;});lastScene=-1;lastBackdrop=null;window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_TRAINING?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='1,0';$('#water-fill').style.width='37%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
 function applyMode(){
  // Keep the phone and scroll-driven cards active at every viewport size.
  // WebGL failure is handled by the existing CSS3D renderer; static HTML remains
  // the last-resort fallback if JavaScript or both rendering paths are unavailable.
+ const wasEnabled=enabled;
  enabled=ready;
  root.classList.toggle('enhanced',enabled);
  root.classList.toggle('dom-device',enabled&&domDevice);
  // Ensure the Motion Studio is visible even under OS-level reduced-motion settings.
  root.classList.toggle('motion-override',enabled&&media.matches);
  root.style.scrollBehavior=enabled?'auto':'';
- if(enabled){resize();position=target=measure();requestTick();}
+ if(enabled){
+  resize();
+  if(!wasEnabled)syncChapterHash();
+  position=target=measure();
+  updateHeader();
+  if(!wasEnabled&&domDevice){
+   try{render(position);}catch(error){
+    console.warn('MOVVA 3D startup failed.',error);
+    ready=false;applyMode();return;
+   }
+  }
+  requestTick();
+ }
  else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}
 }
 function jump(p,animated=true){if(!enabled)return;const top=experience.offsetTop+p*(experience.offsetHeight-stage.clientHeight);scrollTo({top,behavior:animated?'smooth':'auto'});target=p;requestTick();}
-$$('[data-jump]').forEach(a=>a.addEventListener('click',e=>{if(!enabled)return;e.preventDefault();jump(parseFloat(a.dataset.jump));}));
-addEventListener('scroll',()=>{if(enabled){$('.header').style.position=scrollY>experience.offsetHeight-100?'absolute':'fixed';requestTick();}},{passive:true});
+function syncChapterHash(){
+ const progress=chapterProgress.get(location.hash);
+ if(enabled&&progress!==undefined)jump(progress,false);
+}
+document.addEventListener('click',event=>{
+ if(!enabled||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+ const link=event.target.closest?.('a[href^="#"]');
+ const progress=chapterProgress.get(link?.hash);
+ if(progress===undefined||link.target||link.hasAttribute('download'))return;
+ event.preventDefault();
+ if(location.hash!==link.hash)history.pushState(null,'',link.hash);
+ jump(progress,!media.matches);
+});
+addEventListener('hashchange',()=>requestAnimationFrame(syncChapterHash));
+// Browsers finish positioning native fragment targets after loading the page.
+addEventListener('pageshow',()=>requestAnimationFrame(syncChapterHash));
+function updateHeader(){
+ const position=scrollY>experience.offsetHeight-100?'absolute':'fixed';
+ if(header.style.position!==position)header.style.position=position;
+}
+addEventListener('scroll',()=>{if(enabled){updateHeader();requestTick();}},{passive:true});
 addEventListener('movva:hero-layout',requestTick);
-let resizeId;addEventListener('resize',()=>{clearTimeout(resizeId);resizeId=setTimeout(()=>{applyMode();resize();},100);},{passive:true});
-addEventListener('pointermove',e=>{if(!enabled||mobile||e.pointerType==='touch')return;pointerTarget=[clamp((e.clientX/innerWidth-.5)*2,-1,1),clamp((e.clientY/innerHeight-.5)*2,-1,1)];requestTick();},{passive:true});
-addEventListener('pointerout',e=>{if(!e.relatedTarget){pointerTarget=[0,0];requestTick();}},{passive:true});
+let resizeId;addEventListener('resize',()=>{clearTimeout(resizeId);resizeId=setTimeout(applyMode,100);},{passive:true});
+addEventListener('pointermove',e=>{if(!enabled||domDevice||mobile||e.pointerType==='touch')return;pointerTarget=[clamp((e.clientX/innerWidth-.5)*2,-1,1),clamp((e.clientY/innerHeight-.5)*2,-1,1)];requestTick();},{passive:true});
+addEventListener('pointerout',e=>{if(!domDevice&&!e.relatedTarget){pointerTarget=[0,0];requestTick();}},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(raf)cancelAnimationFrame(raf);raf=0;}else{lastTime=0;requestTick();}});
 media.addEventListener?.('change',applyMode);
 canvas.addEventListener('webglcontextlost',e=>{

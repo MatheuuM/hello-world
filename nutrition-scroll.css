@@ -16,11 +16,11 @@
 #nutrition .hydration-caption{display:flex;justify-content:space-between;gap:12px;margin-top:9px;color:#737969;font-size:9px}
 #nutrition .hydration-caption span{font-size:inherit;color:inherit}
 #nutrition .micro-note{font-size:9px;line-height:1.75;color:#707568;margin-top:22px;max-width:355px}
-.nutrition-surface{display:none}
-.enhanced .nutrition-surface{display:block;position:absolute;width:min(42vw,650px);height:80%;border-radius:48% 48% 42% 42%;transform:translate(-50%,-50%) rotate(calc(-8deg + 12deg*var(--nutrition-orbit,0)));background:radial-gradient(ellipse at 30% 40%,#dce3cd9c,#d6ceb55c 64%,transparent 75%);opacity:0;pointer-events:none;z-index:1}
-.enhanced .nutrition-surface:after{content:'';position:absolute;inset:12% -4%;border:1px solid #8b95742c;border-radius:50%;transform:rotate(calc(-28deg + 20deg*var(--nutrition-orbit,0)))}
-.enhanced .nutrition-active .nutrition-surface{opacity:calc(var(--nutrition-presence,0)*.75)}
-.enhanced .nutrition-active .halo,.enhanced .nutrition-active .ghost-word{opacity:0}
+.enhanced .stage.dark #nutrition :is(.eyebrow,h2 em){color:#d6dfbe}
+.enhanced .stage.dark #nutrition :is(.nutrition-chapters,.hydration-title,.hydration-value>span,.hydration-caption,.micro-note){color:#d1dfc8}
+.enhanced .stage.dark #nutrition .nutrition-readout{border-top-color:#b6c8a83d}
+.enhanced .stage.dark #nutrition .water-track{background:#bacaa838}
+.enhanced .stage.dark #nutrition .water-track i{background:#b4c59a}
 .enhanced #nutrition .copy{width:47%;max-width:610px;padding-top:24px}
 @media(max-width:1100px) and (min-width:761px){#nutrition h2{font-size:60px}#nutrition .description{font-size:13px}#nutrition .nutrition-readout{margin-top:24px}.nutrition-chapters{gap:8px 13px;font-size:9px}#nutrition .micro-note{font-size:8px}}
 @media(max-height:800px) and (min-width:761px){#nutrition h2{font-size:65px}#nutrition .eyebrow{margin-bottom:21px}#nutrition .description{font-size:13px;margin-top:20px}#nutrition .nutrition-readout{margin-top:21px;padding-top:15px}#nutrition .nutrition-readout strong{font-size:38px}.nutrition-chapters{margin-top:19px}#nutrition .micro-note{margin-top:15px}}
@@ -36,10 +36,165 @@
  #nutrition .water-track{grid-column:2;grid-row:2;height:3px;margin:3px 0 0;align-self:start}
  #nutrition .hydration-caption{display:none}
  #nutrition .micro-note{font-size:8px;margin-top:10px;max-width:310px;line-height:1.6}
- .enhanced .nutrition-surface{width:85%;height:48%}
 }
 @media(max-width:760px) and (max-height:760px){
  .enhanced #nutrition{padding-top:92px}#nutrition h2{font-size:39px}#nutrition .description{font-size:11px;line-height:1.55;margin-top:13px}
  #nutrition .eyebrow{font-size:7px;margin-bottom:14px}#nutrition .nutrition-readout{margin-top:13px;padding-top:10px;grid-template-columns:94px 1fr}
  #nutrition .nutrition-readout strong{font-size:29px}#nutrition .micro-note{font-size:7px;margin-top:8px}
+}
+
+@media(max-width:360px) and (max-height:650px){
+ .enhanced #nutrition{padding-top:84px}
+ #nutrition h2{font-size:34px}
+ #nutrition .description{margin-top:10px}
+ #nutrition .nutrition-readout{margin-top:10px;padding-top:8px}
+}
+
+/* One uninterrupted take, framed inside the existing Nutrition chapter. */
+#nutrition-take { display: none; }
+
+.enhanced #nutrition-take {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  width: 100%;
+  margin: 0;
+  padding: clamp(82px, 12svh, 140px) 0 clamp(38px, 7svh, 72px);
+  background: #fff;
+}
+
+.enhanced #nutrition-take.is-scroll-ready {
+  opacity: 1;
+}
+
+#nutrition-take video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.enhanced #nutrition:has(#nutrition-take.is-scroll-ready) .copy {
+  position: absolute;
+  z-index: 9;
+  top: clamp(79px, 10svh, 120px);
+  left: var(--gutter);
+  width: auto;
+  padding: 0;
+  color: var(--ink);
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .take-title {
+  font: 500 clamp(14px, 1.4vw, 22px)/1.2 var(--sans);
+  letter-spacing: -.025em;
+}
+
+#nutrition .take-title,
+#nutrition:has(#nutrition-take.is-scroll-ready) .copy > :not(.take-title, .nutrition-local) {
+  display: none;
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .take-title {
+  display: inline;
+}
+
+.enhanced #stage:has(#nutrition-take.is-scroll-ready) .motion-studio {
+  opacity: 0;
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  #nutrition-take video {
+    object-fit: cover;
+    object-position: calc(18% + 32% * var(--take-video-progress, 0)) center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enhanced #nutrition-take { display: none; }
+}
+
+#nutrition:has(.nutrition-local:not([hidden])) .copy > :not(.take-title, .nutrition-local) {
+  display: none;
+}
+
+#nutrition:has(.nutrition-local:not([hidden])) .take-title {
+  display: block;
+}
+
+.nutrition-local:not([hidden]) {
+  position: relative;
+  pointer-events: auto;
+  margin-top: 18px;
+}
+
+.nutrition-local-control {
+  position: relative;
+  display: inline-block;
+}
+
+.nutrition-local label {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 0 16px;
+  border: 1px solid #28352b;
+  border-radius: 24px;
+  background: #28352b;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nutrition-local input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.nutrition-local-control:focus-within label {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.nutrition-local-status {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .copy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.enhanced #nutrition:has(.nutrition-local:not([hidden])) #nutrition-take {
+  padding-top: clamp(122px, 12svh, 140px);
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .nutrition-local {
+  margin-top: 0;
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .nutrition-local label {
+  padding-inline: 11px;
+  background: #fff;
+  color: #28352b;
+  font-size: 12px;
+}
+
+#nutrition:has(#nutrition-take.is-scroll-ready) .nutrition-local-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }

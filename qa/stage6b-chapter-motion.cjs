@@ -34,18 +34,17 @@ const positions=[
    assert.ok(sections.every(s=>s.lines>=2),'Missing heading line elements: '+JSON.stringify(sections));
    async function at(p){
     await page.evaluate(v=>__MOVVA_QA__.setProgress(v),p);
-    await page.waitForFunction(v=>Math.abs(__MOVVA_QA__.progress-v)<.0015,p,{timeout:25000});
+    await page.waitForFunction(v=>__MOVVA_QA__.settled&&Math.abs(__MOVVA_QA__.progress-v)<.0015,p,{timeout:25000});
     await page.waitForTimeout(140);
     return page.evaluate(()=>{
-     const nutrient=document.querySelector('.motion-fragment[data-kind="nutrition"]');
-     const rings=[...nutrient.querySelectorAll('.m-nut-rings .nr i')].map(el=>parseFloat(el.style.getPropertyValue('--value')));
-     const meter=parseFloat(nutrient.querySelector('.m-meter i').style.width);
+     const nutritionPlan=document.querySelector('.motion-fragment[data-kind="nutrition"] strong').textContent;
+     const hydrationMeter=parseFloat(document.querySelector('[data-water-meter]').style.width);
      const graph=document.querySelector('.movva-graph-marker');
      const circle=[...document.querySelectorAll('.movva-circle-connection')].map(x=>parseFloat(x.style.strokeDashoffset));
      const heading=document.querySelector('#nutrition h2');
      const finale=document.querySelector('#rhythm h2');
      const line=[...heading.querySelectorAll('.movva-editorial-line')].map(x=>parseFloat(x.style.getPropertyValue('--movva-reveal')));
-     return {p:__MOVVA_QA__.progress,rings,meter,circle,line,
+     return {p:__MOVVA_QA__.progress,nutritionPlan,hydrationMeter,circle,line,
       graph:graph?.style.transform,
       graphOpacity:+(graph?.style.opacity||0),
       finale:+(finale.style.getPropertyValue('--movva-finale-progress')||0),
@@ -59,11 +58,11 @@ const positions=[
    const samples={};
    for(const [key,p] of positions)samples[key]=await at(p);
    const n=samples;
-   assert.ok(n['nutrition-early'].rings.every(v=>v<=.01),'Nutrition rings not reset at start');
-   assert.ok(n['nutrition-full'].rings[0]>=310&&n['nutrition-full'].rings[0]<=320.1);
-   assert.ok(n['nutrition-full'].meter>=85&&n['nutrition-full'].meter<=86.1);
-   assert.ok(n['rewind-nutrition'].rings.every(v=>v<=.01),'Nutrition rings not reversible');
-   assert.ok(n['nutrition-middle'].rings[0]>10&&n['nutrition-middle'].rings[0]<320);
+   assert.ok(Object.values(samples).every(sample=>sample.nutritionPlan==='1.870 kcal'));
+   assert.equal(n['nutrition-early'].hydrationMeter,0,'Hydration meter should start empty');
+   assert.ok(n['nutrition-full'].hydrationMeter>36&&n['nutrition-full'].hydrationMeter<=37.1);
+   assert.equal(n['rewind-nutrition'].hydrationMeter,0,'Hydration meter should rewind');
+   assert.ok(n['nutrition-middle'].hydrationMeter>10&&n['nutrition-middle'].hydrationMeter<28);
    assert.notEqual(n['evolution-early'].graph,n['evolution-full'].graph,'Graph tracer static');
    assert.ok(n['evolution-full'].graph.includes('translate('));
    assert.equal(n['circle-early'].circle.length,4);
@@ -75,8 +74,8 @@ const positions=[
    assert.equal(n['nutrition-full'].headingText,n['rewind-nutrition'].headingText,'Heading content mutated');
    assert.ok(n['nutrition-full'].allHeadings.some(x=>x.includes('MOVVA')),'Heading text lost');
    assert.ok(Object.values(samples).every(x=>Math.abs(x.overflow)<=1&&x.state.active),'Overflow or renderer failed');
-   const values=n['nutrition-full'].metrics;
-   assert.ok(values.renders>=positions.length,'Chapter renderer not attached to scroll');
+   const renders=Object.values(samples).map(sample=>sample.metrics.renders);
+   assert.ok(renders.every((count,i)=>i===0||count>renders[i-1]),'Chapter renderer missed a scroll position');
    if(!process.env.QA_NO_CAPTURE){
     for(const [key,p] of [['nutrition',.510],['evolution',.705],['circle',.856],['finale',.992]]){
      await at(p);
@@ -86,7 +85,7 @@ const positions=[
     }
    }
    report.views.push({viewport:name,checks:21,snapshot:{
-    nutritionEnd:n['nutrition-full'].rings,closing:n['finale-full'].finale,
+    hydrationEnd:n['nutrition-full'].hydrationMeter,closing:n['finale-full'].finale,
     circle:n['circle-full'].circle,headingSections:sections.length}});
    console.log('PASS '+engine+' '+name+' 21 checks');
    await page.close();

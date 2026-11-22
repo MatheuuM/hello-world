@@ -26,7 +26,11 @@ async function execute(){
  if(group==='accessibility'){
   assert.equal(await page.locator('form').count(),0);assert.equal(await page.locator('a[href="#"]').count(),0);pass('No fake forms or placeholder anchors');
   for(const route of ['/','/privacy/','/terms/','/support/','/assets/home.webp','/assets/circle.webp']){const r=await page.request.get(base+route);assert.equal(r.status(),200);pass('Reachable '+route)}
-  assert.equal(await page.locator('#launch .dark-button').getAttribute('href'),'mailto:suporte@movvawellness.com.br');pass('Honest contact action');
+  const launchContact=new URL(await page.locator('#launch .dark-button').getAttribute('href'));
+  assert.equal(launchContact.protocol,'mailto:');
+  assert.equal(launchContact.pathname,'suporte@movvawellness.com.br');
+  assert.equal(launchContact.searchParams.get('subject'),'Quero saber do lançamento da MOVVA');
+  pass('Launch contact opens an email with a launch subject');
   await page.locator('#motion').click();assert.equal(await page.evaluate(()=>document.documentElement.classList.contains('enhanced')),false);assert.equal(await page.locator('.scene[aria-hidden="true"]').count(),0);pass('User motion preference exposes complete reading mode');
   for(const mode of ['nojs','reduce','nogl']){
    const c=await browser.newContext({viewport:{width:393,height:852},...(mode==='reduce'?{reducedMotion:'reduce'}:{}),...(mode==='nojs'?{javaScriptEnabled:false}:{})});
@@ -35,7 +39,17 @@ async function execute(){
    assert.equal(await p.evaluate(()=>document.documentElement.classList.contains('enhanced')),false);assert.equal(await p.locator('.scene').count(),7);
    await p.locator('#nutrition').scrollIntoViewIfNeeded();const image=await p.locator('#nutrition .static-shot').evaluate(async e=>{e.loading='eager';await e.decode();let r=e.getBoundingClientRect(),s=getComputedStyle(e);return{actual:(r.width-parseFloat(s.borderLeftWidth)-parseFloat(s.borderRightWidth))/(r.height-parseFloat(s.borderTopWidth)-parseFloat(s.borderBottomWidth)),expected:e.naturalWidth/e.naturalHeight}});assert.ok(Math.abs(image.actual-image.expected)<.002);await p.screenshot({path:path.join(out,mode+'.png')});result.images.push(mode+'.png');pass('Accessible complete '+mode+' fallback');await c.close();
   }
-  assert.equal(fs.readFileSync('robots.txt','utf8').includes('Disallow: /'),true);pass('Preview remains not indexed');
+  const canonical='https://www.movvawellness.com.br/';
+  const robots=await page.request.get(base+'/robots.txt');
+  assert.equal(robots.status(),200);
+  const directives=await robots.text();
+  assert.doesNotMatch(directives,/^Disallow:\s*\/\s*$/m);
+  assert.ok(directives.includes('Sitemap: '+canonical+'sitemap.xml'));
+  const sitemap=await page.request.get(base+'/sitemap.xml');
+  assert.equal(sitemap.status(),200);
+  assert.ok((await sitemap.text()).includes('<loc>'+canonical+'</loc>'));
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'),canonical);
+  pass('Homepage canonical URL is crawlable and listed in the sitemap');
   const v=JSON.parse(fs.readFileSync('vercel.json','utf8'));assert.ok(v.headers?.length);pass('Hardening headers configured');
  }
  assert.deepEqual(result.errors,[]);pass('No runtime exceptions or missing assets');result.status='PASS';
