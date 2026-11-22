@@ -260,10 +260,6 @@
   .home-page .overview h2 {
     font-size: min(15.5vw, 60px);
   }
-
-  .home-page .launch h2 {
-    font-size: min(15vw, 58px);
-  }
 }
 
 #launch .launch-footnotes .animated-link,
