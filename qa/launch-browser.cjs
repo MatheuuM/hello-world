@@ -230,6 +230,20 @@ async function verifyBenchPoster(page) {
   assert.equal(await page.locator('.bench-demo button').count(), 0);
 }
 
+async function verifyChapterPhone(page, screen) {
+  const rig = page.locator('#css3d-device');
+  assert.equal(await rig.getAttribute('data-screen'), screen);
+  assert.equal(await rig.evaluate(el => el.classList.contains('css3d-face-on')), true);
+  const image = rig.locator('.css3d-screen-' + screen);
+  assert.equal(await image.getAttribute('src'), '/assets/' + screen + '.webp');
+  assert.equal(await image.isVisible(), true);
+  await verifyImage(page, '.css3d-screen-' + screen, 589, 1280);
+  const bezel = await rig.locator('.css3d-front').evaluate(el => getComputedStyle(el, '::after').backgroundImage);
+  assert.ok(bezel.includes('/assets/react-phone-chapter-bezel.webp'));
+  assert.equal(await rig.locator('.css3d-unibody').isVisible(), false);
+  assert.equal(await rig.locator('.css3d-control').first().isVisible(), false);
+}
+
 async function verifyBench(page, label, capture, useWheel) {
   const demo = page.locator('.bench-demo');
   const samples = [];
@@ -329,13 +343,12 @@ async function test(browser, engine, [label, viewport]) {
         const chapters = await page.locator('.chapter-bar').boundingBox();
         assert.ok(copy.y + copy.height <= chapters.y, 'Conteúdo invadiu a navegação em ' + progress);
       }
-      if ((label === 'desktop' || label === 'iphone') && (progress === .365 || progress === .52)) {
-        const name = progress === .365 ? 'training' : 'nutrition';
-        await verifyImage(page, '.css3d-screen-' + name, 589, 1280);
-        if (name === 'training') {
-          await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.css3d-screen-training')).opacity) > .95);
+      const chapterScreen = { [.365]: 'training', [.52]: 'nutrition', [.66]: 'evolution', [.86]: 'circle' }[progress];
+      if (chapterScreen) {
+        await verifyChapterPhone(page, chapterScreen);
+        if (['desktop', 'iphone'].includes(label) && ['training', 'nutrition'].includes(chapterScreen)) {
+          await screenshot(engine + '-' + chapterScreen + '-' + label);
         }
-        await screenshot(engine + '-' + name + '-' + label);
       }
     }
     await verifyBench(page, label, name => screenshot(engine + '-' + name), engine !== 'webkit' || !viewport.hasTouch);
