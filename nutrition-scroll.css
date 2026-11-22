@@ -104,7 +104,7 @@
 }
 
 .enhanced #stage:has(#nutrition-take.is-scroll-ready) .motion-studio {
-  visibility: hidden;
+  opacity: 0;
 }
 
 @media (max-width: 760px) and (orientation: portrait) {
@@ -167,6 +167,10 @@
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.enhanced #nutrition:has(.nutrition-local:not([hidden])) #nutrition-take {
+  padding-top: clamp(122px, 12svh, 140px);
 }
 
 #nutrition:has(#nutrition-take.is-scroll-ready) .nutrition-local {
