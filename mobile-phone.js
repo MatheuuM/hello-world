@@ -17,7 +17,7 @@ const PRO_MAX_ASPECT=78/163.4;
 // Avoid invalidating the entire shell's calc()-driven geometry when its
 // width and height did not actually change.
 const BASE_WIDTH=170,BASE_HEIGHT=BASE_WIDTH/PRO_MAX_ASPECT;
-const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null,mode:null,rigTransform:null,pose:null,dolly:1};
+const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,opacity:null,mode:null,rigTransform:null,pose:null,dolly:1,unfold:1};
 const metrics={renders:0,sizeWrites:0,scaleWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
@@ -171,6 +171,9 @@ function render(p,active,ix,blend){
  const rearShow=smooth((p-.112)/.055)*(1-smooth((p-.224)/.085));
  const dolly=1+.032*rearShow;
  last.pose=[safeRy,rx,rz];last.dolly=dolly;
+ // The opening handoff scales the rotated object's horizontal axis.
+ last.unfold=stage.classList.contains('hero-active')
+  ? Number(stage.style.getPropertyValue('--hero-unfold') || 1) : 1;
  device.style.transform='rotateY('+safeRy.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg) rotateZ('+rz.toFixed(3)+'deg) scale('+dolly.toFixed(5)+')';
  // Studio specular ribbons move in lockstep with the scroll in physical
  // device coordinates. No time-based animations or full-screen blur.
@@ -229,7 +232,7 @@ function projectScreenPoint(u,v){
  const zoom=last.dolly||1, perspective=1200/(1200-z3*zoom);
  const outer=mobile?last.h/BASE_HEIGHT:1;
  return {
-  x:last.x+outer*x3*zoom*perspective,
+  x:last.x+outer*x3*last.unfold*zoom*perspective,
   y:last.y+outer*y2*zoom*perspective,
   normal:cy*cx,
   u,v

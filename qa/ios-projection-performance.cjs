@@ -23,8 +23,10 @@ const report={engine,status:'RUNNING',views:[],errors:[],captures:[]};
    const elements=[...document.querySelectorAll('.css3d-screen')];
    const display=document.querySelector('.css3d-display'),stage=document.querySelector('#stage');
    const origins=MOVVA_MOTION.origins;
-   const examples=[],poses=[.055,.135,.178,.335,.512,.67,.842];
+   const examples=[],poses=[.055,.12,.135,.178,.335,.512,.67,.842];
    for(const p of poses){
+    // The handoff's horizontal scale belongs to the page's hero controller.
+    MOVVA_HERO.visual(p);
     MOVVA_DOM_DEVICE.render(p,p<.13?0:p<.28?1:Math.min(6,Math.floor(p*7)),p<.28?0:Math.min(4,Math.floor((p-.25)*8)),0);
     for(const source of origins){
      const marker=document.createElement('span');

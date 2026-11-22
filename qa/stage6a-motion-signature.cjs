@@ -29,7 +29,7 @@ const overlap=(a,b)=>{
     await page.waitForFunction(value=>__MOVVA_QA__.settled&&Math.abs(__MOVVA_QA__.progress-value)<.001,p,{timeout:24000});
     await page.waitForTimeout(75);
     return page.evaluate(()=>{
-     const card=document.querySelector('.motion-fragment[data-scene="2"][data-kind="training"]');
+     const card=document.querySelector('.motion-fragment[data-scene="5"][data-kind="circle"]');
      const css=card.style;
      const phone=document.querySelector('#css3d-object');
      const glint=document.querySelector('.css3d-glint');
@@ -58,9 +58,10 @@ const overlap=(a,b)=>{
      };
     });
    }
-   const start=await at(.305),finish=await at(.335),midBack=await at(.178),replay=await at(.305);
+   // Circle retains a visible screen-to-card flight throughout its chapter.
+   const start=await at(.795),finish=await at(.829),midBack=await at(.178),replay=await at(.795);
    assert.ok(Number.isFinite(start.card.extraction)&&start.card.extraction>=0&&start.card.extraction<.65,JSON.stringify(start.card));
-   assert.ok(finish.card.extraction>.98,JSON.stringify(finish.card));
+   assert.ok(finish.card.extraction>.98&&finish.card.opacity>.9,JSON.stringify(finish.card));
    const dist=s=>Math.hypot(s.card.x-s.card.anchorX,s.card.y-s.card.anchorY);
    assert.ok(dist(start)<dist(finish)*.76+1,'Card must emerge from phone before spreading');
    assert.ok(finish.card.depth>75,'Released card must lift above display');
@@ -91,7 +92,7 @@ const overlap=(a,b)=>{
    report.checks+=14;
    report.views.push({viewport:label,earlyExtraction:+start.card.extraction.toFixed(3),lateExtraction:+finish.card.extraction.toFixed(3),emergenceDistance:+dist(start).toFixed(1),releasedDistance:+dist(finish).toFixed(1),dolly:+match[1]});
    if(!process.env.QA_NO_CAPTURE && ['desktop','phone'].includes(label)){
-    for(const [name,p] of [['emerge',.305],['settled',.335],['rear',.178]]){
+    for(const [name,p] of [['emerge',.795],['settled',.829],['rear',.178]]){
      await at(p);
      const filename=label+'-'+name+'.png';
      await page.screenshot({path:path.join(output,filename),timeout:22000,animations:'disabled'});
