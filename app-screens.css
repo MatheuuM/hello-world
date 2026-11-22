@@ -1,0 +1,87 @@
+.app-screens {
+  padding: clamp(56px, 7vw, 104px) var(--gutter);
+  background: #fff;
+  color: var(--ink);
+}
+.app-screens h2 {
+  margin: 0 0 24px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(42px, 5.5vw, 86px);
+  letter-spacing: -.045em;
+  line-height: 1;
+}
+.app-screens fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.app-screens legend,
+.app-screens input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.app-screens label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin: 0 .25rem .35rem 0;
+  padding: 8px 17px;
+  border: 1px solid #c6ccc6;
+  border-radius: 100px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.app-screens input:checked + label {
+  border-color: var(--forest, #24372a);
+  color: #fff;
+  background: var(--forest, #24372a);
+}
+.app-screens input:focus-visible + label,
+.app-shots:focus-visible {
+  outline: 2px solid var(--forest, #24372a);
+  outline-offset: 3px;
+}
+.app-shots {
+  display: none;
+  justify-content: start;
+  grid-auto-flow: column;
+  grid-auto-columns: clamp(177px, 18vw, 249px);
+  gap: clamp(15px, 2vw, 33px);
+  padding: 12px 3px 18px;
+  margin-top: 15px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+}
+#shots-daily:checked ~ .shots-daily,
+#shots-training:checked ~ .shots-training,
+#shots-nutrition:checked ~ .shots-nutrition,
+#shots-evolution:checked ~ .shots-evolution {
+  display: grid;
+}
+.app-shots figure {
+  margin: 0;
+  scroll-snap-align: start;
+}
+.app-shots img {
+  width: 100%;
+  height: auto;
+  border: 1px solid #2125212b;
+  border-radius: clamp(12px, 1.3vw, 20px);
+}
+.app-shots figcaption {
+  padding-top: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+@media (max-width: 600px) {
+  .app-screens label { padding-inline: 12px; font-size: 13px; }
+  .app-shots { grid-auto-columns: min(69vw, 242px); }
+}

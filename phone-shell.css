@@ -2,15 +2,15 @@
 .css3d-device{--shell-w:170px;--shell-h:364.026px}
 .css3d-unibody{position:absolute;inset:0;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;pointer-events:none}
 .css3d-shell-face{position:absolute;left:50%;top:50%;margin:0;display:block;box-sizing:border-box;transform-origin:0 0;pointer-events:none;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.css3d-shell-face--wall{background:linear-gradient(0deg,#3b413d 0%,#707971 16%,#a1aa9d 48%,#777f76 82%,#444b45 100%)}
-.css3d-shell-face--front{background:linear-gradient(0deg,#555e56,#c1c7b9 42%,#848c81 100%)}
-.css3d-shell-face--rear{background:linear-gradient(0deg,#4d554d,#aeb4a8 45%,#656d62 100%)}
+.css3d-shell-face--wall{background:linear-gradient(0deg,#333235 0%,#777579 16%,#d0cecc 48%,#918e8c 82%,#414042 100%)}
+.css3d-shell-face--front{background:linear-gradient(0deg,#444345,#dbd9d7 42%,#858386 100%)}
+.css3d-shell-face--rear{background:linear-gradient(0deg,#39393b,#c4c1bd 45%,#666467 100%)}
 .css3d-front,.css3d-back{inset:calc(var(--shell-w) * .0092);border-radius:12.8% / 5.92%;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .css3d-front{border:calc(var(--shell-w) * .027) solid #434b44;transform:translateZ(calc(var(--shell-w) * .056));box-shadow:inset 0 0 0 1px rgba(255,255,255,.36)}
 .css3d-back{border:calc(var(--shell-w) * .012) solid #7b8378;transform:rotateY(180deg) translateZ(calc(var(--shell-w) * .056));box-shadow:inset 0 0 0 1.2px rgba(255,255,255,.21)}
 .css3d-display{border-radius:9.4% / 4.7%}
-.css3d-control{position:absolute;top:50%;left:50%;display:block;width:calc(var(--shell-w) * .04);border-radius:calc(var(--shell-w) * .012);background:linear-gradient(90deg,#6f786f,#c3cbbc 45%,#4f574f);box-shadow:0 1px 2px #292d2975;transform-origin:0 0;backface-visibility:visible;pointer-events:none}
-.css3d-control--right{background:linear-gradient(90deg,#606860,#bcc4b6 55%,#424941)}
+.css3d-control{position:absolute;top:50%;left:50%;display:block;width:calc(var(--shell-w) * .04);border-radius:calc(var(--shell-w) * .012);background:linear-gradient(90deg,#555357,#d5d2cf 45%,#484648);box-shadow:0 1px 2px #292d2975;transform-origin:0 0;backface-visibility:visible;pointer-events:none}
+.css3d-control--right{background:linear-gradient(90deg,#555457,#c8c6c2 55%,#38373a)}
 @media(max-width:760px){.css3d-front{border-width:calc(var(--shell-w) * .027)}}
 /* Safari: don't allow layout containment to flatten nested 3D compositor layers.
    The wall's back face remains visible as a fallback at exact edge-on poses. */
@@ -26,7 +26,7 @@
    not just a flat bar when nested CSS 3D faces are compositor-culled. */
 .css3d-webkit-profile{
  border-radius:calc(var(--shell-w) * .018);
- background:linear-gradient(90deg,#4e5a50 0%,#899b8c 14%,#bac7b7 32%,#a6b7a6 54%,#697a6d 81%,#435247 100%);
+ background:linear-gradient(90deg,#2e2d30 0%,#888586 14%,#e1dfdb 32%,#b0adab 54%,#686568 81%,#373638 100%);
  box-shadow:inset .8px 0 rgba(244,248,237,.48),inset -1px 0 rgba(25,37,27,.40),0 0 1px #818f81;
 }
 .css3d-webkit-profile .profile-camera-ledge{
@@ -34,7 +34,7 @@
  right:calc(var(--shell-w) * -.045);
  width:calc(var(--shell-w) * .053);height:23.4%;
  border-radius:calc(var(--shell-w) * .018);
- background:linear-gradient(90deg,#4a5c4d 0%,#899d8e 29%,#c7d4c2 55%,#667868 100%);
+ background:linear-gradient(90deg,#37363a 0%,#898686 29%,#d1ceca 55%,#625f62 100%);
  box-shadow:inset 1px 0 rgba(247,251,242,.44),1.5px 1px 2px rgba(38,49,39,.20);
  pointer-events:none;
 }
@@ -45,7 +45,7 @@
 .css3d-webkit-profile .profile-button{
  display:block;position:absolute;z-index:2;
  left:4%;width:30%;border-radius:calc(var(--shell-w) * .009);
- background:linear-gradient(90deg,#4e5d52 0%,#dce6d4 38%,#7f9382 76%,#556559 100%);
+ background:linear-gradient(90deg,#3e3d40 0%,#dfddda 38%,#918f90 76%,#525155 100%);
  box-shadow:inset 0 0 0 .55px rgba(250,252,242,.43),0 0 .65px rgba(20,30,22,.62);
 }
 .css3d-webkit-profile .profile-button--action{top:16.5%;height:4.7%}
@@ -54,13 +54,13 @@
 .css3d-webkit-profile .profile-button--lock{top:24.9%;height:14.6%}
 .css3d-webkit-profile .profile-button--camera-control{
  top:67.3%;height:7.3%;width:23%;left:8%;
- background:linear-gradient(90deg,#4a594d,#a6b5a4 47%,#3f5144);
+ background:linear-gradient(90deg,#38373a,#b2afac 47%,#403e41);
 }
 .css3d-webkit-profile[data-side="left"] .profile-button[data-side="right"],
 .css3d-webkit-profile[data-side="right"] .profile-button[data-side="left"]{display:none}
 .css3d-webkit-profile .profile-antenna{
  display:block;position:absolute;z-index:2;left:0;width:100%;height:calc(var(--shell-w) * .009);
- background:linear-gradient(90deg,#526354 0%,#9fb0a0 52%,#526354 100%);
+ background:linear-gradient(90deg,#454447 0%,#969596 52%,#454447 100%);
 }
 .css3d-webkit-profile .profile-antenna--top{top:7.4%}
 .css3d-webkit-profile .profile-antenna--bottom{bottom:8%}
@@ -139,30 +139,30 @@
 
 /* MOVVA hardware atelier / 18 Pro Max reference language.
    Proportions follow 78 x 163.4 x 8.75 mm. Finish is MOVVA-exclusive
-   pearl titanium/sage, not a branded product replica. */
+   graphite with polished silver edges. */
 .css3d-device{--shell-h:356.128px;--movva-radius:calc(var(--shell-w) * .135)}
 .css3d-front,.css3d-back{border-radius:13.5% / 6.44%}
 .css3d-front{
  border-width:calc(var(--shell-w) * .021);
- border-color:#333e37;
+ border-color:#161618;
  box-shadow:
-   inset 0 0 0 .7px #b2c0ad6e,
-   0 0 0 calc(var(--shell-w) * .0028) #809084;
- background-color:#141e18;
+   inset 0 0 0 .7px #d2cfc85e,
+   0 0 0 calc(var(--shell-w) * .0028) #a6a3a2;
+ background-color:#0d0d0e;
 }
 .css3d-display{border-radius:11.8% / 5.6%}
 .css3d-island{top:1.55%;width:22.7%;height:2.62%;background:#080c0c;box-shadow:0 0 0 .55px #46504b}
 .css3d-back{
  border-width:calc(var(--shell-w) * .011);
- border-color:#747d71;
- background:linear-gradient(115deg,#b4bcb0 0%,#e2e4d9 33%,#c3c9bf 70%,#909a8e 100%);
+ border-color:#737174;
+ background:linear-gradient(115deg,#464447 0%,#777473 33%,#535153 70%,#323134 100%);
  box-shadow:inset 0 0 0 .75px rgba(255,255,255,.50);
 }
 .css3d-back::before{
  content:"";position:absolute;z-index:0;top:28.0%;left:4.1%;right:4.1%;bottom:3.7%;
  border-radius:11.5% / 6.1%;
- background:linear-gradient(132deg,rgba(244,244,234,.80) 0%,rgba(224,229,218,.68) 42%,rgba(192,200,187,.66) 100%);
- box-shadow:0 0 0 .8px rgba(89,104,92,.30),inset 1.2px 1.8px 4px rgba(255,255,255,.61),inset -1px -2px 3px rgba(55,68,58,.12);
+ background:linear-gradient(132deg,#706d6c 0%,#545255 42%,#353437 100%);
+ box-shadow:0 0 0 .8px #22212480,inset 1.2px 1.8px 4px #ffffff50,inset -1px -2px 3px #17161838;
  pointer-events:none;
 }
 .css3d-back::after{
@@ -170,7 +170,7 @@
  background:linear-gradient(105deg,rgba(255,255,255,.10),transparent 24%,rgba(255,255,255,.08) 71%,transparent);
  pointer-events:none;
 }
-.css3d-rear-logo{z-index:1;top:58%;width:37%;opacity:.60;filter:grayscale(1)}
+.css3d-rear-logo{z-index:1;top:58%;width:37%;opacity:.53;filter:brightness(0) invert(1)}
 .css3d-camera-rig .css3d-camera{
  top:3.05%;left:3.05%;width:93.90%;
  height:auto;aspect-ratio:1.88;
@@ -180,13 +180,13 @@
 .css3d-camera-foot,.css3d-camera-deck{border-radius:inherit}
 .css3d-camera-foot{
  transform:translateZ(calc(var(--shell-w) * .004));
- background:linear-gradient(135deg,#57665a 0%,#99a89a 35%,#636f65 72%,#465147 100%);
+ background:linear-gradient(135deg,#343337 0%,#aaa6a4 35%,#656366 72%,#39373a 100%);
  box-shadow:0 2px 7px rgba(30,40,33,.35),0 0 0 .7px rgba(52,64,54,.66);
 }
 .css3d-camera-deck{
  inset:1.25%;border-radius:calc(var(--shell-w) * .096);
  transform:translateZ(calc(var(--shell-w) * .025));
- background:linear-gradient(112deg,#bbc6b7 0%,#d8ded0 20%,#b3c0b1 45%,#849487 78%,#a3b1a2 100%);
+ background:linear-gradient(112deg,#797675 0%,#969391 20%,#696769 45%,#454447 78%,#6b696a 100%);
  border:.6px solid rgba(71,90,74,.45);
  box-shadow:inset 1.4px 1.4px 2.5px rgba(255,255,255,.69),inset -2px -2.5px 4px rgba(35,53,38,.24);
 }
@@ -198,12 +198,12 @@
 .css3d-camera-lens--right{top:32%;right:auto;left:34.0%}
 .css3d-camera-rig .css3d-camera .lens-barrel{
  inset:-6%;border-radius:50%;transform:translateZ(0);
- background:linear-gradient(134deg,#222c29 0%,#99aaa1 24%,#515f55 53%,#141d1b 89%);
+ background:linear-gradient(134deg,#202024 0%,#c0bdb9 24%,#535255 53%,#18171a 89%);
  box-shadow:1px 2px 3px rgba(14,25,19,.42),inset 0 0 0 1.1px rgba(232,235,218,.39);
 }
 .css3d-camera-rig .css3d-camera .lens-rim{
  inset:2.8%;transform:translateZ(calc(var(--shell-w) * .008));
- background:linear-gradient(135deg,#c6d1c4 0%,#202f2d 33%,#7e8b82 57%,#222e2b 85%);
+ background:linear-gradient(135deg,#d8d5d2 0%,#28272b 33%,#959193 57%,#242328 85%);
  box-shadow:inset 0 0 0 1.2px #202927,0 1px 2px rgba(21,29,25,.69);
 }
 .css3d-camera-rig .css3d-camera .lens-optic{
@@ -233,16 +233,16 @@
 .css3d-camera-wall-face{
  position:absolute;display:block;left:50%;top:50%;margin:0;box-sizing:border-box;
  transform-origin:center center;backface-visibility:visible;-webkit-backface-visibility:visible;
- background:linear-gradient(180deg,#cad7c6 0%,#9cae9f 30%,#5a695c 90%);
+ background:linear-gradient(180deg,#d1cdca 0%,#9b9797 30%,#504f52 90%);
  pointer-events:none;
 }
 @media(max-width:760px){.css3d-front{border-width:calc(var(--shell-w) * .021)}}
 
 /* Hardware micro-details: machined controls and USB-C edge silhouette. */
-.css3d-control--action{background:linear-gradient(90deg,#58685c,#d8ddd1 44%,#637467)}
+.css3d-control--action{background:linear-gradient(90deg,#4e4b4f,#d8d5d1 44%,#666366)}
 .css3d-control--camera-control{
  width:calc(var(--shell-w) * .027);
- background:linear-gradient(90deg,#526257,#b1bbae 45%,#475448);
+ background:linear-gradient(90deg,#555256,#c0bdba 45%,#48474a);
  border-radius:calc(var(--shell-w) * .011);
  box-shadow:inset 0 0 0 .55px rgba(241,242,229,.35),0 .5px 1.5px rgba(26,37,29,.5);
 }
@@ -268,7 +268,7 @@
 .css3d-antenna{
  position:absolute;top:50%;left:50%;
  width:calc(var(--shell-w) * .11);height:calc(var(--shell-w) * .009);
- background:linear-gradient(90deg,#a8b5a5,#596b5f 55%,#aeb9ac);
+ background:linear-gradient(90deg,#a3a1a0,#59575a 55%,#a9a7a6);
  box-shadow:0 0 .6px #4a574c;
  pointer-events:none;
  transform-origin:0 0;
@@ -369,7 +369,7 @@
    width:calc(var(--shell-w) * .112);
    height:calc(var(--shell-h) * .981);
    border-radius:calc(var(--shell-w) * .042);
-   background:linear-gradient(90deg,#4b564d 0%,#819182 19%,#c0cbb9 49%,#748476 79%,#465047 100%);
+   background:linear-gradient(90deg,#323135 0%,#858384 19%,#d5d2cf 49%,#898687 79%,#3a383b 100%);
  }
  .css3d-fast-edge--left{
    transform:translate(-50%,-50%) translateX(calc(var(--shell-w) * -.490)) rotateY(90deg);
@@ -381,7 +381,7 @@
    width:calc(var(--shell-w) * .80);
    height:calc(var(--shell-w) * .112);
    border-radius:calc(var(--shell-w) * .015);
-   background:linear-gradient(180deg,#445148 0%,#9dac9c 40%,#c5cdbe 53%,#465448 100%);
+   background:linear-gradient(180deg,#39383b 0%,#aaa7a5 40%,#d8d6d2 53%,#424144 100%);
  }
  .css3d-fast-edge--top{
    transform:translate(-50%,-50%) translateY(calc(var(--shell-h) * -.490)) rotateX(90deg);

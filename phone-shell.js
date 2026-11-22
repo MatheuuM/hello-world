@@ -47,9 +47,9 @@ const layers=compact?
 // A shared directional light is sampled per tangent (not per repeated CSS tile).
 // This keeps the highlight continuous as the phone turns past each corner.
 const palette={
- rear:[[61,68,62],[106,114,104],[93,100,91]],
- wall:[[62,69,63],[139,148,133],[83,91,82]],
- front:[[84,91,83],[173,181,166],[107,115,105]]
+ rear:[[58,57,60],[174,171,169],[88,86,89]],
+ wall:[[58,57,61],[201,198,195],[91,89,92]],
+ front:[[82,80,83],[218,215,212],[110,107,110]]
 };
 const tone=(rgb,shade)=>'rgb('+rgb.map(v=>Math.round(Math.max(0,Math.min(255,v*shade)))).join(',')+')';
 let count=0;
@@ -153,7 +153,7 @@ if(camera){
   wall.style.height='calc(var(--shell-w) * .021 + .10px)';
   wall.style.transform='translate3d(calc(var(--shell-w) * '+((a.x+b.x)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * '+((a.y+b.y)/(2*W)).toFixed(9)+'),calc(var(--shell-w) * .0145)) translate(-50%,-50%) rotateZ('+(Math.atan2(dy,dx)*180/Math.PI).toFixed(4)+'deg) rotateX(90deg)';
   const n=dx/(len||1),light=.84+.17*n;
-  wall.style.background='linear-gradient(180deg,'+tone([202,215,198],light)+' 0%,'+tone([156,174,159],light)+' 30%,'+tone([90,105,92],light)+' 90%)';
+  wall.style.background='linear-gradient(180deg,'+tone([209,205,202],light)+' 0%,'+tone([155,151,151],light)+' 30%,'+tone([80,79,82],light)+' 90%)';
   camera.insertBefore(wall,camera.querySelector('.css3d-camera-deck'));
   cameraWallCount++;
  }

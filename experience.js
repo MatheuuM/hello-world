@@ -155,13 +155,13 @@ async function build(){
  const assetNames=['home','training','nutrition','evolution','circle'];
  await Promise.all(assetNames.map(async name=>{const image=await loadImage('/assets/'+name+'.webp');textureSizes[name]=[image.naturalWidth,image.naturalHeight];textures[name]=texture(image);}));
  // MOVVA satin aluminum unibody, ceramic glass inset and flush front seal.
- object(box(2.80,6.00,.312,.415,.046),[.706,.744,.704],[0,0,0],.77,145,[0,0,0],1);
- object(box(2.749,5.945,.043,.391,.014),[.365,.405,.376],[0,0,-.166],.51,98);
- object(box(2.713,5.907,.035,.374,.015),[.805,.833,.793],[0,0,-.189],.12,72,[0,0,0],2);
+ object(box(2.80,6.00,.312,.415,.046),[.70,.69,.70],[0,0,0],.77,145,[0,0,0],1);
+ object(box(2.749,5.945,.043,.391,.014),[.26,.25,.27],[0,0,-.166],.51,98);
+ object(box(2.713,5.907,.035,.374,.015),[.27,.26,.28],[0,0,-.189],.12,72,[0,0,0],2);
  // Inset rear glass below the elevated camera plateau, visibly distinct.
- object(box(2.52,4.10,.014,.282,.006),[.870,.886,.854],[0,-.72,-.218],.11,112,[0,0,0],2);
- object(box(2.769,5.969,.021,.393,.007),[.72,.75,.714],[0,0,.154],.83,178,[0,0,0],1);
- object(box(2.731,5.931,.030,.375,.009),[.038,.046,.042],[0,0,.169],.18,165);
+ object(box(2.52,4.10,.014,.282,.006),[.21,.20,.22],[0,-.72,-.218],.11,112,[0,0,0],2);
+ object(box(2.769,5.969,.021,.393,.007),[.76,.75,.74],[0,0,.154],.83,178,[0,0,0],1);
+ object(box(2.731,5.931,.030,.375,.009),[.017,.017,.020],[0,0,.169],.18,165);
  screenMesh=object(face(2.626,5.813,.316),[1,1,1],[0,0,.190]);screenMesh.mode=1;
  // Compact current-generation Dynamic Island with optical sensor inset.
  object(box(.624,.132,.018,.065,.006),[.010,.014,.014],[0,2.78,.207],.08,110);
@@ -174,7 +174,7 @@ async function build(){
  object(box(2.650,1.481,.071,.268,.025),
    [.56,.635,.563],[0,2.188,-.237],.81,178,[0,0,0],1);
  object(box(2.600,1.426,.077,.253,.024),
-   [.742,.798,.727],[0,2.188,-.282],.32,116,[0,0,0],2);
+   [.43,.42,.43],[0,2.188,-.282],.32,116,[0,0,0],2);
  // Three independently extruded barrels and recessed coated glass.
  const lensCenters=[[-.925,2.472],[-.318,2.172],[-.925,1.865]];
  lensCenters.forEach(([x,y])=>{
@@ -243,8 +243,8 @@ function includesProgress(scope,p){
 function renderCounters(p){
  // Chapter modules own the data animation while their chapter is in view.
  if(!includesProgress(window.MOVVA_NUTRITION?.scope,p)){
-  const progress=range(p,.47,.56),width=Number((progress*74).toFixed(2));
-  setText(waterNumber,formatWater.format(2*progress));
+  const progress=range(p,.47,.56),width=Number((progress*37).toFixed(2));
+  setText(waterNumber,formatWater.format(progress));
   if(parseFloat(waterFill.style.width)!==width)waterFill.style.width=width+'%';
  }
  if(!includesProgress(window.MOVVA_EVOLUTION?.scope,p)){
@@ -264,7 +264,6 @@ function render(p){
  if(backdrop!==lastBackdrop){stage.style.backgroundColor=backdrop;lastBackdrop=backdrop;}
  const dark=bg[0]*.213+bg[1]*.715+bg[2]*.072<123;
  stage.classList.toggle('dark',dark);header.classList.toggle('dark',dark);
- window.MOVVA_TRAINING?.render(p,active);
  scenes.forEach((el,i)=>{
   const cache=sceneCache[i],opacity=w[i].toFixed(4);
   const visible=w[i]>.002,visibility=visible?'visible':'hidden';
@@ -292,6 +291,7 @@ function render(p){
   intro?.visual(p);
   window.MOVVA_CHAPTER_MOTION?.render(p,active);
   window.MOVVA_DOM_DEVICE?.render(p,active,ix,blend);
+  window.MOVVA_TRAINING?.render(p,active);
   window.MOVVA_MOTION?.render(p,active,null);
   drawCalls=0;frameCount++;return;
  }
@@ -319,6 +319,7 @@ function render(p){
  draw({geom:o.base,color:[.85,.85,.79],metal:.22,shine:80},panelM,txA,txA,0);
  draw({geom:o.geom,color:[1,1,1],mode:1,rect:o.rect},mm(panelM,mat.translation(0,0,.027)),textures[o.tex],textures[o.tex],0);
  }
+ window.MOVVA_TRAINING?.render(p,active);
  window.MOVVA_MOTION?.render(p,active,{nx,ny,scale});
  $('.ground-shadow').style.left=(50+nx*50)+'%';$('.ground-shadow').style.opacity=active===6?.3:1;
  $('.halo').style.transform=`translate(-50%,-50%) rotate(${p*110}deg) scale(${1+p*.08})`;
@@ -339,7 +340,7 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=t-(lastTime|
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
-function clearScenes(){sceneCache.forEach(c=>{c.opacity=null;c.visibility=null;c.inert=null;c.transform=null;});lastScene=-1;lastBackdrop=null;window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_TRAINING?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='2,0';$('#water-fill').style.width='74%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
+function clearScenes(){sceneCache.forEach(c=>{c.opacity=null;c.visibility=null;c.inert=null;c.transform=null;});lastScene=-1;lastBackdrop=null;window.MOVVA_CHAPTER_MOTION?.reset();window.MOVVA_TRAINING?.reset();window.MOVVA_MOTION?.reset();window.MOVVA_INTRO?.reset();stage.classList.remove('hero-active');scenes.forEach(s=>{s.style.opacity='';s.style.visibility='';s.style.transform='';s.inert=false;s.removeAttribute('aria-hidden')});stage.style.backgroundColor='';stage.classList.remove('dark');$('.header').classList.remove('dark');$('#score-number').textContent='52';$('#score-arc').style.strokeDashoffset='138.73';$('#water-number').textContent='1,0';$('#water-fill').style.width='37%';$$('.activity-bar').forEach(bar=>{const h=+bar.dataset.minutes/168*78;bar.setAttribute('height',h);bar.setAttribute('y',88-h)});$('#activity-minutes').textContent='425';}
 function applyMode(){
  // Keep the phone and scroll-driven cards active at every viewport size.
  // WebGL failure is handled by the existing CSS3D renderer; static HTML remains
@@ -356,6 +357,12 @@ function applyMode(){
   if(!wasEnabled)syncChapterHash();
   position=target=measure();
   updateHeader();
+  if(!wasEnabled&&domDevice){
+   try{render(position);}catch(error){
+    console.warn('MOVVA 3D startup failed.',error);
+    ready=false;applyMode();return;
+   }
+  }
   requestTick();
  }
  else{if(raf)cancelAnimationFrame(raf);raf=0;clearScenes();}
@@ -375,7 +382,8 @@ document.addEventListener('click',event=>{
  jump(progress,!media.matches);
 });
 addEventListener('hashchange',()=>requestAnimationFrame(syncChapterHash));
-addEventListener('load',syncChapterHash,{once:true});
+// Browsers finish positioning native fragment targets after loading the page.
+addEventListener('pageshow',()=>requestAnimationFrame(syncChapterHash));
 function updateHeader(){
  const position=scrollY>experience.offsetHeight-100?'absolute':'fixed';
  if(header.style.position!==position)header.style.position=position;

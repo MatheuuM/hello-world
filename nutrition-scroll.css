@@ -16,66 +16,11 @@
 #nutrition .hydration-caption{display:flex;justify-content:space-between;gap:12px;margin-top:9px;color:#737969;font-size:9px}
 #nutrition .hydration-caption span{font-size:inherit;color:inherit}
 #nutrition .micro-note{font-size:9px;line-height:1.75;color:#707568;margin-top:22px;max-width:355px}
-/* The food photographs sit between the light on the set and the handset. */
-.nutrition-surface,.nutrition-food-gallery{display:none}
-.enhanced .nutrition-active .nutrition-surface{
- display:block;position:absolute;z-index:1;pointer-events:none;
- width:min(55vw,790px);height:85%;border-radius:50%;
- opacity:var(--nutrition-presence,0);
- transform:translate(-50%,-50%) rotate(calc(-12deg + 18deg*var(--nutrition-orbit,0)));
- background:radial-gradient(ellipse at 42% 44%,#8e794888 0%,#395940a6 42%,transparent 72%);
-}
-.enhanced .nutrition-surface:after{
- content:'';position:absolute;inset:12% -2%;border:1px solid #b6d18826;
- border-radius:50%;transform:rotate(-20deg);
-}
-.enhanced .nutrition-active .halo,.enhanced .nutrition-active .ghost-word{opacity:0}
-.enhanced .nutrition-active .nutrition-food-gallery{
- display:block;position:absolute;left:0;right:0;pointer-events:none;
-}
-.nutrition-food{
- position:absolute;left:var(--food-x);top:var(--food-y);width:var(--food-width);height:auto;
- z-index:2;opacity:0;filter:drop-shadow(0 12px 13px #070f0aa6);
- transform:translate(-50%,-50%)
-   translate(calc(var(--food-offset-x) * (1 - var(--food-progress,0))),calc(var(--food-offset-y) * (1 - var(--food-progress,0))))
-   rotate(calc(var(--food-turn) - 22deg * (1 - var(--food-progress,0))))
-   scale(calc(.35 + .65 * var(--food-progress,0)));
-}
-.nutrition-food-oats{
- --food-x:42.5%;--food-y:30%;--food-width:min(12vw,183px);
- --food-offset-x:-11vw;--food-offset-y:42%;--food-turn:12deg;
-}
-.nutrition-food-salad{
- --food-x:11%;--food-y:66%;--food-width:min(13vw,190px);
- --food-offset-x:13vw;--food-offset-y:-34%;--food-turn:-19deg;
-}
-.nutrition-food-berries{
- --food-x:42%;--food-y:90%;--food-width:min(9.5vw,145px);
- --food-offset-x:-10vw;--food-offset-y:-54%;--food-turn:21deg;
-}
-.nutrition-food-blueberries{
- --food-x:10%;--food-y:18%;--food-width:min(5.5vw,80px);
- --food-offset-x:17vw;--food-offset-y:75%;--food-turn:-31deg;
- filter:drop-shadow(0 7px 8px #090e0a9c);
-}
-.nutrition-food-avocado{
- --food-x:43%;--food-y:49%;--food-width:min(6vw,84px);
- --food-offset-x:-14vw;--food-offset-y:35%;--food-turn:-15deg;
- filter:drop-shadow(0 9px 12px #090e0aae);
-}
-.nutrition-food-raspberry{
- --food-x:8%;--food-y:91%;--food-width:min(6vw,92px);
- --food-offset-x:15vw;--food-offset-y:-84%;--food-turn:40deg;
- z-index:6;filter:blur(3px) drop-shadow(0 13px 16px #060c08a6);
-}
-.enhanced .stage.dark #nutrition :is(.eyebrow,h2 em){color:#d8e7a6}
+.enhanced .stage.dark #nutrition :is(.eyebrow,h2 em){color:#d6dfbe}
 .enhanced .stage.dark #nutrition :is(.nutrition-chapters,.hydration-title,.hydration-value>span,.hydration-caption,.micro-note){color:#d1dfc8}
 .enhanced .stage.dark #nutrition .nutrition-readout{border-top-color:#b6c8a83d}
 .enhanced .stage.dark #nutrition .water-track{background:#bacaa838}
-.enhanced .stage.dark #nutrition .water-track i{background:#c1d79a}
-@media (prefers-reduced-motion:reduce){
- .nutrition-food{transform:translate(-50%,-50%) rotate(var(--food-turn))}
-}
+.enhanced .stage.dark #nutrition .water-track i{background:#b4c59a}
 .enhanced #nutrition .copy{width:47%;max-width:610px;padding-top:24px}
 @media(max-width:1100px) and (min-width:761px){#nutrition h2{font-size:60px}#nutrition .description{font-size:13px}#nutrition .nutrition-readout{margin-top:24px}.nutrition-chapters{gap:8px 13px;font-size:9px}#nutrition .micro-note{font-size:8px}}
 @media(max-height:800px) and (min-width:761px){#nutrition h2{font-size:65px}#nutrition .eyebrow{margin-bottom:21px}#nutrition .description{font-size:13px;margin-top:20px}#nutrition .nutrition-readout{margin-top:21px;padding-top:15px}#nutrition .nutrition-readout strong{font-size:38px}.nutrition-chapters{margin-top:19px}#nutrition .micro-note{margin-top:15px}}
@@ -91,25 +36,6 @@
  #nutrition .water-track{grid-column:2;grid-row:2;height:3px;margin:3px 0 0;align-self:start}
  #nutrition .hydration-caption{display:none}
  #nutrition .micro-note{font-size:8px;margin-top:10px;max-width:310px;line-height:1.6}
- .enhanced .nutrition-active .nutrition-surface{width:100%;height:52%}
- .nutrition-food-oats{
-  --food-x:86%;--food-y:19%;--food-width:min(20vw,100px);--food-offset-x:-24vw;
- }
- .nutrition-food-salad{
-  --food-x:13%;--food-y:63%;--food-width:min(22vw,104px);--food-offset-x:24vw;
- }
- .nutrition-food-berries{
-  --food-x:86%;--food-y:90%;--food-width:min(16vw,90px);--food-offset-x:-24vw;
- }
- .nutrition-food-blueberries{
-  --food-x:14%;--food-y:14%;--food-width:min(11vw,56px);--food-offset-x:25vw;
- }
- .nutrition-food-avocado{
-  --food-x:85%;--food-y:50%;--food-width:min(12vw,60px);--food-offset-x:-26vw;
- }
- .nutrition-food-raspberry{
-  --food-x:13%;--food-y:87%;--food-width:min(10vw,60px);--food-offset-x:25vw;
- }
 }
 @media(max-width:760px) and (max-height:760px){
  .enhanced #nutrition{padding-top:92px}#nutrition h2{font-size:39px}#nutrition .description{font-size:11px;line-height:1.55;margin-top:13px}
@@ -117,16 +43,231 @@
  #nutrition .nutrition-readout strong{font-size:29px}#nutrition .micro-note{font-size:7px;margin-top:8px}
 }
 
-@media(max-width:760px) and (max-height:700px){
- .nutrition-food-berries,.nutrition-food-raspberry{display:none}
- .nutrition-food-salad{--food-x:14%;--food-y:87%;--food-width:19vw}
- .nutrition-food-blueberries{--food-x:15%;--food-y:10%;--food-width:9vw}
- .nutrition-food-avocado{display:none}
+@media(max-width:360px) and (max-height:650px){
+ .enhanced #nutrition{padding-top:84px}
+ #nutrition h2{font-size:34px}
+ #nutrition .description{margin-top:10px}
+ #nutrition .nutrition-readout{margin-top:10px;padding-top:8px}
 }
-@media(min-width:761px) and (max-height:540px){
- .nutrition-food-oats{--food-x:40%;--food-y:19%;--food-width:min(8.8vw,104px)}
- .nutrition-food-salad{--food-x:11%;--food-y:77%;--food-width:min(10.5vw,124px)}
- .nutrition-food-blueberries{--food-x:8%;--food-y:11%;--food-width:4vw}
- .nutrition-food-avocado{--food-x:44%;--food-y:37%;--food-width:5vw}
- .nutrition-food-berries,.nutrition-food-raspberry{display:none}
+
+/* The photograph becomes the camera surface on the existing chapter timeline. */
+#nutrition .nutrition-camera { margin: 0; width: min(53vw, 880px); flex-shrink: 1; }
+#nutrition .nutrition-camera-poster { width: 100%; height: auto; display: block; }
+#nutrition .nutrition-camera ~ .static-shot { display: none; }
+#nutrition { background-color: #fff; }
+.enhanced #nutrition { background-color: transparent; }
+.enhanced #nutrition .nutrition-camera, .nutrition-camera .nc-frame { display: none; }
+.enhanced #stage > .nutrition-camera {
+  display: block;
+  position: absolute;
+  z-index: 9;
+  inset: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #fff;
+  color: #171919;
+  font-family: var(--sans, system-ui), sans-serif;
+  opacity: var(--camera-presence, 0);
+}
+.enhanced #stage > .nutrition-camera > :is(.nc-frame, .nutrition-camera-poster) {
+  position: absolute;
+  width: 1672px;
+  height: 941px;
+  max-width: none;
+  left: var(--camera-center-x);
+  top: var(--camera-center-y);
+  transform: translate(-50%, -50%) scale(var(--camera-scale));
+}
+.enhanced #stage > .nutrition-camera[data-loaded] .nc-frame { display: block; }
+.enhanced #stage > .nutrition-camera[data-loaded] .nutrition-camera-poster { visibility: hidden; }
+.nutrition-camera .nc-opening, .enhanced #stage > .nutrition-camera > .nutrition-camera-poster {
+  -webkit-mask-image: linear-gradient(black 93%, transparent 100%);
+  mask-image: linear-gradient(black 93%, transparent 100%);
+}
+.nc-opening, .nc-screen-shot, .nc-camera-controls, .nc-tilt, .nc-guides {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.nc-phone {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 589px;
+  height: 1280px;
+  transform-origin: 0 0;
+  /* Map the corners of the 589 × 1280 app capture onto the photographed glass. */
+  transform: matrix3d(.51182277,-.05716538,0,-.0000923483,-.18433830,.55607206,0,-.0000580105,0,0,1,0,460.7587,48.7279,0,1);
+}
+.nc-phone-glass {
+  position: absolute;
+  inset: 0;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 80px 60px 90px 92px / 100px 80px 96px 110px;
+  background: #111;
+
+}
+.nc-finder, .nc-scan, .nc-shutter-flash {
+  position: absolute;
+  left: 19px;
+  top: 282px;
+  width: 550px;
+  height: 716px;
+  overflow: hidden;
+  border-radius: 38px;
+}
+.nc-finder { background: #f4f3f1; }
+.nc-phone-glass::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(142deg, #fff2 0%, #fff1 14%, transparent 45%);
+}
+.nc-finder-photo {
+  position: absolute;
+  max-width: none;
+  width: 1333px;
+  height: 750px;
+  left: -665px;
+  top: -23px;
+  transform-origin: 943px 403px;
+  transform: translate(var(--finder-x, -36px), var(--finder-y, 26px))
+    rotate(var(--finder-roll, -8deg)) scale(var(--finder-scale, 1.18));
+}
+.nc-finder::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(#16161842, transparent 30%, transparent 70%, #16161855);
+}
+.nc-camera-ui { position: absolute; inset: 0; }
+.nc-camera-controls {
+  /* The tabs and shutter controls are cropped directly from the MOVVA screenshot. */
+  clip-path: path("M87 331H503a26 26 0 0 1 0 52H87a26 26 0 0 1 0 -52Z M76 895a28 28 0 1 1 0 56a28 28 0 1 1 0 -56Z M282.5 876a46.5 46.5 0 1 1 0 93a46.5 46.5 0 1 1 0 -93Z M439 895a28 28 0 1 1 0 56a28 28 0 1 1 0 -56Z M512 895a28 28 0 1 1 0 56a28 28 0 1 1 0 -56Z");
+}
+.nc-guides { stroke: #fff; stroke-width: 2.8; stroke-linecap: round; }
+.nc-tilt { transition: opacity 100ms linear; }
+.nc-tilt-warning { clip-path: inset(459px 189px 784px 190px round 19px); }
+.nc-tilt-aligned {
+  opacity: 0;
+  clip-path: inset(460px 205px 784px 206px round 18px);
+}
+.nutrition-camera[data-phase="aligned"] .nc-tilt-warning { opacity: 0; }
+.nutrition-camera[data-phase="aligned"] .nc-tilt-aligned { opacity: 1; }
+.nc-shutter-flash { background: white; opacity: var(--flash, 0); }
+
+.nc-scan, .nc-screen-result { display: none; }
+.nutrition-camera[data-phase="processing"] .nc-scan { display: block; }
+.nutrition-camera[data-phase="processing"] .nc-camera-ui, .nutrition-camera[data-phase="results"] .nc-camera-ui { display: none; }
+.nc-scan {
+  background: linear-gradient(transparent 8%, #16181916 45%, #191b1bb9 90%);
+}
+.nc-scan-line {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: calc(12% + var(--analysis, 0) * 51%);
+  height: 2px;
+  border-radius: 5px;
+  background: #b7ffca;
+  box-shadow: 0 0 16px #94f9b6;
+}
+.nc-scan-note, .nc-screen-result {
+  position: absolute;
+  left: 45px;
+  right: 45px;
+  border-radius: 27px;
+  background: #171918f2;
+  color: #fff;
+  padding: 23px 26px;
+  font-size: 21px;
+  line-height: 1.3;
+}
+.nc-scan-note { bottom: 30px; left: 24px; right: 24px; }
+.nc-scan-progress {
+  display: block;
+  overflow: hidden;
+  height: 5px;
+  margin-top: 16px;
+  border-radius: 4px;
+  background: #ffffff4a;
+}
+.nc-scan-progress i {
+  display: block;
+  height: 100%;
+  background: #8aebaa;
+  transform-origin: left;
+  transform: scaleX(var(--analysis, 0));
+}
+.nc-screen-result { top: 814px; }
+.nc-screen-result strong { display: block; font-size: 42px; }
+.nc-screen-result small { font-size: 25px; font-weight: 500; }
+.nutrition-camera[data-phase="results"] .nc-screen-result { display: block; }
+
+.nc-results {
+  position: absolute;
+  left: 946px;
+  top: 269px;
+  width: 540px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.nc-result-card {
+  --flight-x: 0px;
+  --flight-y: 0px;
+  padding: 18px;
+  border: 1px solid #ffffffca;
+  border-radius: 18px;
+  background: #f8f8f1f0;
+  color: #171b18;
+  box-shadow: 0 10px 28px #101a1630;
+  opacity: var(--card-alpha, 0);
+  transform: translate(calc(var(--flight-x) * (1 - var(--card-rise, 0))), calc(var(--flight-y) * (1 - var(--card-rise, 0))))
+    scale(var(--card-scale, .35));
+}
+.nc-result-energy {
+  --flight-x: -690px;
+  --flight-y: 124px;
+  grid-column: 1 / -1;
+  padding: 22px 26px;
+}
+.nc-result-card:nth-child(2) { --flight-x: -513px; --flight-y: 16px; }
+.nc-result-card:nth-child(3) { --flight-x: -697px; --flight-y: 16px; }
+.nc-result-card:nth-child(4) { --flight-x: -881px; --flight-y: 16px; }
+.nc-result-card span { display: block; font-size: 16px; }
+.nc-result-card strong { display: block; font-size: 37px; line-height: 1.15; letter-spacing: -.04em; }
+.nc-result-card small { font-size: .5em; font-weight: 500; letter-spacing: 0; }
+.nc-result-energy span { font-size: 20px; }
+.nc-result-energy strong { font-size: 76px; }
+
+
+@supports (-webkit-hyphens: none) {
+  .nutrition-camera .nc-phone { transform: matrix(.583,-.0172,-.1641,.61,465.6,43); }
+}
+@media (max-width: 760px) {
+  #nutrition .nutrition-camera { width: 100%; }
+}
+@media (orientation: portrait) and (max-width: 760px) {
+  .nutrition-camera .nc-opening,
+  .enhanced #stage > .nutrition-camera > .nutrition-camera-poster { clip-path: inset(0 832px 0 0); }
+  .nutrition-camera .nc-results { left: 216px; top: 839px; width: 628px; }
+  .nutrition-camera .nc-result-energy { --flight-x: -8px; --flight-y: -448px; }
+  .nutrition-camera .nc-result-card:nth-child(2) { --flight-x: 206px; --flight-y: -570px; }
+  .nutrition-camera .nc-result-card:nth-child(3) { --flight-x: -8px; --flight-y: -570px; }
+  .nutrition-camera .nc-result-card:nth-child(4) { --flight-x: -220px; --flight-y: -570px; }
+  .nutrition-camera .nc-result-card span { font-size: 23px; }
+  .nutrition-camera .nc-result-card strong { font-size: 44px; }
+  .nutrition-camera .nc-result-energy strong { font-size: 72px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nutrition-camera .nc-finder-photo, .nutrition-camera .nc-result-card { transform: none; }
+  .nutrition-camera .nc-shutter-flash { visibility: hidden; }
 }

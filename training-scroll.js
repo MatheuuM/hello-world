@@ -1,4 +1,4 @@
-/* An atlas lets either direction of native scroll select a frame immediately. */
+/* The exercise card and the handset share a scroll-driven camera. */
 (() => {
   'use strict';
   if (new URLSearchParams(location.search).get('visual') === 'estatico') return;
@@ -6,29 +6,31 @@
   const figure = document.querySelector('.bench-demo');
   if (!stage || !figure) return;
 
-  const copy = document.querySelector('#training .copy');
-  const header = document.querySelector('.header');
+  const scene = document.querySelector('#training');
+  const copy = scene.querySelector('.copy');
+  const chapters = document.querySelector('.chapter-bar');
   const canvas = figure.querySelector('canvas');
-  const context = canvas.getContext('2d');
+  const context = canvas.getContext('2d', {alpha: false});
   const button = figure.querySelector('.bench-play');
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  const cols = 6;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const columns = 6;
   const frames = 42;
   const repetitionMs = 3200;
   let atlas;
+  let atlasReady = false;
   let atlasPromise;
-  let ready = false;
   let atlasFailed = false;
-  let frame = -1;
-  let lastLook = '';
+  let imageFrame = -1;
   let active = false;
-  let currentProgress = 0;
-  let focus = 0;
-  let playedOnEntry = false;
-  let idleTimer = 0;
-  let playbackId = 0;
+  let started = false;
+  let position = 0;
+  let timer = 0;
+  let playing = 0;
+  let mobileCenter = 0;
+  let mobileSpace = 0;
 
   const clamp = value => Math.min(1, Math.max(0, value));
+  const lerp = (a, b, t) => a + (b - a) * t;
   function ease(value, start, end) {
     const t = clamp((value - start) / (end - start));
     return t * t * (3 - 2 * t);
@@ -36,11 +38,32 @@
 
   function measure() {
     if (stage.clientWidth > 760) return;
-    const top = copy.offsetTop + copy.offsetHeight + 12;
-    figure.style.setProperty('--bench-top', Math.max(header.offsetHeight + 12, top) + 'px');
+    const top = copy.offsetTop + copy.offsetHeight + 8;
+    const bottom = stage.clientHeight - (chapters.clientHeight || 32) - 21;
+    mobileSpace = Math.max(96, bottom - top);
+    mobileCenter = top + mobileSpace * .49;
+    figure.style.setProperty('--bench-mobile-y', mobileCenter + 'px');
+    figure.style.setProperty('--bench-mobile-room', mobileSpace + 'px');
   }
   new ResizeObserver(measure).observe(copy);
   document.fonts?.ready.then(measure);
+
+  function strength(p) {
+    return ease(p, .296, .338) * (1 - ease(p, .399, .432));
+  }
+
+  function frame(p, chapter, base, width, height) {
+    if (chapter !== 2 || p <= .296 || p >= .432) return base;
+    const amount = strength(p);
+    const portrait = width <= 760;
+    return {
+      cx: lerp(base.cx, width * (portrait ? .206 : .145), amount),
+      cy: lerp(base.cy, portrait ? (mobileCenter || base.cy) : height * .54, amount),
+      h: lerp(base.h, portrait
+        ? Math.max(136, Math.min(mobileSpace * .88, width * .68))
+        : Math.min(base.h * .80, height * .58), amount)
+    };
+  }
 
   function loadAtlas() {
     if (atlasPromise) return atlasPromise;
@@ -53,7 +76,7 @@
     }
     atlas.src = compact ? '/assets/training-bench-compact.webp' : '/assets/training-bench-frames.webp';
     atlasPromise = atlas.decode().then(() => {
-      ready = true;
+      atlasReady = true;
       window.dispatchEvent(new Event('movva:hero-layout'));
       return true;
     }).catch(() => {
@@ -67,114 +90,106 @@
   function showFrame(progress) {
     figure.style.setProperty('--bench-progress', progress.toFixed(4));
     const sampled = Math.round(progress * (frames - 1));
-    if (sampled === frame) return;
-
-    frame = sampled;
-    const { width, height } = canvas;
-    context.clearRect(0, 0, width, height);
-    context.drawImage(atlas, (frame % cols) * width, Math.floor(frame / cols) * height,
+    if (sampled === imageFrame) return;
+    const {width, height} = canvas;
+    context.drawImage(atlas, (sampled % columns) * width, Math.floor(sampled / columns) * height,
       width, height, 0, 0, width, height);
-    canvas.dataset.frame = String(frame);
+    imageFrame = sampled;
+    canvas.dataset.frame = String(sampled);
   }
 
-  function stopPlayback() {
-    clearTimeout(idleTimer);
-    idleTimer = 0;
-    if (playbackId) cancelAnimationFrame(playbackId);
-    playbackId = 0;
+  function stop() {
+    clearTimeout(timer);
+    timer = 0;
+    if (playing) cancelAnimationFrame(playing);
+    playing = 0;
     button.textContent = 'Reproduzir supino';
-    if (reducedMotion.matches) figure.classList.remove('bench-frames-ready');
+    if (reduced.matches) figure.classList.remove('bench-frames-ready');
   }
 
   function play(manual = false) {
-    stopPlayback();
-    if (!ready || (!manual && reducedMotion.matches) || !active || focus < .55 || document.hidden) return;
+    stop();
+    if (!active || !atlasReady || button.hidden || (!manual && reduced.matches) || document.hidden) return;
+    started = true;
     showFrame(0);
     figure.classList.add('bench-frames-ready');
-    playedOnEntry = true;
     button.textContent = 'Pausar supino';
-    let start;
-    const tick = timestamp => {
-      start ??= timestamp;
-      const progress = clamp((timestamp - start) / repetitionMs);
-      showFrame(progress);
-      if (progress === 1) stopPlayback();
-      else playbackId = requestAnimationFrame(tick);
+    let firstTime;
+    const tick = now => {
+      firstTime ??= now;
+      const elapsed = clamp((now - firstTime) / repetitionMs);
+      showFrame(elapsed);
+      if (elapsed < 1) playing = requestAnimationFrame(tick);
+      else stop();
     };
-    playbackId = requestAnimationFrame(tick);
+    playing = requestAnimationFrame(tick);
   }
-  button.addEventListener('click', async () => {
-    if (playbackId) {
-      stopPlayback();
-      return;
-    }
-    const position = scrollY;
-    button.disabled = true;
-    const loaded = await loadAtlas();
-    button.disabled = false;
-    if (loaded && position === scrollY) play(true);
-  });
-  window.addEventListener('scroll', () => {
-    if (idleTimer || playbackId) stopPlayback();
-  }, { passive: true });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stopPlayback();
-    else window.dispatchEvent(new Event('movva:hero-layout'));
-  });
 
   function reset() {
     if (!active) return;
     active = false;
-    playedOnEntry = false;
-    lastLook = '';
-    stopPlayback();
+    started = false;
+    stop();
     button.hidden = true;
     stage.classList.remove('bench-active');
-    stage.style.removeProperty('--bench-focus');
-    for (const property of ['--bench-presence', '--bench-scale', '--bench-progress']) {
-      figure.style.removeProperty(property);
-    }
   }
 
   function render(p, chapter) {
-    if (!atlasPromise && context && !reducedMotion.matches && p >= .137 && p <= .428) loadAtlas();
-    if (chapter !== 2 || p <= .298 || p >= .428) {
+    if (!atlas && context && !reduced.matches && p >= .137 && p <= .432) loadAtlas();
+    if (chapter !== 2 || p <= .296 || p >= .432) {
       reset();
       return;
     }
-
     active = true;
-    currentProgress = p;
-    focus = ease(p, .298, .326) * (1 - ease(p, .410, .428));
-    const progress = clamp((p - .328) / (.407 - .328));
-    const look = focus.toFixed(4);
-    if (look !== lastLook) {
-      lastLook = look;
-      stage.style.setProperty('--bench-focus', look);
-      stage.classList.add('bench-active');
-      figure.style.setProperty('--bench-presence', look);
-      figure.style.setProperty('--bench-scale', (.72 + .28 * focus).toFixed(4));
-    }
+    position = p;
+    const flight = strength(p);
+    const presence = ease(p, .300, .325) * (1 - ease(p, .412, .432));
+    const start = window.MOVVA_DOM_DEVICE?.projectScreenPoint(.53, .41);
+    const localTop = scene.getBoundingClientRect().top - stage.getBoundingClientRect().top;
+    const offsetX = reduced.matches ? 0 : ((start?.x ?? stage.clientWidth * .26) - figure.offsetLeft) * (1 - flight);
+    const offsetY = reduced.matches ? 0 : ((start?.y ?? stage.clientHeight * .52) - figure.offsetTop - localTop) * (1 - flight);
+    stage.classList.add('bench-active');
+    stage.style.setProperty('--bench-presence', presence.toFixed(4));
+    figure.style.setProperty('--bench-x', offsetX.toFixed(2) + 'px');
+    figure.style.setProperty('--bench-y', offsetY.toFixed(2) + 'px');
+    figure.style.setProperty('--bench-turn', (-19 * (1 - flight)).toFixed(2) + 'deg');
+    figure.style.setProperty('--bench-scale', (.22 + .78 * flight).toFixed(4));
 
-    const scrub = ready && !reducedMotion.matches;
-    figure.classList.toggle('bench-frames-ready', scrub || Boolean(playbackId));
-    button.hidden = !context || atlasFailed || focus < .55;
-    if (!scrub || playbackId) return;
-    showFrame(progress);
-
-    // If the reader pauses on the opening beat, play one complete repetition.
-    // Wheel, touch and keyboard scroll always take control back immediately.
-    if (!playedOnEntry && !idleTimer && p >= .325 && p <= .337) {
-      idleTimer = setTimeout(() => {
-        idleTimer = 0;
-        if (currentProgress >= .325 && currentProgress <= .337) play();
-      }, 400);
+    const scrub = atlasReady && !reduced.matches;
+    button.hidden = !context || atlasFailed || presence < .55;
+    figure.classList.toggle('bench-frames-ready', scrub || Boolean(playing));
+    if (!scrub || playing) return;
+    showFrame(clamp((p - .323) / (.411 - .323)));
+    if (!started && !timer && p >= .323 && p <= .346) {
+      // A paused entry plays one repetition. Any native scroll takes over immediately.
+      timer = setTimeout(() => {
+        timer = 0;
+        if (position >= .323 && position <= .346) play();
+      }, 260);
     }
   }
 
-  reducedMotion.addEventListener?.('change', () => {
-    stopPlayback();
+  button.addEventListener('click', async () => {
+    if (playing) {
+      stop();
+      return;
+    }
+    const initialScroll = window.scrollY;
+    button.disabled = true;
+    const loaded = await loadAtlas();
+    button.disabled = false;
+    if (loaded && initialScroll === window.scrollY) play(true);
+  });
+
+  window.addEventListener('scroll', () => {
+    if (timer || playing) stop();
+  }, {passive: true});
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+  });
+  reduced.addEventListener?.('change', () => {
+    stop();
     window.dispatchEvent(new Event('movva:hero-layout'));
   });
-  window.MOVVA_TRAINING = { render, reset };
+  window.MOVVA_TRAINING = {frame, render, reset};
 })();

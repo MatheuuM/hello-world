@@ -58,11 +58,11 @@ const positions=[
    const samples={};
    for(const [key,p] of positions)samples[key]=await at(p);
    const n=samples;
-   assert.ok(Object.values(samples).every(sample=>sample.nutritionPlan==='6 refeições'));
+   assert.ok(Object.values(samples).every(sample=>sample.nutritionPlan==='1.870 kcal'));
    assert.equal(n['nutrition-early'].hydrationMeter,0,'Hydration meter should start empty');
-   assert.ok(n['nutrition-full'].hydrationMeter>72&&n['nutrition-full'].hydrationMeter<=74);
+   assert.ok(n['nutrition-full'].hydrationMeter>36&&n['nutrition-full'].hydrationMeter<=37.1);
    assert.equal(n['rewind-nutrition'].hydrationMeter,0,'Hydration meter should rewind');
-   assert.ok(n['nutrition-middle'].hydrationMeter>20&&n['nutrition-middle'].hydrationMeter<55);
+   assert.ok(n['nutrition-middle'].hydrationMeter>10&&n['nutrition-middle'].hydrationMeter<28);
    assert.notEqual(n['evolution-early'].graph,n['evolution-full'].graph,'Graph tracer static');
    assert.ok(n['evolution-full'].graph.includes('translate('));
    assert.equal(n['circle-early'].circle.length,4);

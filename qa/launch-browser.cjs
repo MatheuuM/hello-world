@@ -25,6 +25,41 @@ async function settled(page, target) {
   });
 }
 
+async function verifyImage(page, selector, expectedWidth, expectedHeight) {
+  const image = page.locator(selector);
+  const size = await image.evaluate(async element => {
+    await element.decode();
+    return [element.naturalWidth, element.naturalHeight];
+  });
+  assert.deepEqual(size, [expectedWidth, expectedHeight], selector + ' deve usar a captura atual.');
+}
+
+async function verifyCamera(page, useWheel) {
+  const camera = page.locator('#stage > .nutrition-camera');
+  for (const [progress, phase] of [
+    [.48, 'aim'], [.513, 'aligned'], [.533, 'processing'],
+    [.57, 'results'], [.533, 'processing'], [.513, 'aligned'], [.48, 'aim']
+  ]) {
+    const distance = await page.evaluate(p => {
+      const experience = document.getElementById('experience');
+      const travel = experience.offsetHeight - document.getElementById('stage').clientHeight;
+      return Math.round(experience.offsetTop + p * travel) - scrollY;
+    }, progress);
+    if (distance) {
+      // Playwright exposes the wheel on desktop WebKit; iOS WebKit uses native document scrolling.
+      if (useWheel) await page.mouse.wheel(0, distance);
+      else await page.evaluate(delta => window.scrollBy(0, delta), distance);
+    }
+    await settled(page, progress);
+    await page.waitForFunction(expected => {
+      const camera = document.querySelector('#stage > .nutrition-camera[data-loaded]');
+      return camera?.dataset.phase === expected && Number(getComputedStyle(camera).opacity) > .90;
+    }, phase);
+    assert.equal(await camera.isVisible(), true);
+    assert.equal(await page.locator('.chapter-dots [aria-current]').getAttribute('href'), '#nutrition');
+  }
+}
+
 async function verifyBench(page, label, capture) {
   const demo = page.locator('.bench-demo');
   const frames = [];
@@ -89,6 +124,10 @@ async function test(browser, engine, [label, viewport]) {
     assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), 'https://www.movvawellness.com.br/');
     assert.equal(await page.locator('meta[name=robots]').count(), 0);
     const screenshot = n => page.screenshot({ path: path.join(output, n + '.jpg'), quality: 86, scale: 'css' });
+    await verifyImage(page, '.hero-product-photo', 1672, 941);
+    await verifyImage(page, '.hero-product-home', 589, 1280);
+    assert.ok(await page.locator('.hero-surface').evaluate(el => Number(getComputedStyle(el).opacity) > .95));
+    assert.ok(await page.locator('#css3d-device').evaluate(el => Number(getComputedStyle(el).opacity) < .05));
     await screenshot(engine + '-abertura-' + label);
     if (label === 'paisagem') {
       const cta = await page.locator('.hero-cta').boundingBox();
@@ -120,6 +159,7 @@ async function test(browser, engine, [label, viewport]) {
     await page.goto(origin + '/#nutrition', { waitUntil: 'load' });
     await settled(page, .48);
     assert.equal(await page.locator('#nutrition').getAttribute('aria-hidden'), 'false');
+    await verifyCamera(page, engine !== 'webkit' || !viewport.hasTouch);
     for (const progress of [.70, .86, .98, .66, .52, .365, 0]) {
       await page.evaluate(value => window.__MOVVA_QA__.setProgress(value), progress);
       await settled(page, progress);
@@ -131,10 +171,10 @@ async function test(browser, engine, [label, viewport]) {
       }
       if ((label === 'desktop' || label === 'iphone') && (progress === .365 || progress === .52)) {
         const name = progress === .365 ? 'training' : 'nutrition';
-        const screen = page.locator('.css3d-screen-' + name);
-        await screen.evaluate(img => img.decode());
-        assert.equal(await screen.evaluate(img => img.naturalWidth), 804);
-        await page.waitForFunction(name => Number(getComputedStyle(document.querySelector('.css3d-screen-' + name)).opacity) > .95, name);
+        await verifyImage(page, '.css3d-screen-' + name, 589, 1280);
+        if (name === 'training') {
+          await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('.css3d-screen-training')).opacity) > .95);
+        }
         await screenshot(engine + '-' + name + '-' + label);
       }
     }
@@ -178,7 +218,9 @@ async function test(browser, engine, [label, viewport]) {
       assert.equal(await page.locator('.bench-frames-ready').count(), 1);
       await page.goto(origin + '/?visual=estatico#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('html.enhanced').count(), 0);
-      assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
+      assert.equal(await page.locator('#nutrition .nutrition-camera-poster').isVisible(), true);
+      await verifyImage(page, '#nutrition .nutrition-camera-poster', 1672, 941);
+      assert.equal(await page.locator('#nutrition .static-shot').isVisible(), false);
       assert.equal(await page.locator('.animated-link').isVisible(), true);
       assert.equal(await page.locator('#launch .static-link:visible').count(), 0);
       assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior), 'auto');
@@ -203,6 +245,7 @@ async function test(browser, engine, [label, viewport]) {
       await page.goto(origin + '/#nutrition', { waitUntil: 'load' });
       assert.equal(await page.locator('#nutrition').isVisible(), true);
       assert.equal(await page.locator('.static-shot').count(), 6);
+      assert.equal(await page.locator('#nutrition .nutrition-camera-poster').isVisible(), true);
       for (const destination of ['privacy/', 'terms/', 'support/', 'robots.txt', 'sitemap.xml', 'assets/compartilhar-movva.jpg']) {
         assert.equal((await context.request.get(origin + '/' + destination)).status(), 200, destination);
       }

@@ -78,7 +78,7 @@ function weights(p,base){
 function active(p,fallback){return p>.08&&p<.435?(p<.129?0:p<.28?1:p<.433?2:fallback):fallback;}
 function background(p,base){
  if(p>=.435)return base;
- const opening=[13,20,15],connected=[21,31,25],training=[35,43,34];
+ const opening=[255,255,255],connected=[21,31,25],training=[35,43,34];
  const color=p<.225?mix(opening,connected,ramp(p,.08,.179)):mix(connected,training,ramp(p,.235,.302));
  return mix(color,base,ramp(p,.409,.435)).map(Math.round);
 }

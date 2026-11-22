@@ -3,6 +3,11 @@
 'use strict';
 const stage=document.getElementById('stage'),rig=document.getElementById('css3d-device'),device=document.getElementById('css3d-object');
 const frames=[...rig.querySelectorAll('.css3d-screen')];
+const firstScreen=frames[0];
+if(firstScreen&&!firstScreen.naturalWidth){
+ firstScreen.style.visibility='hidden';
+ firstScreen.addEventListener('load',()=>firstScreen.style.removeProperty('visibility'),{once:true});
+}
 const studioFront=rig.querySelector('.css3d-glint');
 const studioBack=rig.querySelector('.css3d-back');
 const studioDeck=rig.querySelector('.css3d-camera-deck');
@@ -83,10 +88,20 @@ function mobileFrame(sceneIndex,stageR,vw,vh,barTop){
  if(h*PRO_MAX_ASPECT>vw*.54)h=vw*.54/PRO_MAX_ASPECT;
  return {cx:vw*.5,cy,h};
 }
+function firstFrame(fallback) {
+ const layout = window.MOVVA_HERO?.layout;
+ if (!layout?.height) return fallback;
+ return {cx:layout.x+layout.width/2,cy:layout.y+layout.height/2,h:layout.height};
+}
+function blendFrame(from,to,amount) {
+ return {cx:lerp(from.cx,to.cx,amount),cy:lerp(from.cy,to.cy,amount),h:lerp(from.h,to.h,amount)};
+}
 function openingMobileFrame(p,stageR,vw,vh,barTop){
  const frame=mobileFrame(0,stageR,vw,vh,barTop);
- const approach=smooth(p/.10);
- return {cx:frame.cx+vw*.018*(1-approach),cy:frame.cy,h:frame.h*(.96+.04*approach)};
+ const initial=firstFrame(frame);
+ // Short landscape has a side-by-side opening. Keep it through the hero beat.
+ if(vw>vh&&vh<=540)return initial;
+ return blendFrame(initial,frame,smooth(p/.10));
 }
 function mobileCamera(p,stageR,vw,vh,barTop){
  let index=0;
@@ -97,28 +112,29 @@ function mobileCamera(p,stageR,vw,vh,barTop){
    const from=i===0?openingMobileFrame(p,stageR,vw,vh,barTop):mobileFrame(i,stageR,vw,vh,barTop);
    const to=mobileFrame(i+1,stageR,vw,vh,barTop);
    const t=smooth((p-a)/(b-a));
-   return{cx:lerp(from.cx,to.cx,t),cy:lerp(from.cy,to.cy,t),h:lerp(from.h,to.h,t)};
+   return blendFrame(from,to,t);
   }
   index=i+1;
  }
  return index===0?openingMobileFrame(p,stageR,vw,vh,barTop):mobileFrame(index,stageR,vw,vh,barTop);
 }
 function desktopCamera(p,vw,vh){
- const approach=smooth(p/.10);
  const close=smooth((p-.906)/(.983-.906));
- return {
-  cx:vw*(desktopX(p)+.027*(1-approach)),
+ const frame={
+  cx:vw*desktopX(p),
   cy:vh*lerp(.52,.73,close),
-  h:lerp(lerp(Math.min(560,vh*.66),Math.min(610,vh*.71),approach),Math.min(300,vh*.38),close)
+  h:lerp(Math.min(610,vh*.71),Math.min(300,vh*.38),close)
  };
+ return p<.10?blendFrame(firstFrame(frame),frame,smooth(p/.10)):frame;
 }
 function render(p,active,ix,blend){
  const stageR=stage.getBoundingClientRect(),vw=stage.clientWidth,vh=stage.clientHeight;
  const mobile=vw<=760;
  const barTop=bar?.getBoundingClientRect().top-stageR.top;
- const {cx,cy,h}=mobile?
+ const baseFrame=mobile?
   mobileCamera(p,stageR,vw,vh,barTop):
   desktopCamera(p,vw,vh);
+ const {cx,cy,h}=window.MOVVA_TRAINING?.frame?.(p,active,baseFrame,vw,vh) || baseFrame;
  const w=h*PRO_MAX_ASPECT;
  metrics.renders++;
  if(mobile){
@@ -188,7 +204,7 @@ function render(p,active,ix,blend){
   rig.querySelector('.css3d-back').style.visibility=rear?'visible':'hidden';
   last.rear=rear;
  }
- const opacity=mobile&&h<135?String(clamp((h-100)/35)):'1';
+ const opacity=mobile&&active!==0&&h<135?String(clamp((h-100)/35)):'1';
  if(opacity!==last.opacity){rig.style.opacity=opacity;last.opacity=opacity;}
  if(last.screen===selected&&rig.dataset.screen!==names[selected])rig.dataset.screen=names[selected]||'home';
  if(active!==last.chapter){rig.dataset.chapter=String(active);last.chapter=active;metrics.chapterWrites++;}

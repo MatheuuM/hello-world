@@ -11,19 +11,29 @@ let layout=null;
 function measure(){
  if(!stage||!copy||!slot)return;
  const s=stage.getBoundingClientRect();
- // offsetTop/offsetHeight avoid the scrolling scene's transient transform.
- const top=copy.parentElement.offsetTop+copy.offsetTop+copy.offsetHeight+24;
- stage.style.setProperty('--hero-slot-top',Math.round(top)+'px');
  const r=slot.getBoundingClientRect();
  layout={x:r.left-s.left,y:r.top-s.top,width:r.width,height:r.height,viewportWidth:s.width,viewportHeight:s.height};
  if(layout.width>0&&layout.height>0)stage.style.setProperty('--hero-ground',((layout.y+layout.height+12)/s.height*100).toFixed(2));
 }
-let lastWeight=null;
+let previousProgress;
 function visual(p){
  const weight=1-ease((p-.085)/.045);
- stage.classList.toggle('hero-active',p<.13);
- const value=weight.toFixed(5);
- if(value!==lastWeight){stage.style.setProperty('--hero-intensity',value);lastWeight=value;}
+ // Resume the rotating 3D handset as the photographic opening leaves.
+ const progress=clamp(p,0,.13);
+ if(progress!==previousProgress){
+  const cut=.113;
+  const turn=ease((progress-.082)/(cut-.082));
+  const unfold=ease((progress-cut)/(.13-cut));
+  stage.classList.toggle('hero-active',p<.13);
+  stage.classList.toggle('hero-photo-ended',progress>=cut);
+  stage.style.setProperty('--hero-intensity',weight.toFixed(5));
+  stage.style.setProperty('--hero-motion',ease(progress/.105).toFixed(5));
+  stage.style.setProperty('--hero-turn',turn.toFixed(5));
+  stage.style.setProperty('--hero-fold',(1-.91*turn).toFixed(5));
+  stage.style.setProperty('--hero-unfold',(.12+.88*unfold).toFixed(5));
+  stage.style.setProperty('--hero-hardware-alpha',progress<cut?'0':String(.42+.58*unfold));
+  previousProgress=progress;
+ }
  return weight;
 }
 function fit(p,pose,compose,halfW,halfH){

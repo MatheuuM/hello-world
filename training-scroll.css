@@ -2,108 +2,87 @@
   background: #151e18;
   color: #faf4e8;
 }
-
-.enhanced .scene-training {
-  background: transparent;
-}
+.enhanced .scene-training { background: transparent; }
 
 .bench-demo {
   width: min(46%, 770px);
   margin: 0;
-  color: #faf4e8;
+  color: #f6f3eb;
 }
-
 .bench-visual {
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse 38% 8% at 49% 91%, #07130bae, transparent 100%),
-    radial-gradient(ellipse 52% 58% at 51% 52%, #7f9b604f, transparent 100%);
+  border-radius: clamp(9px, 1.5vw, 23px) clamp(9px, 1.5vw, 23px) 0 0;
+  background: #bec5b8;
 }
-
-.bench-visual canvas,
-.bench-visual img {
+.bench-visual :is(canvas, img) {
   display: block;
   width: 100%;
   height: auto;
+  aspect-ratio: 4 / 3;
 }
-
 .bench-play {
   position: absolute;
-  inset: auto 8px 8px auto;
+  right: 8px;
+  bottom: 8px;
   min-height: 44px;
-  padding-inline: 12px;
+  padding: 0 12px;
   border: 1px solid #e8eddf66;
   border-radius: 999px;
   background: #101b15;
   color: #faf4e8;
+  font: inherit;
   font-size: 11px;
+  cursor: pointer;
   pointer-events: auto;
 }
-
+.bench-play:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .bench-visual canvas {
   position: absolute;
   inset: 0;
   opacity: 0;
 }
+.bench-frames-ready .bench-visual canvas { opacity: 1; }
+.bench-frames-ready .bench-visual img { opacity: 0; }
 
-.bench-frames-ready .bench-visual canvas {
-  opacity: 1;
+.bench-card {
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #d9ecce57;
+  border-radius: clamp(9px, 1.5vw, 23px);
+  background: linear-gradient(150deg, #26372c, #16221b);
+  box-shadow: 0 20px 46px #060c08a0, inset 0 1px #e9ffda22;
 }
-
-.bench-frames-ready .bench-visual img {
-  visibility: hidden;
-}
-
 .bench-demo figcaption {
-  margin-top: 12px;
-  font-size: 12px;
+  position: relative;
+  padding: 11px 13px;
+  font-size: clamp(9px, 1vw, 13px);
   font-weight: 500;
-  letter-spacing: .08em;
+  letter-spacing: .035em;
 }
-
-.bench-progress {
-  display: none;
-}
-
 .enhanced .bench-demo {
   position: absolute;
-  inset-inline-start: var(--gutter);
-  top: 50%;
-  opacity: var(--bench-presence, 0);
-  transform: translateY(-50%) scale(var(--bench-scale, .72));
-  transform-origin: 55% 50%;
+  left: 38.5%;
+  top: 53.5%;
+  width: min(29vw, 500px);
+  opacity: 0;
+  transform: translate(-50%, -50%) translate3d(var(--bench-x, 0px), var(--bench-y, 0px), 0)
+    perspective(950px) rotateY(var(--bench-turn, 0deg)) scale(var(--bench-scale, .22));
   pointer-events: none;
 }
-
-.enhanced .bench-progress {
-  display: block;
-  height: 2px;
-  margin-top: 11px;
-  background: #f3eddb4d;
-}
-
-.bench-progress i {
-  display: block;
+.enhanced .bench-active .bench-demo { opacity: var(--bench-presence, 0); }
+.enhanced .bench-frames-ready figcaption::after {
+  content: "";
+  position: absolute;
+  inset: auto auto 0 0;
   width: 100%;
-  height: 100%;
-  background: #c2d299;
+  height: 1px;
   transform: scaleX(var(--bench-progress, 0));
   transform-origin: left;
+  background: #b4ce9d;
 }
-
-.bench-active #training .micro-note {
-  visibility: hidden;
-}
-
 .bench-active > .motion-studio {
-  opacity: calc(1 - var(--bench-focus, 0));
-}
-
-.bench-active > #css3d-device,
-.bench-active > #world {
-  /* Override the DOM renderer's inline finale fade only during this takeover. */
-  opacity: calc(1 - var(--bench-focus, 0)) !important;
+  opacity: calc(1 - var(--bench-presence, 0) * .91);
 }
 
 @media (min-width: 761px) {
@@ -112,77 +91,29 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 32px 55px;
   }
-
   :root:not(.enhanced) .scene-training .bench-demo {
     width: 100%;
     grid-row: span 2;
   }
-
-  :root:not(.enhanced) .scene-training .static-shot {
-    grid-column: 1;
-  }
+  :root:not(.enhanced) .scene-training .static-shot { grid-column: 1; }
 }
-
 @media (min-width: 761px) and (max-height: 680px) {
   .enhanced .bench-demo {
-    --bench-landscape-width: min(43vw, max(158px, (100svh - 174px) * 4 / 3));
-    width: var(--bench-landscape-width);
-    inset-inline-start: calc(var(--gutter) + (43vw - var(--bench-landscape-width)) / 2);
-    top: calc(52% + 18px);
+    width: min(29vw, max(140px, (100svh - 159px) * 4 / 3));
   }
 }
-
 @media (max-width: 760px) {
-  .bench-demo {
-    width: 100%;
-  }
-
-  .enhanced .scene-training h2 {
-    font-size: clamp(36px, 9.5vw, 60px);
-  }
-
-  .enhanced .scene-training .modality-list {
-    margin-top: 14px;
-  }
-
-  .enhanced .scene-training .micro-note {
-    margin-top: 12px;
-  }
-
+  .bench-demo { width: 100%; }
+  .enhanced .scene-training h2 { font-size: clamp(36px, 9.5vw, 60px); }
+  .enhanced .scene-training .modality-list { margin-top: 14px; }
+  .enhanced .scene-training .micro-note { margin-top: 12px; }
   .enhanced .bench-demo {
-    inset: var(--bench-top, 53%) var(--gutter) 54px;
-    width: auto;
-    display: grid;
-    align-content: start;
-    container-type: size;
-    transform: scale(var(--bench-scale, .72));
+    left: 64.5%;
+    top: var(--bench-mobile-y, 68%);
+    width: min(56vw, max(135px, (var(--bench-mobile-room, 220px) - 36px) * 4 / 3));
   }
-
-  .enhanced .bench-visual {
-    justify-self: center;
-    aspect-ratio: 4 / 3;
-    width: 100%;
-    width: min(100%, max(0px, (100cqh - 34px) * 4 / 3));
-  }
-
-  .enhanced .bench-visual canvas,
-  .enhanced .bench-visual img {
-    height: 100%;
-    object-fit: contain;
-  }
-
-  .enhanced .bench-demo figcaption,
-  .enhanced .bench-progress {
-    margin-top: 7px;
-  }
+  .bench-demo figcaption { padding: 8px 10px; }
 }
-
 @media (prefers-reduced-motion: reduce) {
-  .enhanced .bench-demo {
-    --bench-scale: 1 !important;
-  }
-
-  .bench-progress {
-    visibility: hidden;
-  }
+  .enhanced .bench-demo { transform: translate(-50%, -50%); }
 }

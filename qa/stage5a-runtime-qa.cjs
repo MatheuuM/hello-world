@@ -30,7 +30,8 @@ try{
      overflow:document.documentElement.scrollWidth-innerWidth};
    });
   }
-  const training=await move(.335);
+  // The bench camera finishes its entry move at .338; sample two positions on its hold.
+  const training=await move(.350);
   assert.equal(training.screen,'training');
   assert.ok(training.active&&training.engine==='CSS3D DOM');
   assert.ok(training.metrics.renders>=training.metrics.sizeWrites);
