@@ -50,6 +50,30 @@ function poseAt(p){
  );
 }
 const names=['home','training','nutrition','evolution','circle'];
+const nextScreenPrep=[.220,.379,.539,.714];
+const decodedScreens=new Set([0]);
+function prepareScreen(index,priority){
+ const image=frames[index];
+ if(!image?.dataset.src||image.hasAttribute('src'))return;
+ image.fetchPriority=priority;
+ image.src=image.dataset.src;
+ image.decode().then(()=>{
+  decodedScreens.add(index);
+  window.dispatchEvent(new Event('movva:hero-layout'));
+ }).catch(()=>{}); // Keep the current screen if the next capture cannot be decoded.
+}
+function renderScreen(p,index,blend){
+ const target=Math.min(frames.length-1,index+(blend>=.5?1:0));
+ prepareScreen(target,'auto');
+ // Prime only the next capture as the visitor approaches the transition.
+ if(p>=nextScreenPrep[target])prepareScreen(target+1,'low');
+ const selected=decodedScreens.has(target)?target:Math.max(0,last.screen);
+ if(selected===last.screen)return;
+ frames.forEach((image,i)=>{image.style.display=i===selected?'block':'none';image.style.opacity='1';});
+ rig.dataset.screen=names[selected];
+ last.screen=selected;
+ metrics.screenWrites++;
+}
 // Chapter switches are discrete accessibility states; the physical camera is
 // not. Positions must be sampled from continuous scroll progress alone.
 const desktopHeroX=.71;
@@ -192,11 +216,7 @@ function render(p,active,ix,blend){
  }
  }
  window.MOVVA_SHELL?.setPose(safeRy,rx,rz);
- const selected=Math.min(frames.length-1,ix+(blend>=.5?1:0));
- if(selected!==last.screen){
-  frames.forEach((el,i)=>{el.style.display=i===selected?'block':'none';el.style.opacity='1';});
-  last.screen=selected;metrics.screenWrites++;
- }
+ renderScreen(p,ix,blend);
  const degrees=((-safeRy%360)+360)%360;
  const rear=degrees>92&&degrees<268;
  const faceOn=active>=2&&(degrees<45||degrees>315);
@@ -211,7 +231,6 @@ function render(p,active,ix,blend){
  }
  const opacity=mobile&&active!==0&&h<135?String(clamp((h-100)/35)):'1';
  if(opacity!==last.opacity){rig.style.opacity=opacity;last.opacity=opacity;}
- if(last.screen===selected&&rig.dataset.screen!==names[selected])rig.dataset.screen=names[selected]||'home';
  if(active!==last.chapter){rig.dataset.chapter=String(active);last.chapter=active;metrics.chapterWrites++;}
 }
 // Project a point in the screenshot (0-1 UV) through the actual CSS3D

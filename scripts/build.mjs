@@ -17,7 +17,10 @@ const loadPhone = `<script type="module">
   if (!matchMedia(MOBILE_PHONE_QUERY).matches &&
       !matchMedia('(prefers-reduced-motion: reduce)').matches &&
       query.get('visual') !== 'estatico' && query.get('renderer') !== 'webgl') {
-    import('/react-phone-build.js').catch(error => console.warn('MOVVA handset unavailable', error));
+    import('/react-phone-build.js').catch(error => {
+      console.warn('MOVVA handset unavailable', error);
+      window.dispatchEvent(new Event('movva:phone-fallback'));
+    });
   }
 </script>`;
 
@@ -29,7 +32,10 @@ const directories = new Set(['assets', 'privacy', 'support', 'terms']);
 const entries = await readdir(root, { withFileTypes: true });
 for (const entry of entries) {
   if (directories.has(entry.name) || (entry.isFile() && /\.(css|js|xml|txt)$/.test(entry.name))) {
-    await cp(path.join(root, entry.name), path.join(output, entry.name), { recursive: true });
+    await cp(path.join(root, entry.name), path.join(output, entry.name), {
+      recursive: true,
+      filter: source => source !== path.join(root, 'assets', 'telas')
+    });
   }
 }
 const bundle = await build({
