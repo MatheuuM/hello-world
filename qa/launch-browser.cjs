@@ -262,7 +262,6 @@ async function test(browser, engine, [label, viewport]) {
     assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), 'https://www.movvawellness.com.br/');
     assert.equal(await page.locator('meta[name=robots]').count(), 0);
     const screenshot = n => page.screenshot({ path: path.join(output, n + '.jpg'), quality: 86, scale: 'css' });
-    await verifyImage(page, '.hero-react-poster', 1344, 1344);
     const opening = await verifyOpening(page, engine !== 'webkit' || !viewport.hasTouch, () => screenshot(engine + '-abertura-' + label));
     await verifyOpeningTransition(page, engine !== 'webkit' || !viewport.hasTouch);
     await page.evaluate(() => window.__MOVVA_QA__.setProgress(0));
@@ -393,6 +392,8 @@ async function test(browser, engine, [label, viewport]) {
       assert.equal(await page.locator('#nutrition .static-shot').isVisible(), true);
       await verifyImage(page, '#nutrition .static-shot', 589, 1280);
       assert.equal(await page.locator('#nutrition-take').isVisible(), false);
+      await page.locator('.hero-react-poster').scrollIntoViewIfNeeded();
+      await verifyImage(page, '.hero-react-poster', 1344, 1344);
       await page.locator('.bench-visual img').scrollIntoViewIfNeeded();
       await verifyBenchPoster(page);
       for (const destination of ['privacy/', 'terms/', 'support/', 'robots.txt', 'sitemap.xml', 'assets/compartilhar-movva.jpg']) {
