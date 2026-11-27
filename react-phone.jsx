@@ -1,26 +1,24 @@
-import React, { Component, useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, { Component, useCallback, useLayoutEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { addAfterEffect } from '@react-three/fiber';
 import { IPhoneMockup } from 'react-3d-mockups';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { CanvasTexture, MeshBasicMaterial, SRGBColorSpace } from 'three';
-import { PHONE_MOTION_END, PHONE_TURN_END, phonePoseAt, readPhoneProgress } from './phone-motion.js';
+import { CanvasTexture, MeshBasicMaterial, SRGBColorSpace, Vector3 } from 'three';
 
-const screenUrl = '/assets/home.webp';
-const toRadians = Math.PI / 180;
+const camera = { position: [0, 0, 8], fov: 40 };
+const bodyHeight = 4.398; // Body height of the pinned Pro Max model, in world units.
+const radians = Math.PI / 180;
+const mount = document.querySelector('#react-phone');
+const stage = document.querySelector('#stage');
+let latestFrame;
+let renderer;
 
-function mountScreenTexture(model, image, cutout, anisotropy) {
+function createDisplay(model, cutout, anisotropy) {
   let panel;
   model.traverse(object => {
-    // The pinned mockup draws its display cutout using a rounded shader mesh.
-    if (object.isMesh && object.geometry.type === 'ShapeGeometry' && object.material.isShaderMaterial) {
-      panel = object;
-    }
+    if (object.isMesh && object.geometry.type === 'ShapeGeometry' && object.material.isShaderMaterial) panel = object;
   });
   if (!panel) return null;
 
-  // Reuse the display's actual curved boundary and position for the texture.
   const originalGeometry = panel.geometry;
   const originalMaterial = panel.material;
   const geometry = originalGeometry.clone();
@@ -28,35 +26,21 @@ function mountScreenTexture(model, image, cutout, anisotropy) {
   const { min, max } = geometry.boundingBox;
   const positions = geometry.getAttribute('position');
   const uv = geometry.getAttribute('uv');
-  for (let index = 0; index < positions.count; index++) {
-    uv.setXY(index,
-      (positions.getX(index) - min.x) / (max.x - min.x),
-      (positions.getY(index) - min.y) / (max.y - min.y));
+  for (let i = 0; i < positions.count; i++) {
+    uv.setXY(i, (positions.getX(i) - min.x) / (max.x - min.x), (positions.getY(i) - min.y) / (max.y - min.y));
   }
-
   const surface = document.createElement('canvas');
-  surface.width = image.naturalWidth;
-  surface.height = image.naturalHeight;
+  surface.width = 589;
+  surface.height = 1280;
   const context = surface.getContext('2d');
   if (!context) {
     geometry.dispose();
     return null;
   }
-  context.drawImage(image, 0, 0);
 
-  // Preserve the mockup's Dynamic Island at its own measured screen coordinates.
   const width = parseFloat(cutout.style.width);
   const height = parseFloat(cutout.style.height);
-  const left = (surface.width - width) / 2;
   const top = parseFloat(cutout.style.top);
-  const radius = height / 2;
-  context.fillStyle = cutout.style.backgroundColor || '#020308';
-  context.beginPath();
-  context.arc(left + width - radius, top + radius, radius, -Math.PI / 2, Math.PI / 2);
-  context.arc(left + radius, top + radius, radius, Math.PI / 2, Math.PI * 1.5);
-  context.closePath();
-  context.fill();
-
   const texture = new CanvasTexture(surface);
   texture.colorSpace = SRGBColorSpace;
   texture.anisotropy = Math.max(1, Math.min(8, anisotropy));
@@ -64,118 +48,154 @@ function mountScreenTexture(model, image, cutout, anisotropy) {
   panel.geometry = geometry;
   panel.material = material;
 
-  return () => {
-    panel.geometry = originalGeometry;
-    panel.material = originalMaterial;
-    geometry.dispose();
-    texture.dispose();
-    material.dispose();
+  return {
+    panel, min, max,
+    paint(image) {
+      context.drawImage(image, 0, 0, surface.width, surface.height);
+      context.fillStyle = cutout.style.backgroundColor || '#020308';
+      context.beginPath();
+      const left = (surface.width - width) / 2;
+      const radius = height / 2;
+      context.arc(left + width - radius, top + radius, radius, -Math.PI / 2, Math.PI / 2);
+      context.arc(left + radius, top + radius, radius, Math.PI / 2, Math.PI * 1.5);
+      context.closePath();
+      context.fill();
+      texture.needsUpdate = true;
+    },
+    dispose() {
+      panel.geometry = originalGeometry;
+      panel.material = originalMaterial;
+      geometry.dispose();
+      texture.dispose();
+      material.dispose();
+    }
   };
+}
+
+function hide() {
+  mount.classList.remove('is-ready');
+  stage.classList.remove('phone-story-live');
 }
 
 class PhoneFallback extends Component {
   state = { failed: false };
-
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-
-  render() {
-    return this.state.failed ? null : this.props.children;
-  }
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? null : this.props.children; }
 }
 
-function OpeningPhone({ mount, experience, stage }) {
-  const [turnProgress, setTurnProgress] = useState(() => Math.min(readPhoneProgress(experience, stage), PHONE_TURN_END));
+function StoryPhone() {
   const phone = useRef(null);
-  const screenImage = useRef(null);
-  const renderer = useRef(null);
-
-  useLayoutEffect(() => {
-    const sync = () => {
-      const progress = Math.min(readPhoneProgress(experience, stage), PHONE_MOTION_END);
-      const pose = phonePoseAt(progress);
-      mount.dataset.progress = (progress / PHONE_MOTION_END).toFixed(5);
-      mount.dataset.pageProgress = progress.toFixed(5);
-      mount.dataset.yaw = pose.yaw.toFixed(3);
-      mount.dataset.pitch = pose.pitch.toFixed(3);
-      mount.dataset.roll = pose.roll.toFixed(3);
-      setTurnProgress(Math.min(progress, PHONE_TURN_END));
-    };
-    const trigger = ScrollTrigger.create({
-      trigger: experience,
-      start: 'top top',
-      end: () => '+=' + Math.max(1, (experience.offsetHeight - stage.clientHeight) * PHONE_MOTION_END),
-      onUpdate: sync,
-      onRefresh: sync,
-    });
-    sync();
-
-    const observer = new ResizeObserver(() => trigger.refresh());
-    observer.observe(experience);
-    observer.observe(stage);
-    return () => {
-      observer.disconnect();
-      trigger.kill();
-      delete mount.dataset.progress;
-      delete mount.dataset.pageProgress;
-      delete mount.dataset.yaw;
-      delete mount.dataset.pitch;
-      delete mount.dataset.roll;
-    };
-  }, [mount, experience, stage]);
+  const dispose = useRef(null);
 
   const onCreated = useCallback(state => {
-    renderer.current?.dispose();
+    dispose.current?.();
     const canvas = state.gl.domElement;
-    const hide = () => mount.classList.remove('is-ready');
-    let disposeScreen;
+    let display;
+    let lastFrame;
+    let lastSize;
+    let paintedImage;
+    let paintedScreen;
+    let lost = false;
+    let awaitingPaint = false;
+
+    function render(frame) {
+      if (!frame || !display || lost || !phone.current) return;
+      const { size } = state.get();
+      if (!size.width || !size.height) return;
+      const { image, screen, progress, x, y, height, pitch, yaw, roll } = frame;
+      const painted = image?.naturalWidth && image !== paintedImage;
+      if (painted) {
+        display.paint(image);
+        paintedImage = image;
+        paintedScreen = screen;
+      }
+      if (!paintedImage) return;
+      const unchanged = lastSize === size && lastFrame?.progress === progress &&
+        lastFrame.x === x && lastFrame.y === y && lastFrame.height === height &&
+        lastFrame.pitch === pitch && lastFrame.yaw === yaw && lastFrame.roll === roll;
+      if (!painted && unchanged && mount.classList.contains('is-ready')) return;
+
+      const units = 2 * camera.position[2] * Math.tan(camera.fov * radians / 2) / size.height;
+      phone.current.position.set((x - size.width / 2) * units, (size.height / 2 - y) * units, 0);
+      phone.current.scale.setScalar(height * units / bodyHeight);
+      phone.current.rotation.set(pitch * radians, yaw * radians, roll * radians, 'YXZ');
+      phone.current.updateMatrixWorld(true);
+      mount.dataset.pageProgress = progress.toFixed(5);
+      mount.dataset.yaw = yaw.toFixed(3);
+      mount.dataset.pitch = pitch.toFixed(3);
+      mount.dataset.roll = roll.toFixed(3);
+      stage.style.setProperty('--story-shadow-x', x.toFixed(2) + 'px');
+      stage.style.setProperty('--story-shadow-y', (y + height * .49).toFixed(2) + 'px');
+      stage.style.setProperty('--story-shadow-width', (height * .53).toFixed(2) + 'px');
+      lastFrame = frame;
+      lastSize = size;
+      awaitingPaint = true;
+      state.invalidate();
+    }
+
+    function projectScreenPoint(u, v) {
+      if (!display || !mount.classList.contains('is-ready')) return null;
+      const { size, camera } = state.get();
+      const { panel, min, max } = display;
+      const point = new Vector3(min.x + (max.x - min.x) * u, max.y - (max.y - min.y) * v, 0);
+      panel.localToWorld(point).project(camera);
+      const normal = new Vector3(0, 0, 1).transformDirection(panel.matrixWorld).z;
+      return { x: (point.x + 1) * size.width / 2, y: (1 - point.y) * size.height / 2, normal, u, v };
+    }
+
     const unsubscribe = addAfterEffect(() => {
-      const context = state.gl.getContext();
-      if (!screenImage.current || !phone.current || !canvas.isConnected || context.isContextLost() ||
-          state.gl.info.render.calls === 0) return;
-      if (!disposeScreen) {
+      if (lost || !phone.current || !canvas.isConnected || state.gl.info.render.calls === 0) return;
+      if (!display) {
         const cutout = mount.querySelector('[data-mockup-cutout]');
         if (!cutout) return;
-        disposeScreen = mountScreenTexture(
-          phone.current, screenImage.current, cutout, state.gl.capabilities.getMaxAnisotropy()
-        );
-        if (disposeScreen) queueMicrotask(state.invalidate);
+        display = createDisplay(phone.current, cutout, state.gl.capabilities.getMaxAnisotropy());
+        if (display) queueMicrotask(() => render(latestFrame));
         return;
       }
-      mount.classList.add('is-ready');
-      unsubscribe();
+      if (awaitingPaint) {
+        awaitingPaint = false;
+        mount.dataset.screen = paintedScreen;
+        mount.classList.add('is-ready');
+        stage.classList.add('phone-story-live');
+      }
     });
-    canvas.addEventListener('webglcontextlost', hide, { once: true });
-    renderer.current = {
-      invalidate: state.invalidate,
-      dispose() {
-        unsubscribe();
-        disposeScreen?.();
-        canvas.removeEventListener('webglcontextlost', hide);
-        hide();
-      },
+    const contextLost = event => {
+      event.preventDefault();
+      lost = true;
+      hide();
+    };
+    const contextRestored = () => {
+      lost = false;
+      lastFrame = undefined;
+      render(latestFrame);
+    };
+    canvas.addEventListener('webglcontextlost', contextLost);
+    canvas.addEventListener('webglcontextrestored', contextRestored);
+    renderer = { render, projectScreenPoint };
+    dispose.current = () => {
+      unsubscribe();
+      display?.dispose();
+      canvas.removeEventListener('webglcontextlost', contextLost);
+      canvas.removeEventListener('webglcontextrestored', contextRestored);
+      renderer = undefined;
+      hide();
     };
     state.invalidate();
-  }, [mount]);
+  }, []);
 
   useLayoutEffect(() => {
-    let mounted = true;
-    const image = new Image();
-    image.src = screenUrl;
-    image.decode().then(() => {
-      if (!mounted) return;
-      screenImage.current = image;
-      renderer.current?.invalidate();
-    }, () => {});
+    const home = document.querySelector('.css3d-screen-home');
+    const refresh = () => renderer?.render(latestFrame);
+    home?.addEventListener('load', refresh);
+    const resize = new ResizeObserver(() => window.dispatchEvent(new Event('movva:hero-layout')));
+    resize.observe(stage);
     return () => {
-      mounted = false;
-      renderer.current?.dispose();
-      renderer.current = null;
+      home?.removeEventListener('load', refresh);
+      resize.disconnect();
+      dispose.current?.();
     };
   }, []);
 
-  const { pitch, yaw, roll } = phonePoseAt(turnProgress);
   return (
     <IPhoneMockup
       ref={phone}
@@ -185,50 +205,41 @@ function OpeningPhone({ mount, experience, stage }) {
       controls={false}
       autoRotate={false}
       float={false}
-      shadows
+      shadows={false}
+      camera={camera}
       frameloop="demand"
       dpr={[1, 2]}
       resolution={589}
-      rotation={[pitch * toRadians, yaw * toRadians, roll * toRadians]}
       onCreated={onCreated}
       label="iPhone 17 Pro Max com o aplicativo MOVVA"
     >
-      <img
-        src={screenUrl}
-        className="hero-react-screen"
-        alt=""
-        width={589}
-        height={1280}
-        draggable={false}
-      />
+      <img src="/assets/home.webp" className="hero-react-screen" alt="" width={589} height={1280} draggable={false} />
     </IPhoneMockup>
   );
 }
 
-const mount = document.querySelector('#react-phone');
-const experience = document.querySelector('#experience');
-const stage = document.querySelector('#stage');
-const staticMode = new URLSearchParams(location.search).get('visual') === 'estatico';
-if (mount && experience && stage && !staticMode &&
-    !document.documentElement.classList.contains('static-experience')) {
-  gsap.registerPlugin(ScrollTrigger);
+if (mount && stage && !document.documentElement.classList.contains('static-experience')) {
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  const hide = () => mount.classList.remove('is-ready');
+  window.MOVVA_REACT_PHONE = {
+    render(frame) {
+      latestFrame = frame;
+      renderer?.render(frame);
+    },
+    projectScreenPoint(u, v) {
+      return renderer?.projectScreenPoint(u, v);
+    }
+  };
   let root;
   function syncMotion() {
     if (motion.matches) {
       root?.unmount();
       root = null;
       hide();
-      return;
+    } else if (!root) {
+      root = createRoot(mount, { onCaughtError: hide, onUncaughtError: hide });
+      root.render(<PhoneFallback><StoryPhone /></PhoneFallback>);
     }
-    if (root) return;
-    root = createRoot(mount, { onCaughtError: hide, onUncaughtError: hide });
-    root.render(
-      <PhoneFallback>
-        <OpeningPhone mount={mount} experience={experience} stage={stage} />
-      </PhoneFallback>
-    );
+    window.dispatchEvent(new Event('movva:hero-layout'));
   }
   motion.addEventListener('change', syncMotion);
   syncMotion();

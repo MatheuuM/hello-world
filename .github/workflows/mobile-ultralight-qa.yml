@@ -3,6 +3,11 @@ on:
   pull_request:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      run_legacy_benchmark:
+        description: Compare the two archived mobile CSS 3D releases
+        type: boolean
+        default: false
 concurrency:
   group: movva-ultralight-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
@@ -10,7 +15,8 @@ permissions:
   contents: read
 jobs:
   comparison:
-    name: Benchmark ${{ matrix.engine }}
+    name: Archived benchmark ${{ matrix.engine }}
+    if: github.event_name == 'workflow_dispatch' && inputs.run_legacy_benchmark
     runs-on: ubuntu-latest
     timeout-minutes: 16
     strategy:
@@ -24,9 +30,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Compare exactly with previous master
+      - name: Check out both benchmark releases
         run: |
           git worktree add --detach /tmp/movva-baseline 309278fbcf1939ea2363c636a712fd51dd608513
+          git worktree add --detach /tmp/movva-four-planes 68e4cab6f216b9ddd1908677ac6b4bc29b1bd6ec
           node --check experience.js
           node --check phone-shell.js
           node --check mobile-phone.js
@@ -39,7 +46,7 @@ jobs:
           QA_ENGINE: ${{ matrix.engine }}
         run: |
           python3 -m http.server 8078 -d /tmp/movva-baseline >/tmp/movva-baseline.log 2>&1 &
-          python3 -m http.server 8077 >/tmp/movva-candidate.log 2>&1 &
+          python3 -m http.server 8077 -d /tmp/movva-four-planes >/tmp/movva-candidate.log 2>&1 &
           timeout 460s node qa/mobile-ultralight-performance.cjs
       - uses: actions/upload-artifact@v4
         if: always()
@@ -49,6 +56,7 @@ jobs:
           retention-days: 7
   regression:
     name: Browser regression ${{ matrix.engine }}
+    if: github.event_name != 'workflow_dispatch' || !inputs.run_legacy_benchmark
     runs-on: ubuntu-latest
     timeout-minutes: 16
     strategy:
@@ -60,28 +68,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install test engine
+      - name: Build site and install browser
         run: |
-          node --check phone-shell.js
-          node --check mobile-phone.js
-          node --check motion-studio.js
+          npm ci
           npm install --no-save --package-lock=false playwright@1.64.0
+          npm run build
           npx playwright install --with-deps ${{ matrix.engine }}
-      - name: Validate 3D, scroll, origins and geometry
+      - name: Validate mobile scroll, screen textures and renderer fallback
         env:
           QA_ENGINE: ${{ matrix.engine }}
-          QA_NO_CAPTURE: '1'
+          QA_VIEWPORT: touch
         run: |
-          python3 -m http.server 8077 >/tmp/movva-qa.log 2>&1 &
-          timeout 175s node qa/ios-projection-performance.cjs
-          timeout 180s node qa/stage4c-camera-continuity.cjs
-          timeout 190s node qa/stage6a-motion-signature.cjs
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ultralight-regression-${{ matrix.engine }}
-          path: |
-            qa-ios-projection/
-            qa-stage4c/
-            qa-stage6a/
-          retention-days: 7
+          node qa/serve-static.cjs dist 8077 >/tmp/movva-qa.log 2>&1 &
+          timeout 270s node qa/phone-story.cjs

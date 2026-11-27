@@ -295,7 +295,6 @@ function render(p){
  }
  renderCounters(p);
  window.MOVVA_HERO?.positionPhone(target);
- window.MOVVA_PHONE_FRAMES?.render(target);
  const takeStart = .448, takeEnd = .582;
  const takeActive = active === 3;
  window.MOVVA_NUTRITION_TAKE?.render(

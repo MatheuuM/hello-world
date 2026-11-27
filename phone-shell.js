@@ -8,40 +8,46 @@ const shell=device?.querySelector('.css3d-unibody');
 if(!rig||!device||!shell)return;
 // Apple 18 Pro Max physical ratio: 78 / 163.4 (MOVVA-exclusive finish).
 const PRO_MAX_RATIO=78/163.4;
-// Safari and mobile browsers cannot afford hundreds of independent CSS3D
-// compositor layers. Use one continuous perimeter wall instead of three
-// overlapping bevel strips at compact widths. Front/back borders retain trim.
 const compact=matchMedia('(max-width:760px)').matches;
-// Explicit diagnostic escape hatch for same-build before/after comparison.
-// Default on phones is visually dimensional, low-compositor-cost geometry.
 const legacyGeometry=new URLSearchParams(location.search).get('quality')==='legacy';
-rig.classList.toggle('movva-legacy-geometry',compact&&legacyGeometry);
-const W=170,H=W/PRO_MAX_RATIO,RX=W*.135,RY=H*.063,CORNER=compact?10:14;
-// Each tangent is sized to the true contour; excessive strip overlap caused
-// visibly folded corners when CSS transformed the individual faces.
+const ua=navigator.userAgent||'';
+const isWebKit=/AppleWebKit/i.test(ua)&&(!/(?:Chrome|Chromium|Edg|OPR|SamsungBrowser)/i.test(ua)||/iPhone|iPad|iPod/i.test(ua));
+const composeSurfaces=isWebKit&&!legacyGeometry;
+const surfacePose=composeSurfaces ? 'var(--shell-pose) ' : '';
+if(isWebKit)rig.classList.add('css3d-webkit-engine');
+rig.classList.toggle('movva-legacy-geometry',legacyGeometry);
+rig.classList.toggle('movva-physical-shell',!legacyGeometry);
+const W=170,H=W/PRO_MAX_RATIO;
 const FACE=.056,WALL=.038,INSET=.0092;
 const frontAperture={faceInset:INSET,x:.0355,y:.0155};
 rig.style.setProperty('--shell-face-inset',String(frontAperture.faceInset));
 rig.style.setProperty('--chapter-glass-inset-x',(frontAperture.x*100)+'%');
 rig.style.setProperty('--chapter-glass-inset-y',(frontAperture.y*100)+'%');
-const STRAIGHT_OVERLAP=.16,CURVE_OVERLAP=.055,DEPTH_OVERLAP=.02;
+
+// Front glass, back plate and side walls share the same rounded perimeter.
+const edgeInset=legacyGeometry ? 0 : W*INSET;
+const halfW=W/2-edgeInset,halfH=H/2-edgeInset;
+const rx=W*(legacyGeometry ? .135 : .158)-edgeInset;
+const ry=(legacyGeometry ? H*.063 : W*.158)-edgeInset;
+const CORNER=legacyGeometry ? (compact ? 10 : 14) : (compact ? 7 : 12);
+const STRAIGHT_OVERLAP=.16,CURVE_OVERLAP=legacyGeometry ? .055 : .18,DEPTH_OVERLAP=.02;
 const contour=[],pt=(x,y)=>contour.push({x,y});
-pt(-W/2+RX,-H/2);pt(W/2-RX,-H/2);
+pt(-halfW+rx,-halfH);pt(halfW-rx,-halfH);
 const corners=[
- [W/2-RX,-H/2+RY,-Math.PI/2,0],
- [W/2-RX,H/2-RY,0,Math.PI/2],
- [-W/2+RX,H/2-RY,Math.PI/2,Math.PI],
- [-W/2+RX,-H/2+RY,Math.PI,1.5*Math.PI]
+ [halfW-rx,-halfH+ry,-Math.PI/2,0],
+ [halfW-rx,halfH-ry,0,Math.PI/2],
+ [-halfW+rx,halfH-ry,Math.PI/2,Math.PI],
+ [-halfW+rx,-halfH+ry,Math.PI,1.5*Math.PI]
 ];
 for(let c=0;c<4;c++){
  const [cx,cy,a,b]=corners[c];
- for(let j=1;j<=CORNER;j++){const t=a+(b-a)*j/CORNER;pt(cx+RX*Math.cos(t),cy+RY*Math.sin(t));}
- if(c===0)pt(W/2,H/2-RY);
- if(c===1)pt(-W/2+RX,H/2);
- if(c===2)pt(-W/2,-H/2+RY);
+ for(let j=1;j<=CORNER;j++){const t=a+(b-a)*j/CORNER;pt(cx+rx*Math.cos(t),cy+ry*Math.sin(t));}
+ if(c===0)pt(halfW,halfH-ry);
+ if(c===1)pt(-halfW+rx,halfH);
+ if(c===2)pt(-halfW,-halfH+ry);
 }
-pt(-W/2+RX,-H/2);
-const layers=compact?
+pt(-halfW+rx,-halfH);
+const layers=!legacyGeometry||compact?
  [{aZ:-FACE,bZ:FACE,aInset:0,bInset:0,className:'wall'}]:
  [
   {aZ:-FACE,bZ:-WALL,aInset:INSET,bInset:0,className:'rear'},
@@ -76,21 +82,11 @@ for(let i=0;i<contour.length-1;i++){
   piece.setAttribute('aria-hidden','true');
   piece.style.width='calc(var(--shell-w) * '+(L/W).toFixed(9)+' + '+overlap+'px)';
   piece.style.height='calc(var(--shell-w) * '+(height/W).toFixed(9)+' + '+DEPTH_OVERLAP+'px)';
-  piece.style.background='linear-gradient(180deg,'+tone(colors[0],light)+' 0%,'+tone(colors[1],light)+' 48%,'+tone(colors[2],light)+' 100%)';
-  piece.style.transform='translate3d(calc(var(--shell-w) * '+(x/W).toFixed(9)+'),calc(var(--shell-h) * '+(y/H).toFixed(9)+'),calc(var(--shell-w) * '+z.toFixed(9)+')) rotateZ('+tangent.toFixed(5)+'deg) rotateX('+angle.toFixed(5)+'deg) translate(-50%,-50%)';
+  piece.style.background=legacyGeometry?
+   'linear-gradient(180deg,'+tone(colors[0],light)+' 0%,'+tone(colors[1],light)+' 48%,'+tone(colors[2],light)+' 100%)':
+   'linear-gradient(180deg,'+tone([109,113,119],light)+' 0%,'+tone([220,224,228],light)+' 24%,'+tone([148,151,157],light)+' 68%,'+tone([68,71,77],light)+' 100%)';
+  piece.style.transform=surfacePose+'translate3d(calc(var(--shell-w) * '+(x/W).toFixed(9)+'),calc(var(--shell-h) * '+(y/H).toFixed(9)+'),calc(var(--shell-w) * '+z.toFixed(9)+')) rotateZ('+tangent.toFixed(5)+'deg) rotateX('+angle.toFixed(5)+'deg) translate(-50%,-50%)';
   shell.appendChild(piece);count++;
- }
-}
-// Four planar extruded metal edges preserve physical XYZ depth while keeping
-// the phone's curved front/rear and actual camera/lenses. Mobile normally
-// paints these 4 planes instead of 44 tiny shell layers + 36 camera walls.
-// The full geometry remains accessible via ?quality=legacy for QA and rollback.
-if(compact){
- for(const side of ['left','right','top','bottom']){
-  const edge=document.createElement('i');
-  edge.className='css3d-fast-edge css3d-fast-edge--'+side;
-  edge.setAttribute('aria-hidden','true');
-  shell.appendChild(edge);
  }
 }
 // Five independent mechanical controls: action, volume up/down, lock, camera.
@@ -101,10 +97,11 @@ for(const b of [
  {x:.504,y:-.178,h:.146,kind:'lock'},
  {x:.504,y:.210,h:.073,kind:'camera-control'}
 ]){
+ const x=legacyGeometry ? b.x : Math.sign(b.x)*(.5-INSET+.003);
  const el=document.createElement('i');
  el.className='css3d-control css3d-control--'+(b.x<0?'left':'right')+' css3d-control--'+b.kind;
  el.style.height='calc(var(--shell-h) * '+b.h+')';
- el.style.transform='translate3d(calc(var(--shell-w) * '+b.x+'),calc(var(--shell-h) * '+b.y+'),0) rotateY('+(b.x<0?-90:90)+'deg) translate(-50%,-50%)';
+ el.style.transform=surfacePose+'translate3d(calc(var(--shell-w) * '+x+'),calc(var(--shell-h) * '+b.y+'),0) rotateY('+(b.x<0?-90:90)+'deg) translate(-50%,-50%)';
  device.appendChild(el);
 }
 // Bottom-edge cutouts, visible only as the handset tilts away from camera.
@@ -114,11 +111,12 @@ for(const klass of ['css3d-port','css3d-speakers']){
  e.className=klass;e.setAttribute('aria-hidden','true');
  device.appendChild(e);
 }
-for(const x of [-.499,.499]){
+for(const side of [-1,1]){
+ const x=side*(legacyGeometry ? .499 : .5-INSET+.0008);
  for(const y of [-.333,.333]){
   const seam=document.createElement('i');
   seam.className='css3d-antenna';seam.setAttribute('aria-hidden','true');
-  seam.style.transform='translate3d(calc(var(--shell-w) * '+x+'),calc(var(--shell-h) * '+y+'),0) rotateY('+(x<0?-90:90)+'deg) translate(-50%,-50%)';
+  seam.style.transform=surfacePose+'translate3d(calc(var(--shell-w) * '+x+'),calc(var(--shell-h) * '+y+'),0) rotateY('+(x<0?-90:90)+'deg) translate(-50%,-50%)';
   device.appendChild(seam);
  }
 }
@@ -131,7 +129,7 @@ for(const x of [-.499,.499]){
 const camera=device.querySelector('.css3d-camera-rig .css3d-camera');
 let cameraWallCount=0;
 if(camera){
- const pw=W*.939,ph=pw/1.88,pr=W*.105,steps=compact?8:11;
+ const pw=W*.939,ph=pw/1.88,pr=W*.105,steps=legacyGeometry ? (compact ? 8 : 11) : (compact ? 4 : 6);
  const profile=[],add=(x,y)=>profile.push({x,y});
  add(-pw/2+pr,-ph/2);add(pw/2-pr,-ph/2);
  const corners=[
@@ -165,25 +163,36 @@ if(camera){
 function setSize(w,h){rig.style.setProperty('--shell-w',w.toFixed(3)+'px');rig.style.setProperty('--shell-h',h.toFixed(3)+'px')}
 setSize(W,H);
 
-const ua=navigator.userAgent||'';
-const isWebKit=/AppleWebKit/i.test(ua)&&(!/(?:Chrome|Chromium|Edg|OPR|SamsungBrowser)/i.test(ua)||/iPhone|iPad|iPod/i.test(ua));
-const profile=document.createElement('div');
-profile.className='css3d-webkit-profile';
-profile.setAttribute('aria-hidden','true');
-profile.innerHTML=[
- '<span class="profile-camera-ledge"></span>',
- '<i class="profile-button profile-button--action" data-side="left"></i>',
- '<i class="profile-button profile-button--volume-up" data-side="left"></i>',
- '<i class="profile-button profile-button--volume-down" data-side="left"></i>',
- '<i class="profile-button profile-button--lock" data-side="right"></i>',
- '<i class="profile-button profile-button--camera-control" data-side="right"></i>',
- '<i class="profile-antenna profile-antenna--top"></i>',
- '<i class="profile-antenna profile-antenna--bottom"></i>'
-].join('');
-rig.appendChild(profile);
-if(isWebKit)rig.classList.add('css3d-webkit-engine');
+let profile;
+if(legacyGeometry){
+ profile=document.createElement('div');
+ profile.className='css3d-webkit-profile';
+ profile.setAttribute('aria-hidden','true');
+ profile.innerHTML=[
+  '<span class="profile-camera-ledge"></span>',
+  '<i class="profile-button profile-button--action" data-side="left"></i>',
+  '<i class="profile-button profile-button--volume-up" data-side="left"></i>',
+  '<i class="profile-button profile-button--volume-down" data-side="left"></i>',
+  '<i class="profile-button profile-button--lock" data-side="right"></i>',
+  '<i class="profile-button profile-button--camera-control" data-side="right"></i>',
+  '<i class="profile-antenna profile-antenna--top"></i>',
+  '<i class="profile-antenna profile-antenna--bottom"></i>'
+ ].join('');
+ rig.appendChild(profile);
+}
+let lastSurfacePose;
 function setPose(ry,rx,rz){
- if(!isWebKit)return;
+ if(composeSurfaces){
+  // Combining the global pose and the local face transform avoids WebKit
+  // flattening the nested wall group into the front plane at a quarter turn.
+  const livePose=device.style.transform;
+  if(livePose&&livePose!==lastSurfacePose){
+   rig.style.setProperty('--shell-pose',livePose);
+   lastSurfacePose=livePose;
+  }
+  return;
+ }
+ if(!isWebKit||!profile)return;
  const radians=ry*Math.PI/180;
  const facing=Math.abs(Math.cos(radians)),sin=Math.sin(radians);
  const side=sin<=0?'right':'left';
@@ -208,7 +217,7 @@ function setPose(ry,rx,rz){
  profile.style.transform='translateX(-50%) rotateZ('+rz.toFixed(3)+'deg) rotateX('+rx.toFixed(3)+'deg)';
 }
 
-window.MOVVA_SHELL={setSize,setPose,frontAperture,isWebKit,compact,legacyGeometry,fastEdgeCount:compact?4:0,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
+window.MOVVA_SHELL={setSize,setPose,frontAperture,isWebKit,composeSurfaces,compact,legacyGeometry,fastEdgeCount:0,partCount:count,edgeCount:count/layers.length,layerCount:layers.length,bodyDepthFactor:FACE*2,cornerSegments:CORNER,curveOverlapPx:CURVE_OVERLAP,cameraWallCount,referenceAspectRatio:PRO_MAX_RATIO,
  get width(){return parseFloat(rig.style.getPropertyValue('--shell-w'))||W},
  get height(){return parseFloat(rig.style.getPropertyValue('--shell-h'))||H}
 };

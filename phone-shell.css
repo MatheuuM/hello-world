@@ -356,54 +356,15 @@
 }
 
 
-/* MOVVA mobile fast extrusion — 4 real CSS3D planes instead of 80
-   individually composited wall segments. The original high-detail hardware
-   is retained behind ?quality=legacy for QA and safe comparison.
-   Rounded front/back, optical lenses, buttons and scroll-driven rotation stay. */
-.css3d-fast-edge{display:none}
 @media(max-width:760px){
- .css3d-device:not(.movva-legacy-geometry) .css3d-shell-face,
- .css3d-device:not(.movva-legacy-geometry) .css3d-camera-wall-face{
-   display:none!important;
- }
- .css3d-device:not(.movva-legacy-geometry) .css3d-fast-edge{
-   display:block;position:absolute;left:50%;top:50%;pointer-events:none;
-   backface-visibility:visible;-webkit-backface-visibility:visible;
-   transform-origin:center center;
- }
- .css3d-fast-edge--left,.css3d-fast-edge--right{
-   width:calc(var(--shell-w) * .112);
-   height:calc(var(--shell-h) * .865);
-   border-radius:calc(var(--shell-w) * .042);
-   background:linear-gradient(90deg,#323135 0%,#858384 19%,#d5d2cf 49%,#898687 79%,#3a383b 100%);
- }
- .css3d-fast-edge--left{
-   transform:translate(-50%,-50%) translateX(calc(var(--shell-w) * -.490)) rotateY(90deg);
- }
- .css3d-fast-edge--right{
-   transform:translate(-50%,-50%) translateX(calc(var(--shell-w) * .490)) rotateY(90deg);
- }
- .css3d-fast-edge--top,.css3d-fast-edge--bottom{
-   width:calc(var(--shell-w) * .74);
-   height:calc(var(--shell-w) * .112);
-   border-radius:calc(var(--shell-w) * .015);
-   background:linear-gradient(180deg,#39383b 0%,#aaa7a5 40%,#d8d6d2 53%,#424144 100%);
- }
- .css3d-fast-edge--top{
-   transform:translate(-50%,-50%) translateY(calc(var(--shell-h) * -.490)) rotateX(90deg);
- }
- .css3d-fast-edge--bottom{
-   transform:translate(-50%,-50%) translateY(calc(var(--shell-h) * .490)) rotateX(90deg);
- }
- .css3d-device:not(.movva-legacy-geometry) .css3d-shadow{
-   filter:none!important;
-   background:radial-gradient(ellipse,rgba(76,73,57,.27),transparent 72%);
+ .css3d-device .css3d-shadow{
+  filter:none!important;
+  background:radial-gradient(ellipse,rgba(76,73,57,.27),transparent 72%);
  }
 }
 
-/* The opening mockup's front bezel, with the original app screenshots beneath
-   its transparent display. The glass insets also drive card projection. */
-.css3d-front{
+/* Original bevel render remains on the explicit legacy diagnostic route. */
+.movva-legacy-geometry .css3d-front{
  border:0;
  border-radius:16% / 7.8%;
  overflow:visible;
@@ -411,7 +372,7 @@
  background:#101012;
  box-shadow:none;
 }
-.css3d-front::after{
+.movva-legacy-geometry .css3d-front::after{
  content:"";
  position:absolute;
  inset:0;
@@ -423,10 +384,91 @@
  inset:var(--chapter-glass-inset-y) var(--chapter-glass-inset-x);
  border-radius:13.5% / 6.4%;
 }
-.css3d-front .css3d-island{display:none}
-
-/* Front-facing chapters use a single outline. Keep the extrusion and controls
-   available in profile, where the phone's physical depth is visible. */
-.css3d-face-on :is(.css3d-unibody,.css3d-control,.css3d-antenna,.css3d-port,.css3d-speakers){
+.movva-legacy-geometry .css3d-island{display:none}
+.movva-legacy-geometry.css3d-face-on :is(.css3d-unibody,.css3d-control,.css3d-antenna,.css3d-port,.css3d-speakers){
  visibility:hidden;
+}
+
+/* The silver lip is part of the physical front plate. Its outline matches
+   the rounded wall from which the back plate is separated in Z. */
+.movva-physical-shell{
+ --shell-radius:calc(var(--shell-w) * (.158 - var(--shell-face-inset)));
+ --shell-lip:calc(var(--shell-w) * .0085);
+}
+.movva-physical-shell .css3d-front,.movva-physical-shell .css3d-back{
+ border:0;
+ border-radius:var(--shell-radius);
+ transform-style:flat;
+}
+.movva-physical-shell .css3d-front{
+ background:linear-gradient(136deg,#f3f5f7 0%,#999da3 22%,#62666e 46%,#c2c6cc 79%,#858991 100%);
+ box-shadow:inset 0 0 0 .45px #ffffff78;
+}
+.movva-physical-shell .css3d-front::before{
+ content:"";
+ position:absolute;
+ inset:var(--shell-lip);
+ border-radius:calc(var(--shell-radius) - var(--shell-lip));
+ background:linear-gradient(135deg,#292b30,#090a0d 39%,#111216 78%,#26282d);
+}
+.movva-physical-shell .css3d-front .css3d-display{
+ z-index:1;
+ background:#141519;
+ box-shadow:0 0 0 .45px #ffffff23;
+}
+.movva-physical-shell .css3d-island{
+ top:2.18%;
+ width:23.9%;
+ height:2.7%;
+ background:#050608;
+ box-shadow:0 0 0 .35px #24262a;
+}
+.movva-physical-shell :is(.css3d-port,.css3d-speakers){
+ top:calc(100% - var(--shell-w) * (var(--shell-face-inset) - .0008));
+}
+.movva-physical-shell .css3d-back{
+ background:linear-gradient(142deg,#e4e7e9 0%,#c3c6cc 41%,#aeb2ba 65%,#dce0e4 100%);
+ box-shadow:inset 0 0 0 .7px #f5f6f8a6;
+}
+.movva-physical-shell .css3d-back::before{
+ background:linear-gradient(144deg,#d8dbe0,#b5b9c0 68%,#c7cad0);
+ box-shadow:inset 0 0 0 .55px #f4f5f78c;
+}
+.movva-physical-shell .css3d-rear-logo{
+ opacity:.5;
+}
+.movva-physical-shell .css3d-camera-foot,
+.movva-physical-shell .css3d-camera-deck{
+ background:linear-gradient(148deg,#c9cdd1,#a4a9b2 66%,#c4c8ce);
+ border-color:#d8dbe1;
+}
+.movva-physical-shell .css3d-camera-lens{
+ isolation:auto;
+}
+.movva-physical-shell.css3d-webkit-engine .css3d-shell-face--wall{
+ backface-visibility:hidden;
+ -webkit-backface-visibility:hidden;
+}
+
+/* WebKit can flatten the nested group before applying the parent's rotation.
+   Apply the same pose before each physical surface's local transform instead. */
+.movva-physical-shell.css3d-webkit-engine{
+ --shell-pose:rotateY(-13deg) rotateX(3deg) rotateZ(-3deg);
+}
+.movva-physical-shell.css3d-webkit-engine .css3d-object{
+ transform:none!important;
+}
+.movva-physical-shell.css3d-webkit-engine .css3d-front{
+ transform:var(--shell-pose) translateZ(calc(var(--shell-w) * .056));
+}
+.movva-physical-shell.css3d-webkit-engine .css3d-back{
+ transform:var(--shell-pose) rotateY(180deg) translateZ(calc(var(--shell-w) * .056));
+}
+.movva-physical-shell.css3d-webkit-engine .css3d-camera-rig{
+ transform:var(--shell-pose) rotateY(180deg) translateZ(calc(var(--shell-w) * .056 + 1px));
+}
+.movva-physical-shell.css3d-webkit-engine :is(.css3d-port,.css3d-speakers){
+ top:50%;
+ transform-origin:0 0;
+ transform:var(--shell-pose) translateY(calc(var(--shell-h) / 2 - var(--shell-w) * (var(--shell-face-inset) - .0008))) rotateX(90deg) translate(-50%,-50%);
 }
