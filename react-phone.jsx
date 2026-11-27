@@ -10,7 +10,7 @@ import { PHONE_MOTION_END, PHONE_TURN_END, phonePoseAt, readPhoneProgress } from
 const screenUrl = '/assets/home.webp';
 const toRadians = Math.PI / 180;
 
-function mountScreenTexture(model, image, cutout) {
+function mountScreenTexture(model, image, cutout, anisotropy) {
   let panel;
   model.traverse(object => {
     // The pinned mockup draws its display cutout using a rounded shader mesh.
@@ -59,6 +59,7 @@ function mountScreenTexture(model, image, cutout) {
 
   const texture = new CanvasTexture(surface);
   texture.colorSpace = SRGBColorSpace;
+  texture.anisotropy = Math.max(1, Math.min(8, anisotropy));
   const material = new MeshBasicMaterial({ map: texture, toneMapped: false });
   panel.geometry = geometry;
   panel.material = material;
@@ -136,7 +137,9 @@ function OpeningPhone({ mount, experience, stage }) {
       if (!disposeScreen) {
         const cutout = mount.querySelector('[data-mockup-cutout]');
         if (!cutout) return;
-        disposeScreen = mountScreenTexture(phone.current, screenImage.current, cutout);
+        disposeScreen = mountScreenTexture(
+          phone.current, screenImage.current, cutout, state.gl.capabilities.getMaxAnisotropy()
+        );
         if (disposeScreen) queueMicrotask(state.invalidate);
         return;
       }
@@ -184,7 +187,7 @@ function OpeningPhone({ mount, experience, stage }) {
       float={false}
       shadows
       frameloop="demand"
-      dpr={[1, 1.75]}
+      dpr={[1, 2]}
       resolution={589}
       rotation={[pitch * toRadians, yaw * toRadians, roll * toRadians]}
       onCreated={onCreated}

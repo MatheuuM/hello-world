@@ -3,61 +3,97 @@ import { MOBILE_PHONE_QUERY, PHONE_MOTION_END, phoneTurnAt } from './phone-motio
 const canvas = document.querySelector('#react-phone-frames');
 const live = document.querySelector('#react-phone');
 const context = canvas?.getContext('2d');
+const query = new URLSearchParams(location.search);
 
-if (context && live) {
+if (context && live && query.get('visual') !== 'estatico') {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const mobile = matchMedia(MOBILE_PHONE_QUERY).matches;
-  const atlasSource = mobile ? '/assets/react-phone-frames-mobile.webp' : '/assets/react-phone-frames.webp';
-  if (mobile) canvas.width = canvas.height = 384;
+  const paths = mobile
+    ? ['/assets/react-phone-frames-mobile.webp', '/assets/react-phone-frames-mobile-end.webp']
+    : ['/assets/react-phone-frames.webp'];
   const frameCount = 30;
-  let sheet;
-  let columns = 0;
+  const framesPerSheet = frameCount / paths.length;
+  const tileSize = mobile ? 544 : 672;
+  const outputSize = mobile ? 1088 : 1344;
+  const first = canvas.parentElement.querySelector('.hero-react-poster');
+  const last = canvas.parentElement.querySelector('.hero-react-front');
+  const sheets = [];
+  let useFrames = mobile || query.get('renderer') === 'webgl';
+  let fallbackTimer;
   let position = 0;
-  let displayed = -1;
+  let displayedIndex = -1;
+  let displayedImage;
+
+  function startFallback() {
+    useFrames = true;
+    clearTimeout(fallbackTimer);
+    render(position);
+  }
+
+  function loadSheet(page) {
+    if (sheets[page]) return sheets[page];
+    const image = new Image();
+    const sheet = { image, columns: 0 };
+    sheets[page] = sheet;
+    image.fetchPriority = mobile && page === 0 ? 'high' : 'low';
+    image.src = paths[page];
+    image.decode().then(() => {
+      if (sheets[page] !== sheet) return;
+      const across = image.naturalWidth / tileSize;
+      const down = image.naturalHeight / tileSize;
+      if (!Number.isInteger(across) || !Number.isInteger(down) || across * down < framesPerSheet) return;
+      sheet.columns = across;
+      render(position);
+    }).catch(() => {
+      // Keep the poster or last usable frame on an unavailable sheet.
+    });
+    return sheet;
+  }
 
   function render(progress) {
     position = progress;
     const liveReady = !mobile && live.classList.contains('is-ready');
     if (liveReady) {
-      sheet = undefined;
-      columns = 0;
+      clearTimeout(fallbackTimer);
+      useFrames = true;
+      sheets.length = 0;
+      displayedImage = undefined;
     }
     if (reduced.matches || liveReady) {
       canvas.classList.remove('is-frame-ready');
       return;
     }
+    if (!sheets.length && progress > PHONE_MOTION_END + .021) return;
 
-    // Keep a loaded handset through the fade even if a fast swipe advances the scroll target.
-    if (!sheet && progress > PHONE_MOTION_END + .021) return;
-
-    const turn = phoneTurnAt(progress, mobile);
-
-    if (!sheet) {
-      const image = new Image();
-      sheet = image;
-      image.fetchPriority = mobile ? 'high' : 'low';
-      image.src = atlasSource;
-      image.decode().then(() => {
-        if (sheet !== image) return;
-        const tilesAcross = image.naturalWidth / canvas.width;
-        const tilesDown = image.naturalHeight / canvas.height;
-        if (!Number.isInteger(tilesAcross) || !Number.isInteger(tilesDown) || tilesAcross * tilesDown < frameCount) return;
-        columns = tilesAcross;
-        render(position);
-      }).catch(() => {
-        // Keep the opening poster if the frame sheet cannot be decoded.
-      });
+    // Give the desktop model a chance to start before downloading its fallback.
+    if (!useFrames) {
+      if (fallbackTimer === undefined) fallbackTimer = setTimeout(startFallback, 1800);
+      return;
     }
-    if (!columns) return;
 
-    const index = Math.round(turn * (frameCount - 1));
-    if (index !== displayed) {
-      const { width, height } = canvas;
-      const x = (index % columns) * width;
-      const y = Math.floor(index / columns) * height;
-      context.clearRect(0, 0, width, height);
-      context.drawImage(sheet, x, y, width, height, 0, 0, width, height);
-      displayed = index;
+    const index = Math.round(phoneTurnAt(progress, mobile) * (frameCount - 1));
+    const page = Math.floor(index / framesPerSheet);
+    const sheet = loadSheet(page);
+    if (mobile && page === 0 && index >= 8) loadSheet(1);
+    if (!sheet.columns) return;
+
+    // Reuse the full-resolution stills at the two poses where the phone rests.
+    const poster = index === 0 ? first : index === frameCount - 1 ? last : null;
+    const image = poster?.complete && poster.naturalWidth ? poster : sheet.image;
+    if (index !== displayedIndex || image !== displayedImage) {
+      if (canvas.width !== outputSize) canvas.width = canvas.height = outputSize;
+      context.clearRect(0, 0, outputSize, outputSize);
+      context.imageSmoothingQuality = 'high';
+      if (image === poster) {
+        context.drawImage(image, 0, 0, outputSize, outputSize);
+      } else {
+        const offset = index % framesPerSheet;
+        const x = (offset % sheet.columns) * tileSize;
+        const y = Math.floor(offset / sheet.columns) * tileSize;
+        context.drawImage(image, x, y, tileSize, tileSize, 0, 0, outputSize, outputSize);
+      }
+      displayedIndex = index;
+      displayedImage = image;
       canvas.dataset.frame = String(index);
     }
     canvas.classList.add('is-frame-ready');
@@ -67,6 +103,8 @@ if (context && live) {
     attributes: true,
     attributeFilter: ['class']
   });
+  window.addEventListener('movva:phone-fallback', startFallback);
+  for (const poster of [first, last]) poster?.addEventListener('load', () => render(position));
   reduced.addEventListener('change', () => render(position));
   window.MOVVA_PHONE_FRAMES = { render };
   window.dispatchEvent(new Event('movva:hero-layout'));

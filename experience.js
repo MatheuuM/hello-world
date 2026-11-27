@@ -23,7 +23,7 @@ const scoreNumber=$('#score-number'),scoreArc=$('#score-arc'),waterNumber=$('#wa
 const activityBars=$$('.activity-bar').map(element=>({element,height:Number(element.dataset.minutes)/168*78}));
 const formatWater=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const sceneCache=scenes.map(()=>({opacity:null,visibility:null,inert:null,transform:null}));
-let lastScene=-1,lastBackdrop=null;
+let lastScene=-1,lastBackdrop=null,chapterFocus=null;
 let enabled=false,ready=false,disposed=false,raf=0,lastTime=0,position=0,target=0,width=0,height=0,mobile=false,domDevice=false;
 let pointer=[0,0],pointerTarget=[0,0],idle=0,gl=null;
  const PRO_MAX_REFERENCE_ASPECT=78/163.4;
@@ -255,6 +255,18 @@ function renderCounters(p){
   activityBars.forEach(({element,height},i)=>setActivityBar(element,height*range(p,.64+i*.006,.728+i*.002)));
  }
 }
+function focusChapter(active,p){
+ if(!chapterFocus||Math.abs(chapterFocus.progress-p)>=.001)return;
+ const {chapter,link}=chapterFocus;
+ const heading=chapter.querySelector('h1,h2');
+ if(!heading||scenes[active]!==chapter||![document.body,link].includes(document.activeElement)){
+  chapterFocus=null;
+  return;
+ }
+ heading.tabIndex=-1;
+ heading.focus({preventScroll:true});
+ if(document.activeElement===heading)chapterFocus=null;
+}
 function render(p){
  if(!domDevice&&(!gl||gl.isContextLost()))return;
  const intro=window.MOVVA_INTRO;
@@ -345,6 +357,7 @@ function tick(t){raf=0;if(!enabled||document.hidden)return;const dt=t-(lastTime|
    try{render(position)}catch(fallbackErr){console.warn('MOVVA compatible renderer also failed.',fallbackErr);ready=false;applyMode()}
   }else{ready=false;applyMode()}
  }
+ focusChapter(lastScene,position);
  const changing=Math.abs(position-target)>.000006||Math.abs(pointer[0]-pointerTarget[0])>.0005||Math.abs(pointer[1]-pointerTarget[1])>.0005;
  if(changing){idle=0;requestTick();}else if(idle++<2)requestTick();
 }
@@ -377,6 +390,7 @@ function applyMode(){
 }
 function jump(p,animated=true){if(!enabled)return;const top=experience.offsetTop+p*(experience.offsetHeight-stage.clientHeight);scrollTo({top,behavior:animated?'smooth':'auto'});target=p;requestTick();}
 function syncChapterHash(){
+ if(chapterFocus&&chapterFocus.link.hash!==location.hash)chapterFocus=null;
  const progress=chapterProgress.get(location.hash);
  if(enabled&&progress!==undefined)jump(progress,false);
 }
@@ -387,7 +401,9 @@ document.addEventListener('click',event=>{
  if(progress===undefined||link.target||link.hasAttribute('download'))return;
  event.preventDefault();
  if(location.hash!==link.hash)history.pushState(null,'',link.hash);
- jump(progress,!media.matches);
+ const chapter=event.detail===0?document.getElementById(link.hash.slice(1)):null;
+ chapterFocus=chapter?{chapter,link,progress}:null;
+ jump(progress,!chapter&&!media.matches);
 });
 addEventListener('hashchange',()=>requestAnimationFrame(syncChapterHash));
 // Browsers finish positioning native fragment targets after loading the page.

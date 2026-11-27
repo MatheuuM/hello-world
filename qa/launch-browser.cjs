@@ -92,9 +92,10 @@ async function verifyOpening(page, useWheel, capture) {
   const display = page.locator(selector);
   await display.waitFor({ timeout: 30000 });
   if (mobile) {
-    assert.equal(await display.evaluate(el => el.width), 384);
+    assert.equal(await display.evaluate(el => el.width), 1088);
     const paths = await page.evaluate(() => performance.getEntriesByType('resource').map(entry => new URL(entry.name).pathname));
     assert.ok(paths.includes('/assets/react-phone-frames-mobile.webp'));
+    assert.equal(paths.includes('/assets/react-phone-frames-mobile-end.webp'), false);
     assert.equal(paths.includes('/assets/react-phone-frames.webp') || paths.includes('/react-phone-build.js'), false);
   }
   assert.equal(await page.locator('.hero-react-poster').isVisible(), false);
@@ -304,7 +305,7 @@ async function test(browser, engine, [label, viewport]) {
     assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'), 'https://www.movvawellness.com.br/');
     assert.equal(await page.locator('meta[name=robots]').count(), 0);
     const screenshot = n => page.screenshot({ path: path.join(output, n + '.jpg'), quality: 86, scale: 'css' });
-    await verifyImage(page, '.hero-react-poster', 672, 672);
+    await verifyImage(page, '.hero-react-poster', 1344, 1344);
     assert.ok(await page.locator('.hero-surface').evaluate(el => Number(getComputedStyle(el).opacity) > .95));
     const handsetOpacity = () => page.locator('#css3d-device').evaluate(el => +getComputedStyle(el).opacity);
     assert.ok(await handsetOpacity() < .05);
@@ -329,6 +330,10 @@ async function test(browser, engine, [label, viewport]) {
     }
     await settled(page, .18);
     assert.equal(new URL(page.url()).hash, '#connected');
+    if (label === 'desktop') {
+      assert.equal(await page.locator('#connected h2').evaluate(heading => heading === document.activeElement), true,
+        'O teclado precisa levar o foco ao título do capítulo.');
+    }
     assert.ok(await handsetOpacity() < .05, 'O aparelho giratório apareceu em Tudo conectado');
     assert.equal(await page.locator('#connected .static-shot').isVisible(), false);
     assert.equal(await opening.display.evaluate((el, initial) => el === initial, opening.node), true);
@@ -490,7 +495,7 @@ async function verifyNarrowHandoff(page) {
 async function verifyNarrowPosters(browser) {
   const context = await browser.newContext({ viewport: { width: 648, height: 870 } });
   try {
-    await context.route('**/assets/react-phone-frames-mobile.webp', route => route.abort());
+    await context.route('**/assets/react-phone-frames-mobile*.webp', route => route.abort());
     const page = await context.newPage();
     await page.goto(origin);
     await settled(page, 0);
