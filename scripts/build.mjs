@@ -12,14 +12,11 @@ if (index.split(marker).length !== 2) {
 }
 
 const loadPhone = `<script type="module">
-  import { MOBILE_PHONE_QUERY } from "/phone-motion.js";
   const query = new URLSearchParams(location.search);
-  if (!matchMedia(MOBILE_PHONE_QUERY).matches &&
-      !matchMedia('(prefers-reduced-motion: reduce)').matches &&
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches &&
       query.get('visual') !== 'estatico' && query.get('renderer') !== 'webgl') {
     import('/react-phone-build.js').catch(error => {
       console.warn('MOVVA handset unavailable', error);
-      window.dispatchEvent(new Event('movva:phone-fallback'));
     });
   }
 </script>`;

@@ -7,8 +7,43 @@ on:
 permissions:
   contents: read
 jobs:
+  current:
+    name: Site 3D / ${{ matrix.engine }}
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build site and install browser
+        run: |
+          npm ci
+          npm install --no-save --package-lock=false playwright@1.64.0
+          npm run build
+          npx playwright install --with-deps ${{ matrix.engine }}
+      - name: Verify the continuous handset and launch flow
+        env:
+          QA_ENGINE: ${{ matrix.engine }}
+        run: |
+          node qa/serve-static.cjs dist 8077 >/tmp/movva-compiled.log 2>&1 &
+          timeout 280s node qa/phone-story.cjs
+          timeout 320s node qa/launch-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: movva-launch-${{ matrix.engine }}
+          path: qa-launch/
+          retention-days: 8
+
   browser:
     name: Shell / ${{ matrix.engine }}
+    if: github.event_name == 'push' && github.ref != 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 23
     strategy:
@@ -63,6 +98,7 @@ jobs:
 
   signature:
     name: Motion 6A / ${{ matrix.engine }}
+    if: github.event_name == 'push' && github.ref != 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 14
     strategy:
@@ -96,6 +132,7 @@ jobs:
 
   chapter-motion:
     name: Chapters 6B / ${{ matrix.engine }}
+    if: github.event_name == 'push' && github.ref != 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 18
     strategy:
@@ -133,6 +170,7 @@ jobs:
 
   ios-stability:
     name: iOS Performance Geometry / ${{ matrix.engine }}
+    if: github.event_name == 'push' && github.ref != 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 17
     strategy:

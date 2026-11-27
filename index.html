@@ -36,6 +36,7 @@
 <link rel="stylesheet" href="/mobile-phone.css">
 <link rel="stylesheet" href="/phone-shell.css">
 <script defer src="/phone-shell.js"></script>
+<script defer src="/phone-motion.js"></script>
 <script defer src="/mobile-phone.js"></script>
 <link rel="stylesheet" href="/motion-studio.css">
 <script defer src="/motion-studio.js"></script>
@@ -45,7 +46,6 @@
 <link rel="stylesheet" href="/training-scroll.css">
 <script defer src="/training-scroll.js"></script>
 <script defer src="/experience.js"></script>
-<script type="module" src="/phone-frames.js"></script>
 <!-- react-phone-entry -->
 </head>
 <body class="home-page">
@@ -67,11 +67,10 @@
 <div class="ground-shadow" aria-hidden="true"></div>
 <div class="hero-device-slot" aria-hidden="true"></div>
 <div class="hero-surface" aria-hidden="true">
-  <img class="hero-react-poster" src="/assets/react-phone-poster.webp" width="1344" height="1344" alt="" fetchpriority="high">
-  <img class="hero-react-front" src="/assets/react-phone-poster-front.webp" width="1344" height="1344" alt="" fetchpriority="low">
-  <canvas id="react-phone-frames" class="hero-react-frames" width="672" height="672"></canvas>
-  <div id="react-phone" class="hero-react-phone"></div>
+  <img class="hero-react-poster" src="/assets/react-phone-poster.webp" width="1344" height="1344" alt="" loading="lazy">
+  <img class="hero-react-front" src="/assets/react-phone-poster-front.webp" width="1344" height="1344" alt="" loading="lazy">
 </div>
+<div id="react-phone" class="hero-react-phone" aria-hidden="true"></div>
 <canvas id="world" aria-hidden="true"></canvas>
 <div id="css3d-device" class="css3d-device" aria-hidden="true">
  <div class="css3d-object" id="css3d-object">

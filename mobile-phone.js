@@ -17,37 +17,16 @@ const PRO_MAX_ASPECT=78/163.4;
 // Avoid invalidating the entire shell's calc()-driven geometry when its
 // width and height did not actually change.
 const BASE_WIDTH=170,BASE_HEIGHT=BASE_WIDTH/PRO_MAX_ASPECT;
-const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,faceOn:null,opacity:null,mode:null,rigTransform:null,pose:null,dolly:1};
+const last={w:NaN,h:NaN,x:NaN,y:NaN,screen:-1,chapter:-1,rear:null,mode:null,rigTransform:null,pose:null,dolly:1};
 const metrics={renders:0,sizeWrites:0,scaleWrites:0,positionWrites:0,screenWrites:0,chapterWrites:0};
 const lerp=(a,b,t)=>a+(b-a)*t;
 const smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
-// Monotone cubic interpolation: continuous angular velocity at chapter knots.
-// Previous per-keyframe smoothstep forced the phone to stop/start at every beat.
-const slope=(i,k)=>{
- if(i<=0||i>=rotations.length-1)return 0; // intentional rest at start and end
- const a=rotations[i-1],b=rotations[i],c=rotations[i+1];
- const left=(b[k]-a[k])/(b[0]-a[0]),right=(c[k]-b[k])/(c[0]-b[0]);
- if(left*right<=0)return 0; // no overshoot through a held pose or change of direction
- const h0=b[0]-a[0],h1=c[0]-b[0],w0=2*h1+h0,w1=h1+2*h0;
- return (w0+w1)/(w0/left+w1/right);
-};
-const rotations=[
- [0,-9,-1,-2], [.10,-18,-2,-3], [.16,-135,1,0], [.215,-171,4,2],
- [.26,-235,4,2], [.32,-346,-2,-2], [.40,-350,1,2],
- [.46,-364,-2,2], [.58,-345,2,-2], [.66,-350,-2,2],
- [.77,-368,2,1], [.84,-379,-2,2], [.92,-385,2,-2], [1,-390,1,0]
-];
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+const openingSlot=stage.querySelector('.hero-device-slot');
 function poseAt(p){
- p=clamp(p);
- if(p===1)return rotations[rotations.length-1].slice(1);
- let i=0;
- while(i<rotations.length-2&&p>rotations[i+1][0])i++;
- const a=rotations[i],b=rotations[i+1],h=b[0]-a[0],t=(p-a[0])/h,t2=t*t,t3=t2*t;
- const h00=2*t3-3*t2+1,h10=t3-2*t2+t,h01=-2*t3+3*t2,h11=t3-t2;
- return [1,2,3].map(k=>
-  h00*a[k]+h10*h*slope(i,k)+h01*b[k]+h11*h*slope(i+1,k)
- );
+ const pose=window.MOVVA_PHONE_POSE.at(reduced.matches?0:p,stage.clientWidth<=760);
+ return [pose.yaw,-pose.pitch,-pose.roll];
 }
 const names=['home','training','nutrition','evolution','circle'];
 const nextScreenPrep=[.220,.379,.539,.714];
@@ -112,20 +91,17 @@ function mobileFrame(sceneIndex,stageR,vw,vh,barTop){
  if(h*PRO_MAX_ASPECT>vw*.54)h=vw*.54/PRO_MAX_ASPECT;
  return {cx:vw*.5,cy,h};
 }
-function firstFrame(fallback) {
- const layout = window.MOVVA_HERO?.layout;
- if (!layout?.height) return fallback;
- return {cx:layout.x+layout.width/2,cy:layout.y+layout.height/2,h:layout.height};
-}
 function blendFrame(from,to,amount) {
  return {cx:lerp(from.cx,to.cx,amount),cy:lerp(from.cy,to.cy,amount),h:lerp(from.h,to.h,amount)};
 }
-function openingMobileFrame(p,stageR,vw,vh,barTop){
- const frame=mobileFrame(0,stageR,vw,vh,barTop);
- const initial=firstFrame(frame);
- // Short landscape has a side-by-side opening. Keep it through the hero beat.
- if(vw>vh&&vh<=540)return initial;
- return blendFrame(initial,frame,smooth(p/.10));
+function openingFrame(p,stageR,vw){
+ const slot=openingSlot.getBoundingClientRect();
+ const glide=reduced.matches?0:Math.sqrt(clamp(p/.166));
+ return {
+  cx:slot.left-stageR.left+stage.scrollLeft+slot.width*.5-Math.min(56,vw*.052*glide),
+  cy:slot.top-stageR.top+stage.scrollTop+slot.height*.5,
+  h:slot.height*(vw<=760?.92:.94)*(1+.08*glide)
+ };
 }
 function mobileCamera(p,stageR,vw,vh,barTop){
  let index=0;
@@ -133,14 +109,14 @@ function mobileCamera(p,stageR,vw,vh,barTop){
   const a=sceneCuts[i]-cutHalfWidths[i],b=sceneCuts[i]+cutHalfWidths[i];
   if(p<a)break;
   if(p<=b){
-   const from=i===0?openingMobileFrame(p,stageR,vw,vh,barTop):mobileFrame(i,stageR,vw,vh,barTop);
+   const from=mobileFrame(i,stageR,vw,vh,barTop);
    const to=mobileFrame(i+1,stageR,vw,vh,barTop);
    const t=smooth((p-a)/(b-a));
    return blendFrame(from,to,t);
   }
   index=i+1;
  }
- return index===0?openingMobileFrame(p,stageR,vw,vh,barTop):mobileFrame(index,stageR,vw,vh,barTop);
+ return mobileFrame(index,stageR,vw,vh,barTop);
 }
 function desktopCamera(p,vw,vh){
  const close=smooth((p-.906)/(.983-.906));
@@ -149,7 +125,7 @@ function desktopCamera(p,vw,vh){
   cy:vh*lerp(.52,.73,close),
   h:lerp(Math.min(610,vh*.71),Math.min(300,vh*.38),close)
  };
- return p<.10?blendFrame(firstFrame(frame),frame,smooth(p/.10)):frame;
+ return frame;
 }
 function render(p,active,ix,blend){
  const stageR=stage.getBoundingClientRect(),vw=stage.clientWidth,vh=stage.clientHeight;
@@ -158,7 +134,10 @@ function render(p,active,ix,blend){
  const baseFrame=mobile?
   mobileCamera(p,stageR,vw,vh,barTop):
   desktopCamera(p,vw,vh);
- const {cx,cy,h}=window.MOVVA_TRAINING?.frame?.(p,active,baseFrame,vw,vh) || baseFrame;
+ const chapterFrame=window.MOVVA_TRAINING?.frame?.(p,active,baseFrame,vw,vh)||baseFrame;
+ const {cx,cy,h}=p<.317
+  ?blendFrame(openingFrame(p,stageR,vw),chapterFrame,smooth((p-.242)/.075))
+  :chapterFrame;
  const w=h*PRO_MAX_ASPECT;
  metrics.renders++;
  if(mobile){
@@ -188,7 +167,7 @@ function render(p,active,ix,blend){
   last.x=cx;last.y=cy;metrics.positionWrites++;
  }
  const [ry,rx,rz]=poseAt(p);
- const safeRy=mobile?clamp(ry,-398,-8):ry;
+ const safeRy=ry;
  // 6A: a restrained studio-camera dolly over the flagship rear module.
  // Transform the assembled object, not the shell width; this preserves
  // Stage 5A's inexpensive static CSS3D geometry and Stage 4C framing.
@@ -219,24 +198,23 @@ function render(p,active,ix,blend){
  renderScreen(p,ix,blend);
  const degrees=((-safeRy%360)+360)%360;
  const rear=degrees>92&&degrees<268;
- const faceOn=active>=2&&(degrees<45||degrees>315);
- if(faceOn!==last.faceOn){
-  rig.classList.toggle('css3d-face-on',faceOn);
-  last.faceOn=faceOn;
- }
  if(rear!==last.rear){
   rig.querySelector('.css3d-front').style.visibility=rear?'hidden':'visible';
   rig.querySelector('.css3d-back').style.visibility=rear?'visible':'hidden';
   last.rear=rear;
  }
- const opacity=mobile&&active!==0&&h<135?String(clamp((h-100)/35)):'1';
- if(opacity!==last.opacity){rig.style.opacity=opacity;last.opacity=opacity;}
  if(active!==last.chapter){rig.dataset.chapter=String(active);last.chapter=active;metrics.chapterWrites++;}
+ window.MOVVA_REACT_PHONE?.render({
+  progress:p,x:cx,y:cy,height:h,pitch:-rx,yaw:safeRy,roll:-rz,
+  screen:names[last.screen],image:frames[last.screen]
+ });
 }
 // Project a point in the screenshot (0-1 UV) through the actual CSS3D
 // camera pose. It is computed from the same transforms, with no per-frame
 // getBoundingClientRect on the hundreds of shell faces.
 function projectScreenPoint(u,v){
+ const livePoint=window.MOVVA_REACT_PHONE?.projectScreenPoint(u,v);
+ if(livePoint)return livePoint;
  const aperture=window.MOVVA_SHELL?.frontAperture;
  if(!aperture||!last.pose||!Number.isFinite(last.x)||!Number.isFinite(last.h))return null;
  const mobile=last.mode==='compact';

@@ -11,6 +11,7 @@ const path = require('node:path');
 
 const SITE = 'https://www.movvawellness.com.br';
 const browserName = process.env.QA_ENGINE || 'chromium';
+const requireContinuous = process.env.GITHUB_EVENT_NAME === 'push' && process.env.GITHUB_REF === 'refs/heads/master';
 const browserType = { chromium, webkit }[browserName];
 const output = path.join('qa-live', browserName);
 fs.mkdirSync(output, { recursive: true });
@@ -27,15 +28,16 @@ async function waitForPublicAssets(request) {
         request.get(SITE + '/phone-shell.css', { timeout: 20000 })
       ]);
       const [a, b, c, d] = await Promise.all([phone.text(), motion.text(), shell.text(), shellCss.text()]);
-      if (phone.ok() && motion.ok() && shell.ok() && shellCss.ok() &&
-          a.includes('projectScreenPoint') && a.includes('BASE_WIDTH=170') &&
-          b.includes('screenOrigins') && c.includes('const compact=matchMedia') &&
-          c.includes('fastEdgeCount') && c.includes('legacyGeometry') &&
-          d.includes('css3d-fast-edge') && d.includes('movva-legacy-geometry')) {
-        return { attempts: attempt, assets: { mobilePhone: a.length, motion: b.length, shell: c.length, shellCss: d.length }, verified: 'ultralight mobile CSS3D' };
+      const continuous = a.includes('MOVVA_REACT_PHONE?.render') && c.includes('fastEdgeCount:0');
+      const legacy = c.includes('fastEdgeCount') && d.includes('css3d-fast-edge');
+      const available = phone.ok() && motion.ok() && shell.ok() && shellCss.ok()
+        && a.includes('projectScreenPoint') && b.includes('screenOrigins');
+      if (available && (continuous || (!requireContinuous && legacy))) {
+        return { attempts: attempt, continuous,
+          assets: { mobilePhone: a.length, motion: b.length, shell: c.length, shellCss: d.length } };
       }
       last = 'HTTP ' + [phone, motion, shell, shellCss].map(r => r.status()).join('/') +
-        ' expected ultralight release markers not all present';
+        ' expected release markers not all present';
     } catch (error) {
       last = String(error);
     }
@@ -70,10 +72,35 @@ async function main() {
         window.MOVVA_MOTION?.origins && window.MOVVA_3D_STATUS?.().active,
       null, { timeout: 65000 });
 
+      const livePhone = page.locator('#react-phone.is-ready canvas');
+      const expectsLive = assets.continuous && await page.evaluate(() => {
+        const gl = document.createElement('canvas').getContext('webgl2');
+        gl?.getExtension('WEBGL_lose_context')?.loseContext();
+        return Boolean(gl);
+      });
+      if (expectsLive) await livePhone.waitFor({ timeout: 65000 });
+      const initialCanvas = expectsLive ? await livePhone.elementHandle() : null;
       const scenes = [];
-      for (const progress of [.178, .335, .512, .842, .335]) {
+      const sequence = assets.continuous
+        ? [[0, 'home'], [.178, 'home'], [.335, 'training'], [.512, 'nutrition'],
+          [.672, 'evolution'], [.842, 'circle'], [.97, 'circle'], [.335, 'training']]
+        : [[.178], [.335], [.512], [.842], [.335]];
+      for (const [progress, screen] of sequence) {
         await page.evaluate(value => __MOVVA_QA__.setProgress(value), progress);
         await page.waitForFunction(value => Math.abs(__MOVVA_QA__.progress - value) < .003, progress, { timeout: 65000 });
+        if (expectsLive) {
+          await page.waitForFunction(({ canvas, screen }) => {
+            const housing = document.querySelector('#react-phone.is-ready');
+            return housing?.querySelector('canvas') === canvas && housing.dataset.screen === screen
+              && Number(getComputedStyle(housing).opacity) > .9;
+          }, { canvas: initialCanvas, screen }, { timeout: 65000 });
+        } else if (assets.continuous) {
+          await page.waitForFunction(screen => {
+            const rig = document.querySelector('#css3d-device');
+            return rig.dataset.screen === screen && Number(getComputedStyle(rig).opacity) > .2
+              && getComputedStyle(rig).visibility === 'visible';
+          }, screen, { timeout: 65000 });
+        }
         scenes.push(await page.evaluate(() => ({
           p: __MOVVA_QA__.progress, chapter: Number(document.querySelector('#css3d-device').dataset.chapter),
           overflow: document.documentElement.scrollWidth - innerWidth,
@@ -89,24 +116,29 @@ async function main() {
           origins: MOVVA_MOTION.origins.length
         })));
       }
-      assert.deepEqual(scenes.map(s => s.chapter), [1, 2, 3, 5, 2], 'Wrong chapters on scroll or rewind');
-      assert.ok(scenes.every(s => s.renderer === 'CSS3D DOM' && s.origins === (s.launch ? 11 : 12)));
+      const order = assets.continuous ? [0, 1, 2, 3, 4, 5, 6, 2] : [1, 2, 3, 5, 2];
+      assert.deepEqual(scenes.map(s => s.chapter), order, 'Wrong chapters on scroll or rewind');
+      assert.ok(scenes.every(s => s.origins === (s.launch ? 11 : 12)));
       assert.ok(scenes.every(s => Math.abs(s.overflow) <= 1));
-      assert.ok(scenes.every(s => s.cardCount >= 1));
-      if (width <= 760) {
+      assert.ok(scenes.some(s => s.cardCount >= 1));
+      if (assets.continuous) {
+        assert.ok(scenes.every(s => s.compact === (width <= 760) && s.shellFaces >= 20 && s.cameraFaces >= 12 &&
+          s.renderedFaces === s.shellFaces + s.cameraFaces && s.fastPlanes === 0 && !s.legacyGeometry),
+        'The geometry fallback must retain a rounded wall and camera body.');
+      } else if (width <= 760) {
         assert.ok(scenes.every(s => s.compact && s.shellFaces === 44 && s.cameraFaces === 36 &&
           s.renderedFaces === 0 && s.fastPlanes === 4 && !s.legacyGeometry),
-          'Official domain must render only four fast 3D planes on mobile, not legacy facets');
+          'The previous public release must retain its compact geometry.');
       } else {
         assert.ok(scenes.every(s => !s.compact && s.shellFaces === 180 && s.cameraFaces === 48 &&
           s.renderedFaces === 228 && s.fastPlanes === 0),
-          'Desktop 3D geometry must remain unchanged');
+          'The previous public release must retain its desktop geometry.');
       }
       assert.deepEqual(report.errors, [], 'Browser JavaScript exceptions');
       const image = view + '.png';
       await page.screenshot({ path: path.join(output, image), timeout: 22000 });
       report.tests.push({ name: view + ' official-domain scroll + rewind', samples: scenes, screenshot: image });
-      console.log('PASS', browserName, view, 'HTTP 200, CSS3D active, precise card anchors, reversible scroll');
+      console.log('PASS', browserName, view, 'HTTP 200, ' + (expectsLive ? 'live WebGL' : 'CSS 3D') + ', reversible scroll');
       await context.close();
     }
     report.status = 'PASS';
